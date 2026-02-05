@@ -132,11 +132,24 @@ CREATE TABLE IF NOT EXISTS portal_data (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Settings table (for Gmail tokens, preferences, etc.)
+-- Settings table (for Gmail tokens, preferences, brand palette, etc.)
 CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
     key VARCHAR(100) UNIQUE NOT NULL,
     value TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Imported calendars table (personal calendars imported from iCal/Google)
+CREATE TABLE IF NOT EXISTS imported_calendars (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    source_url TEXT,
+    color VARCHAR(20) DEFAULT '#999999',
+    events JSONB DEFAULT '[]',
+    enabled BOOLEAN DEFAULT TRUE,
+    last_synced TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -158,6 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(event_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_revenue_date ON revenue(revenue_date);
+CREATE INDEX IF NOT EXISTS idx_imported_calendars_enabled ON imported_calendars(enabled);
 
 -- Generate invoice numbers automatically
 CREATE OR REPLACE FUNCTION generate_invoice_number()

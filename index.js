@@ -779,6 +779,147 @@ app.post('/api/revenue', async (req, res) => {
   }
 });
 
+// ============================================
+// IMPORTED CALENDARS
+// ============================================
+app.get('/api/imported-calendars', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM imported_calendars ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching imported calendars:', err);
+    res.status(500).json({ error: 'Failed to fetch imported calendars' });
+  }
+});
+
+app.get('/api/imported-calendars/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM imported_calendars WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Imported calendar not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching imported calendar:', err);
+    res.status(500).json({ error: 'Failed to fetch imported calendar' });
+  }
+});
+
+app.post('/api/imported-calendars', async (req, res) => {
+  try {
+    const { name, source_url, color, events, enabled } = req.body;
+    const result = await pool.query(
+      `INSERT INTO imported_calendars (name, source_url, color, events, enabled, last_synced)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING *`,
+      [name, source_url, color || '#999999', JSON.stringify(events || []), enabled !== false]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating imported calendar:', err);
+    res.status(500).json({ error: 'Failed to create imported calendar' });
+  }
+});
+
+app.put('/api/imported-calendars/:id', async (req, res) => {
+  try {
+    const { name, source_url, color, events, enabled, last_synced } = req.body;
+    const result = await pool.query(
+      `UPDATE imported_calendars SET
+       name = COALESCE($1, name),
+       source_url = COALESCE($2, source_url),
+       color = COALESCE($3, color),
+       events = COALESCE($4, events),
+       enabled = COALESCE($5, enabled),
+       last_synced = COALESCE($6, last_synced),
+       updated_at = NOW()
+       WHERE id = $7 RETURNING *`,
+      [name, source_url, color, events ? JSON.stringify(events) : null, enabled, last_synced, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Imported calendar not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating imported calendar:', err);
+    res.status(500).json({ error: 'Failed to update imported calendar' });
+  }
+});
+
+app.delete('/api/imported-calendars/:id', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM imported_calendars WHERE id = $1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Imported calendar not found' });
+    }
+    res.json({ success: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Error deleting imported calendar:', err);
+    res.status(500).json({ error: 'Failed to delete imported calendar' });
+  }
+});
+
+// ============================================
+// SETTINGS (Generic key-value store)
+// ============================================
+app.get('/api/settings/:key', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM settings WHERE key = $1', [req.params.key]);
+    if (result.rows.length === 0) {
+      return res.json({ key: req.params.key, value: null });
+    }
+    // Parse value if it's JSON
+    const row = result.rows[0];
+    try {
+      row.value = JSON.parse(row.value);
+    } catch (e) {
+      // Value is not JSON, leave as-is
+    }
+    res.json(row);
+  } catch (err) {
+    console.error('Error fetching setting:', err);
+    res.status(500).json({ error: 'Failed to fetch setting' });
+  }
+});
+
+app.put('/api/settings/:key', async (req, res) => {
+  try {
+    const { value } = req.body;
+    const valueStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    const result = await pool.query(`
+      INSERT INTO settings (key, value)
+      VALUES ($1, $2)
+      ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()
+      RETURNING *`,
+      [req.params.key, valueStr]
+    );
+    // Parse value back for response
+    const row = result.rows[0];
+    try {
+      row.value = JSON.parse(row.value);
+    } catch (e) {
+      // Value is not JSON, leave as-is
+    }
+    res.json(row);
+  } catch (err) {
+    console.error('Error saving setting:', err);
+    res.status(500).json({ error: 'Failed to save setting' });
+  }
+});
+
+app.delete('/api/settings/:key', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM settings WHERE key = $1 RETURNING *', [req.params.key]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Setting not found' });
+    }
+    res.json({ success: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Error deleting setting:', err);
+    res.status(500).json({ error: 'Failed to delete setting' });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
