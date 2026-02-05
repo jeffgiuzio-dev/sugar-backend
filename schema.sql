@@ -132,6 +132,22 @@ CREATE TABLE IF NOT EXISTS portal_data (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Settings table (for Gmail tokens, preferences, etc.)
+CREATE TABLE IF NOT EXISTS settings (
+    id SERIAL PRIMARY KEY,
+    key VARCHAR(100) UNIQUE NOT NULL,
+    value TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Add missing columns to clients if they don't exist
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_date DATE;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_time TIME;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_guests INTEGER;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS event_time TIME;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
 CREATE INDEX IF NOT EXISTS idx_clients_event_date ON clients(event_date);

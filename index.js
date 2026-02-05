@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
+const { google } = require('googleapis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,16 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+// Google OAuth2 setup
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI || 'https://sugar-backend-production.up.railway.app/auth/google/callback'
+);
+
+// Gmail API
+const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
 // Middleware
 app.use(helmet());
@@ -28,6 +39,232 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// ============================================
+// GMAIL OAUTH & EMAIL SYNC
+// ============================================
+
+// Start OAuth flow - redirects to Google
+app.get('/auth/google', (req, res) => {
+  const scopes = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.send'
+  ];
+
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: scopes,
+    prompt: 'consent'
+  });
+
+  res.redirect(authUrl);
+});
+
+// OAuth callback - exchanges code for tokens
+app.get('/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).send('Missing authorization code');
+  }
+
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    // Store refresh token in database for persistence
+    await pool.query(`
+      INSERT INTO settings (key, value)
+      VALUES ('gmail_refresh_token', $1)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [tokens.refresh_token || tokens.access_token]);
+
+    // Redirect to frontend with success
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8000';
+    res.redirect(`${frontendUrl}/admin/settings.html?gmail=connected`);
+  } catch (err) {
+    console.error('OAuth callback error:', err);
+    res.status(500).send('Failed to authenticate with Google');
+  }
+});
+
+// Check Gmail connection status
+app.get('/api/gmail/status', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+
+    if (result.rows.length === 0) {
+      return res.json({ connected: false });
+    }
+
+    // Try to refresh token and verify connection
+    oauth2Client.setCredentials({ refresh_token: result.rows[0].value });
+
+    try {
+      await gmail.users.getProfile({ userId: 'me' });
+      res.json({ connected: true });
+    } catch (err) {
+      res.json({ connected: false, error: 'Token expired' });
+    }
+  } catch (err) {
+    console.error('Gmail status check error:', err);
+    res.status(500).json({ error: 'Failed to check Gmail status' });
+  }
+});
+
+// Sync emails - fetch recent emails and match to clients
+app.post('/api/gmail/sync', async (req, res) => {
+  try {
+    // Get stored refresh token
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({ error: 'Gmail not connected. Please authenticate first.' });
+    }
+
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+
+    // Get last sync timestamp
+    const lastSyncResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_last_sync'");
+    const lastSync = lastSyncResult.rows.length > 0 ? lastSyncResult.rows[0].value : null;
+
+    // Build query - get emails from last 7 days or since last sync
+    let query = 'newer_than:7d';
+    if (lastSync) {
+      const syncDate = new Date(lastSync);
+      query = `after:${Math.floor(syncDate.getTime() / 1000)}`;
+    }
+
+    // Fetch messages
+    const messagesResponse = await gmail.users.messages.list({
+      userId: 'me',
+      q: query,
+      maxResults: 100
+    });
+
+    const messages = messagesResponse.data.messages || [];
+    let synced = 0;
+    let matched = 0;
+
+    // Get all client emails for matching
+    const clientsResult = await pool.query('SELECT id, name, email FROM clients WHERE email IS NOT NULL');
+    const clientEmails = {};
+    clientsResult.rows.forEach(c => {
+      if (c.email) clientEmails[c.email.toLowerCase()] = c;
+    });
+
+    // Process each message
+    for (const msg of messages) {
+      try {
+        // Get full message details
+        const fullMsg = await gmail.users.messages.get({
+          userId: 'me',
+          id: msg.id,
+          format: 'full'
+        });
+
+        const headers = fullMsg.data.payload.headers;
+        const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+
+        const from = getHeader('From');
+        const to = getHeader('To');
+        const subject = getHeader('Subject');
+        const date = getHeader('Date');
+        const messageId = getHeader('Message-ID');
+
+        // Extract email addresses
+        const fromEmail = from.match(/<(.+?)>/) ? from.match(/<(.+?)>/)[1].toLowerCase() : from.toLowerCase();
+        const toEmail = to.match(/<(.+?)>/) ? to.match(/<(.+?)>/)[1].toLowerCase() : to.toLowerCase();
+
+        // Check if already synced (by gmail message ID)
+        const existingCheck = await pool.query(
+          'SELECT id FROM communications WHERE external_id = $1',
+          [msg.id]
+        );
+
+        if (existingCheck.rows.length > 0) {
+          continue; // Already synced
+        }
+
+        // Try to match to a client
+        let client = clientEmails[fromEmail] || clientEmails[toEmail];
+
+        if (!client) {
+          // Also check team members
+          const teamResult = await pool.query(
+            'SELECT client_id FROM team_members WHERE LOWER(email) = $1 OR LOWER(email) = $2',
+            [fromEmail, toEmail]
+          );
+          if (teamResult.rows.length > 0) {
+            const clientResult = await pool.query('SELECT id, name, email FROM clients WHERE id = $1', [teamResult.rows[0].client_id]);
+            if (clientResult.rows.length > 0) {
+              client = clientResult.rows[0];
+            }
+          }
+        }
+
+        if (client) {
+          // Get message body
+          let body = '';
+          if (fullMsg.data.payload.body && fullMsg.data.payload.body.data) {
+            body = Buffer.from(fullMsg.data.payload.body.data, 'base64').toString('utf-8');
+          } else if (fullMsg.data.payload.parts) {
+            const textPart = fullMsg.data.payload.parts.find(p => p.mimeType === 'text/plain');
+            if (textPart && textPart.body && textPart.body.data) {
+              body = Buffer.from(textPart.body.data, 'base64').toString('utf-8');
+            }
+          }
+
+          // Determine direction
+          const kennaEmail = process.env.KENNA_EMAIL || 'hello@kennagiuziocake.com';
+          const direction = fromEmail.includes(kennaEmail.split('@')[0]) ? 'outbound' : 'inbound';
+
+          // Insert communication
+          await pool.query(`
+            INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [client.id, 'email', direction, subject, body.substring(0, 10000), 'gmail', msg.id, new Date(date)]);
+
+          matched++;
+        }
+
+        synced++;
+      } catch (msgErr) {
+        console.error('Error processing message:', msg.id, msgErr.message);
+      }
+    }
+
+    // Update last sync timestamp
+    await pool.query(`
+      INSERT INTO settings (key, value)
+      VALUES ('gmail_last_sync', $1)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [new Date().toISOString()]);
+
+    res.json({
+      success: true,
+      total: messages.length,
+      synced,
+      matched,
+      message: `Synced ${synced} emails, ${matched} matched to clients`
+    });
+
+  } catch (err) {
+    console.error('Gmail sync error:', err);
+    res.status(500).json({ error: 'Failed to sync emails', details: err.message });
+  }
+});
+
+// Disconnect Gmail
+app.post('/api/gmail/disconnect', async (req, res) => {
+  try {
+    await pool.query("DELETE FROM settings WHERE key IN ('gmail_refresh_token', 'gmail_last_sync')");
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Gmail disconnect error:', err);
+    res.status(500).json({ error: 'Failed to disconnect Gmail' });
+  }
 });
 
 // ============================================
