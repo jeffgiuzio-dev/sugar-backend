@@ -267,6 +267,72 @@ app.post('/api/gmail/disconnect', async (req, res) => {
   }
 });
 
+// Send email via Gmail
+app.post('/api/gmail/send', async (req, res) => {
+  try {
+    const { to, subject, message, client_id } = req.body;
+
+    if (!to || !message) {
+      return res.status(400).json({ error: 'Missing required fields: to, message' });
+    }
+
+    // Get stored refresh token
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({ error: 'Gmail not connected. Please authenticate first.' });
+    }
+
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+
+    // Get Kenna's email for the From header
+    const kennaEmail = process.env.KENNA_EMAIL || 'hello@kennagiuziocake.com';
+
+    // Build the email
+    const emailLines = [
+      `To: ${to}`,
+      `From: ${kennaEmail}`,
+      `Subject: ${subject || ''}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      message
+    ];
+    const email = emailLines.join('\r\n');
+
+    // Encode to base64url
+    const encodedEmail = Buffer.from(email)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    // Send via Gmail API
+    const sendResult = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedEmail
+      }
+    });
+
+    // Log the communication if client_id provided
+    if (client_id) {
+      await pool.query(`
+        INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      `, [client_id, 'email', 'outbound', subject || '', message, 'gmail', sendResult.data.id]);
+    }
+
+    res.json({
+      success: true,
+      messageId: sendResult.data.id,
+      message: 'Email sent successfully'
+    });
+
+  } catch (err) {
+    console.error('Gmail send error:', err);
+    res.status(500).json({ error: 'Failed to send email', details: err.message });
+  }
+});
+
 // ============================================
 // CLIENTS
 // ============================================
