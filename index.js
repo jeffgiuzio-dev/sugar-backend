@@ -334,6 +334,90 @@ app.post('/api/gmail/send', async (req, res) => {
 });
 
 // ============================================
+// PUBLIC INQUIRY ENDPOINT (Website Form)
+// ============================================
+app.post('/api/inquiries', async (req, res) => {
+  try {
+    const { name, email, event_date, guest_count, venue, message } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    // Create client in database
+    const clientResult = await pool.query(
+      `INSERT INTO clients (name, email, status, event_date, guest_count, venue, notes, source)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [name, email, 'inquiry', event_date || null, guest_count || null, venue || null, message || null, 'website']
+    );
+
+    const newClient = clientResult.rows[0];
+
+    // Send notification email to Kenna
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+        // Build notification email
+        const eventInfo = event_date ? `\nEvent Date: ${event_date}` : '';
+        const guestInfo = guest_count ? `\nGuest Count: ${guest_count}` : '';
+        const venueInfo = venue ? `\nVenue/Location: ${venue}` : '';
+        const visionInfo = message ? `\n\nTheir Vision:\n${message}` : '';
+
+        const notificationBody = `New inquiry from your website!
+
+Name: ${name}
+Email: ${email}${eventInfo}${guestInfo}${venueInfo}${visionInfo}
+
+---
+View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClient.id}`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: New Inquiry: ${name}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          notificationBody
+        ];
+        const emailRaw = emailLines.join('\r\n');
+
+        const encodedEmail = Buffer.from(emailRaw)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: { raw: encodedEmail }
+        });
+
+        console.log(`Inquiry notification sent to ${kennaEmail} for client ${newClient.id}`);
+      }
+    } catch (emailErr) {
+      // Log but don't fail the request if email fails
+      console.error('Failed to send inquiry notification email:', emailErr.message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Inquiry received',
+      clientId: newClient.id
+    });
+
+  } catch (err) {
+    console.error('Error creating inquiry:', err);
+    res.status(500).json({ error: 'Failed to submit inquiry' });
+  }
+});
+
+// ============================================
 // CLIENTS
 // ============================================
 app.get('/api/clients', async (req, res) => {
