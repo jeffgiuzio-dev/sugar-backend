@@ -58,12 +58,15 @@ app.get('/api/clients/:id', async (req, res) => {
 
 app.post('/api/clients', async (req, res) => {
   try {
-    const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address } = req.body;
+    const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
+            tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
-      `INSERT INTO clients (name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO clients (name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
+       tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
        RETURNING *`,
-      [name, email, phone, status || 'inquiry', event_date, event_type, guest_count, venue, source, notes, address]
+      [name, email, phone, status || 'inquiry', event_date, event_type, guest_count, venue, source, notes, address,
+       tasting_date, tasting_time, tasting_guests, event_time, archived || false, instagram, linkedin, website, company]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -74,12 +77,16 @@ app.post('/api/clients', async (req, res) => {
 
 app.put('/api/clients/:id', async (req, res) => {
   try {
-    const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address } = req.body;
+    const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
+            tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
       `UPDATE clients SET name=$1, email=$2, phone=$3, status=$4, event_date=$5, event_type=$6,
-       guest_count=$7, venue=$8, source=$9, notes=$10, address=$11, updated_at=NOW()
-       WHERE id=$12 RETURNING *`,
-      [name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address, req.params.id]
+       guest_count=$7, venue=$8, source=$9, notes=$10, address=$11,
+       tasting_date=$12, tasting_time=$13, tasting_guests=$14, event_time=$15, archived=$16,
+       instagram=$17, linkedin=$18, website=$19, company=$20, updated_at=NOW()
+       WHERE id=$21 RETURNING *`,
+      [name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
+       tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
@@ -305,6 +312,112 @@ app.delete('/api/events/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting event:', err);
     res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
+// ============================================
+// PORTAL DATA
+// ============================================
+app.get('/api/portal/:clientId', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM portal_data WHERE client_id = $1', [req.params.clientId]);
+    if (result.rows.length === 0) {
+      return res.json({});
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching portal data:', err);
+    res.status(500).json({ error: 'Failed to fetch portal data' });
+  }
+});
+
+app.put('/api/portal/:clientId', async (req, res) => {
+  try {
+    const { tasting_paid, deposit_paid, final_paid, files, notes, internal_notes } = req.body;
+
+    // Upsert - insert or update
+    const result = await pool.query(`
+      INSERT INTO portal_data (client_id, tasting_paid, deposit_paid, final_paid, files, notes, internal_notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (client_id) DO UPDATE SET
+        tasting_paid = COALESCE($2, portal_data.tasting_paid),
+        deposit_paid = COALESCE($3, portal_data.deposit_paid),
+        final_paid = COALESCE($4, portal_data.final_paid),
+        files = COALESCE($5, portal_data.files),
+        notes = COALESCE($6, portal_data.notes),
+        internal_notes = COALESCE($7, portal_data.internal_notes),
+        updated_at = NOW()
+      RETURNING *`,
+      [req.params.clientId, tasting_paid, deposit_paid, final_paid,
+       JSON.stringify(files || []), JSON.stringify(notes || []), JSON.stringify(internal_notes || [])]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating portal data:', err);
+    res.status(500).json({ error: 'Failed to update portal data' });
+  }
+});
+
+// ============================================
+// TEAM MEMBERS
+// ============================================
+app.get('/api/team/:clientId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM team_members WHERE client_id = $1 ORDER BY sort_order ASC',
+      [req.params.clientId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching team members:', err);
+    res.status(500).json({ error: 'Failed to fetch team members' });
+  }
+});
+
+app.post('/api/team', async (req, res) => {
+  try {
+    const { client_id, name, email, phone, role, role_type, sort_order } = req.body;
+    const result = await pool.query(
+      `INSERT INTO team_members (client_id, name, email, phone, role, role_type, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [client_id, name, email, phone, role, role_type, sort_order || 0]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating team member:', err);
+    res.status(500).json({ error: 'Failed to create team member' });
+  }
+});
+
+app.put('/api/team/:id', async (req, res) => {
+  try {
+    const { name, email, phone, role, role_type, sort_order } = req.body;
+    const result = await pool.query(
+      `UPDATE team_members SET name=$1, email=$2, phone=$3, role=$4, role_type=$5, sort_order=$6
+       WHERE id=$7 RETURNING *`,
+      [name, email, phone, role, role_type, sort_order, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Team member not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating team member:', err);
+    res.status(500).json({ error: 'Failed to update team member' });
+  }
+});
+
+app.delete('/api/team/:id', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM team_members WHERE id = $1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Team member not found' });
+    }
+    res.json({ success: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Error deleting team member:', err);
+    res.status(500).json({ error: 'Failed to delete team member' });
   }
 });
 
