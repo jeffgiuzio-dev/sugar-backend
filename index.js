@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
 const { google } = require('googleapis');
+const twilio = require('twilio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,11 @@ const oauth2Client = new google.auth.OAuth2(
 
 // Gmail API
 const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+// Twilio setup
+const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
 
 // Middleware
 app.use(helmet());
@@ -331,6 +337,271 @@ app.post('/api/gmail/send', async (req, res) => {
     console.error('Gmail send error:', err);
     res.status(500).json({ error: 'Failed to send email', details: err.message });
   }
+});
+
+// ============================================
+// TWILIO SMS & VOICE
+// ============================================
+
+// Send SMS
+app.post('/api/sms/send', async (req, res) => {
+  try {
+    const { to, message, client_id } = req.body;
+
+    if (!twilioClient) {
+      return res.status(503).json({ error: 'Twilio not configured' });
+    }
+
+    if (!to || !message) {
+      return res.status(400).json({ error: 'Missing required fields: to, message' });
+    }
+
+    // Clean phone number (remove formatting, ensure +1 prefix)
+    let phone = to.replace(/\D/g, '');
+    if (phone.length === 10) phone = '1' + phone;
+    if (!phone.startsWith('+')) phone = '+' + phone;
+
+    const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    const smsResult = await twilioClient.messages.create({
+      body: message,
+      from: twilioNumber,
+      to: phone
+    });
+
+    // Log to communications
+    if (client_id) {
+      await pool.query(`
+        INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      `, [client_id, 'text', 'outbound', null, message, 'twilio', smsResult.sid]);
+    }
+
+    res.json({
+      success: true,
+      sid: smsResult.sid,
+      message: 'SMS sent successfully'
+    });
+
+  } catch (err) {
+    console.error('SMS send error:', err);
+    res.status(500).json({ error: 'Failed to send SMS', details: err.message });
+  }
+});
+
+// Webhook for incoming SMS (Twilio calls this)
+app.post('/api/sms/webhook', express.urlencoded({ extended: false }), async (req, res) => {
+  try {
+    const { From, Body, MessageSid } = req.body;
+
+    console.log(`Incoming SMS from ${From}: ${Body}`);
+
+    // Clean phone number for matching
+    let phone = From.replace(/\D/g, '');
+    if (phone.startsWith('1') && phone.length === 11) phone = phone.substring(1);
+
+    // Try to match to a client by phone
+    const clientResult = await pool.query(`
+      SELECT id, name FROM clients
+      WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', '') LIKE $1
+      LIMIT 1
+    `, ['%' + phone]);
+
+    let clientId = null;
+    let clientName = 'Unknown';
+
+    if (clientResult.rows.length > 0) {
+      clientId = clientResult.rows[0].id;
+      clientName = clientResult.rows[0].name;
+    }
+
+    // Log the incoming message
+    await pool.query(`
+      INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `, [clientId, 'text', 'inbound', null, Body, 'twilio', MessageSid]);
+
+    // Send notification email to Kenna
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+        const emailBody = `New text message received!
+
+From: ${clientName} (${From})
+Message: ${Body}
+
+${clientId ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${clientId}` : 'Client not found in system - may be a new inquiry.'}`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: Text from ${clientName}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          emailBody
+        ];
+
+        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: { raw: encodedEmail }
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send SMS notification email:', emailErr.message);
+    }
+
+    // Respond to Twilio (empty TwiML = no auto-reply)
+    res.type('text/xml').send('<Response></Response>');
+
+  } catch (err) {
+    console.error('SMS webhook error:', err);
+    res.type('text/xml').send('<Response></Response>');
+  }
+});
+
+// Webhook for incoming voice calls (plays voicemail greeting)
+app.post('/api/voice/webhook', express.urlencoded({ extended: false }), async (req, res) => {
+  const VoiceResponse = twilio.twiml.VoiceResponse;
+  const twiml = new VoiceResponse();
+
+  // Play greeting and record voicemail
+  twiml.say(
+    { voice: 'alice' },
+    "Hi, you've reached Kenna Giuzio Cake. I'm unable to take your call right now. Please leave a message with your name and number, and I'll get back to you soon. You can also text this number or email kenna at kenna giuzio cake dot com."
+  );
+
+  twiml.record({
+    maxLength: 120,
+    action: '/api/voice/voicemail',
+    transcribe: true,
+    transcribeCallback: '/api/voice/transcription'
+  });
+
+  twiml.say({ voice: 'alice' }, "I didn't receive a message. Goodbye.");
+
+  res.type('text/xml').send(twiml.toString());
+});
+
+// Handle voicemail recording completion
+app.post('/api/voice/voicemail', express.urlencoded({ extended: false }), async (req, res) => {
+  try {
+    const { From, RecordingUrl, RecordingDuration } = req.body;
+
+    console.log(`Voicemail from ${From}: ${RecordingUrl} (${RecordingDuration}s)`);
+
+    // Clean phone for matching
+    let phone = From.replace(/\D/g, '');
+    if (phone.startsWith('1') && phone.length === 11) phone = phone.substring(1);
+
+    // Try to match client
+    const clientResult = await pool.query(`
+      SELECT id, name FROM clients
+      WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', '') LIKE $1
+      LIMIT 1
+    `, ['%' + phone]);
+
+    let clientId = null;
+    let clientName = 'Unknown';
+
+    if (clientResult.rows.length > 0) {
+      clientId = clientResult.rows[0].id;
+      clientName = clientResult.rows[0].name;
+    }
+
+    // Log voicemail
+    await pool.query(`
+      INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `, [clientId, 'call', 'inbound', 'Voicemail', `Voicemail (${RecordingDuration}s): ${RecordingUrl}`, 'twilio', RecordingUrl]);
+
+    // Email notification to Kenna
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+        const emailBody = `New voicemail received!
+
+From: ${clientName} (${From})
+Duration: ${RecordingDuration} seconds
+Recording: ${RecordingUrl}
+
+${clientId ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${clientId}` : 'Caller not found in system.'}`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: Voicemail from ${clientName}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          emailBody
+        ];
+
+        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: { raw: encodedEmail }
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send voicemail notification:', emailErr.message);
+    }
+
+  } catch (err) {
+    console.error('Voicemail handler error:', err);
+  }
+
+  // End call
+  const VoiceResponse = twilio.twiml.VoiceResponse;
+  const twiml = new VoiceResponse();
+  twiml.say({ voice: 'alice' }, "Thank you. Goodbye.");
+  twiml.hangup();
+  res.type('text/xml').send(twiml.toString());
+});
+
+// Handle voicemail transcription (optional, Twilio sends this async)
+app.post('/api/voice/transcription', express.urlencoded({ extended: false }), async (req, res) => {
+  try {
+    const { TranscriptionText, RecordingUrl } = req.body;
+
+    if (TranscriptionText) {
+      // Update the communication record with transcription
+      await pool.query(`
+        UPDATE communications
+        SET message = message || E'\n\nTranscription: ' || $1
+        WHERE external_id = $2
+      `, [TranscriptionText, RecordingUrl]);
+
+      console.log(`Transcription for ${RecordingUrl}: ${TranscriptionText}`);
+    }
+  } catch (err) {
+    console.error('Transcription handler error:', err);
+  }
+
+  res.sendStatus(200);
+});
+
+// Get Twilio status
+app.get('/api/twilio/status', (req, res) => {
+  res.json({
+    configured: !!twilioClient,
+    phoneNumber: process.env.TWILIO_PHONE_NUMBER || null
+  });
 });
 
 // ============================================
