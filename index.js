@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const { Pool } = require('pg');
 const { google } = require('googleapis');
 const twilio = require('twilio');
+const Stripe = require('stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,13 +31,26 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
 
+// Stripe setup
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
 // Middleware
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
-app.use(express.json({ limit: '10mb' }));
+
+// Use raw body for Stripe webhook, JSON for everything else
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/payments/webhook') {
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 
 // Health check
 app.get('/', (req, res) => {
@@ -602,6 +616,209 @@ app.get('/api/twilio/status', (req, res) => {
     configured: !!twilioClient,
     phoneNumber: process.env.TWILIO_PHONE_NUMBER || null
   });
+});
+
+// ============================================
+// STRIPE PAYMENTS
+// ============================================
+
+// Get Stripe status
+app.get('/api/stripe/status', (req, res) => {
+  res.json({
+    configured: !!stripe,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null
+  });
+});
+
+// Create Checkout Session
+app.post('/api/payments/create-checkout', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe not configured' });
+    }
+
+    const { invoice_id, invoice_type, client_id, client_name, client_email, amount, description } = req.body;
+
+    if (!amount || !description) {
+      return res.status(400).json({ error: 'Missing required fields: amount, description' });
+    }
+
+    // Amount should be in dollars, Stripe needs cents
+    const amountCents = Math.round(parseFloat(amount) * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: description,
+            description: `Kenna Giuzio Cake - ${client_name || 'Client'}`
+          },
+          unit_amount: amountCents
+        },
+        quantity: 1
+      }],
+      mode: 'payment',
+      customer_email: client_email || undefined,
+      metadata: {
+        invoice_id: invoice_id || '',
+        invoice_type: invoice_type || '',
+        client_id: client_id || '',
+        client_name: client_name || ''
+      },
+      success_url: `${process.env.FRONTEND_URL || 'https://portal.kennagiuziocake.com'}/invoices/payment-success.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'https://portal.kennagiuziocake.com'}/invoices/payment-cancelled.html`
+    });
+
+    res.json({
+      success: true,
+      sessionId: session.id,
+      url: session.url
+    });
+
+  } catch (err) {
+    console.error('Stripe checkout error:', err);
+    res.status(500).json({ error: 'Failed to create checkout session', details: err.message });
+  }
+});
+
+// Stripe Webhook (handles payment completion)
+app.post('/api/payments/webhook', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    if (webhookSecret) {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } else {
+      // For testing without webhook signature verification
+      event = JSON.parse(req.body);
+    }
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+
+    console.log('Payment successful:', session.id);
+
+    const { invoice_id, invoice_type, client_id, client_name } = session.metadata || {};
+
+    // Update invoice status to paid
+    if (invoice_id) {
+      await pool.query(`
+        UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+        WHERE id = $1
+      `, [invoice_id]);
+    }
+
+    // Update client status based on payment type
+    if (client_id && invoice_type) {
+      if (invoice_type === 'tasting') {
+        // Update portal data - tasting paid
+        await pool.query(`
+          INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
+          VALUES ($1, TRUE, NOW())
+          ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
+        `, [client_id]);
+      } else if (invoice_type === 'deposit') {
+        // Update client status to booked + portal data
+        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [client_id]);
+        await pool.query(`
+          INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
+          VALUES ($1, TRUE, NOW())
+          ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
+        `, [client_id]);
+      } else if (invoice_type === 'final') {
+        // Update portal data - final paid
+        await pool.query(`
+          INSERT INTO portal_data (client_id, final_paid, final_paid_date)
+          VALUES ($1, TRUE, NOW())
+          ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
+        `, [client_id]);
+      }
+    }
+
+    // Record revenue
+    if (client_id) {
+      await pool.query(`
+        INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
+        VALUES ($1, $2, $3, $4, NOW(), $5)
+      `, [client_id, invoice_id || null, session.amount_total / 100, invoice_type || 'other', `Stripe payment: ${session.id}`]);
+    }
+
+    // Send confirmation email to Kenna
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+        const amountFormatted = (session.amount_total / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        const emailBody = `Payment received!
+
+Client: ${client_name || 'Unknown'}
+Amount: ${amountFormatted}
+Type: ${invoice_type || 'Payment'}
+Stripe Session: ${session.id}
+
+${client_id ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${client_id}` : ''}`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: Payment Received: ${amountFormatted} from ${client_name || 'Client'}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          emailBody
+        ];
+
+        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: { raw: encodedEmail }
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send payment notification:', emailErr.message);
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// Get checkout session details (for success page)
+app.get('/api/payments/session/:sessionId', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe not configured' });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+
+    res.json({
+      success: true,
+      paid: session.payment_status === 'paid',
+      amount: session.amount_total / 100,
+      customerEmail: session.customer_email,
+      metadata: session.metadata
+    });
+
+  } catch (err) {
+    console.error('Get session error:', err);
+    res.status(500).json({ error: 'Failed to get session details' });
+  }
 });
 
 // ============================================
