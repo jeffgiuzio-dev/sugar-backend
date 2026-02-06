@@ -842,6 +842,15 @@ app.post('/api/inquiries', async (req, res) => {
 
     const newClient = clientResult.rows[0];
 
+    // Log initial inquiry to communications
+    if (message) {
+      await pool.query(
+        `INSERT INTO communications (client_id, type, direction, subject, message, channel)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [newClient.id, 'note', 'inbound', 'Website Inquiry', message, 'website']
+      );
+    }
+
     // Send notification email to Kenna
     try {
       const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
