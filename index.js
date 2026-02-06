@@ -237,7 +237,7 @@ app.post('/api/gmail/sync', async (req, res) => {
           }
 
           // Determine direction
-          const kennaEmail = process.env.KENNA_EMAIL || 'hello@kennagiuziocake.com';
+          const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
           const direction = fromEmail.includes(kennaEmail.split('@')[0]) ? 'outbound' : 'inbound';
 
           // Insert communication
@@ -305,7 +305,7 @@ app.post('/api/gmail/send', async (req, res) => {
     oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
 
     // Get Kenna's email for the From header
-    const kennaEmail = process.env.KENNA_EMAIL || 'hello@kennagiuziocake.com';
+    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
     // Build the email
     const emailLines = [
