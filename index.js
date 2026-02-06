@@ -826,7 +826,7 @@ app.get('/api/payments/session/:sessionId', async (req, res) => {
 // ============================================
 app.post('/api/inquiries', async (req, res) => {
   try {
-    const { name, email, event_date, guest_count, venue, message } = req.body;
+    const { name, email, event_type, event_date, guest_count, venue, message } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
@@ -834,10 +834,10 @@ app.post('/api/inquiries', async (req, res) => {
 
     // Create client in database
     const clientResult = await pool.query(
-      `INSERT INTO clients (name, email, status, event_date, guest_count, venue, notes, source)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO clients (name, email, status, event_type, event_date, guest_count, venue, notes, source)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [name, email, 'inquiry', event_date || null, guest_count || null, venue || null, message || null, 'website']
+      [name, email, 'inquiry', event_type || null, event_date || null, guest_count || null, venue || null, message || null, 'website']
     );
 
     const newClient = clientResult.rows[0];
@@ -852,6 +852,7 @@ app.post('/api/inquiries', async (req, res) => {
         const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
         // Build notification email
+        const eventTypeInfo = event_type ? `\nEvent Type: ${event_type}` : '';
         const eventInfo = event_date ? `\nEvent Date: ${event_date}` : '';
         const guestInfo = guest_count ? `\nGuest Count: ${guest_count}` : '';
         const venueInfo = venue ? `\nVenue/Location: ${venue}` : '';
@@ -860,7 +861,7 @@ app.post('/api/inquiries', async (req, res) => {
         const notificationBody = `New inquiry from your website!
 
 Name: ${name}
-Email: ${email}${eventInfo}${guestInfo}${venueInfo}${visionInfo}
+Email: ${email}${eventTypeInfo}${eventInfo}${guestInfo}${venueInfo}${visionInfo}
 
 ---
 View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClient.id}`;
