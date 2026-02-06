@@ -1059,17 +1059,47 @@ app.get('/api/invoices', async (req, res) => {
 
 app.post('/api/invoices', async (req, res) => {
   try {
-    const { client_id, type, amount, status, due_date, data } = req.body;
+    const { client_id, invoice_number, type, amount, status, due_date, data } = req.body;
     const result = await pool.query(
-      `INSERT INTO invoices (client_id, type, amount, status, due_date, data)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO invoices (client_id, invoice_number, type, amount, status, due_date, data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [client_id, type, amount, status || 'draft', due_date, JSON.stringify(data || {})]
+      [client_id, invoice_number || null, type, amount, status || 'draft', due_date, JSON.stringify(data || {})]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Error creating invoice:', err);
     res.status(500).json({ error: 'Failed to create invoice' });
+  }
+});
+
+// Get single invoice by ID or invoice_number
+app.get('/api/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Try to find by invoice_number first (TI-2026-1234), then by id
+    let result;
+    if (id.startsWith('TI-') || id.startsWith('DI-') || id.startsWith('FI-') || id.startsWith('INV-')) {
+      result = await pool.query(
+        'SELECT * FROM invoices WHERE invoice_number = $1',
+        [id]
+      );
+    } else {
+      result = await pool.query(
+        'SELECT * FROM invoices WHERE id = $1',
+        [parseInt(id)]
+      );
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching invoice:', err);
+    res.status(500).json({ error: 'Failed to fetch invoice' });
   }
 });
 
