@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     title VARCHAR(255) NOT NULL,
     event_date DATE NOT NULL,
     event_time TIME,
+    event_end_time TIME,
     event_type VARCHAR(50), -- wedding, tasting, consultation, custom
     notes TEXT,
     created_at TIMESTAMP DEFAULT NOW()
@@ -160,6 +161,8 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_time TIME;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_guests INTEGER;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS event_time TIME;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_end_time TIME;
+ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS event_end_time TIME;
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);

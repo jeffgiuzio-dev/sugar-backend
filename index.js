@@ -944,14 +944,14 @@ app.get('/api/clients/:id', async (req, res) => {
 app.post('/api/clients', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-            tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
+            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
       `INSERT INTO clients (name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+       tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
        RETURNING *`,
       [name, email, phone, status || 'inquiry', event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_guests, event_time, archived || false, instagram, linkedin, website, company]
+       tasting_date, tasting_time, tasting_end_time || null, tasting_guests, event_time, archived || false, instagram, linkedin, website, company]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -963,15 +963,15 @@ app.post('/api/clients', async (req, res) => {
 app.put('/api/clients/:id', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-            tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
+            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
       `UPDATE clients SET name=$1, email=$2, phone=$3, status=$4, event_date=$5, event_type=$6,
        guest_count=$7, venue=$8, source=$9, notes=$10, address=$11,
-       tasting_date=$12, tasting_time=$13, tasting_guests=$14, event_time=$15, archived=$16,
-       instagram=$17, linkedin=$18, website=$19, company=$20, updated_at=NOW()
-       WHERE id=$21 RETURNING *`,
+       tasting_date=$12, tasting_time=$13, tasting_end_time=$14, tasting_guests=$15, event_time=$16, archived=$17,
+       instagram=$18, linkedin=$19, website=$20, company=$21, updated_at=NOW()
+       WHERE id=$22 RETURNING *`,
       [name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_guests, event_time, archived, instagram, linkedin, website, company, req.params.id]
+       tasting_date, tasting_time, tasting_end_time || null, tasting_guests, event_time, archived, instagram, linkedin, website, company, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
@@ -1203,12 +1203,12 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const { client_id, title, event_date, event_time, event_type, notes } = req.body;
+    const { client_id, title, event_date, event_time, event_end_time, event_type, notes } = req.body;
     const result = await pool.query(
-      `INSERT INTO calendar_events (client_id, title, event_date, event_time, event_type, notes)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO calendar_events (client_id, title, event_date, event_time, event_end_time, event_type, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [client_id, title, event_date, event_time, event_type, notes]
+      [client_id, title, event_date, event_time, event_end_time || null, event_type, notes]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
