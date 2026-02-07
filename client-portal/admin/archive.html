@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-secondary: #fff;
+            --bg-tertiary: #fafafa;
+            --bg-hover: #f5f3f0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border-color: #eee;
+            --border-light: #f0f0f0;
+            --accent-gold: #b5956a;
+            --accent-gold-hover: #a08050;
+            --modal-bg: #fff;
+            --input-bg: #fff;
+            --shadow: rgba(0,0,0,0.1);
+            --overlay: rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #252525;
+            --bg-tertiary: #2d2d2d;
+            --bg-hover: #333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #aaa;
+            --text-muted: #777;
+            --border-color: #3a3a3a;
+            --border-light: #333;
+            --accent-gold: #c9a66a;
+            --accent-gold-hover: #d4b87a;
+            --modal-bg: #252525;
+            --input-bg: #2d2d2d;
+            --shadow: rgba(0,0,0,0.3);
+            --overlay: rgba(0,0,0,0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        body.dark-mode .logo img {
+            filter: invert(0.85);
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-gold);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 30px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Archive List */
+        .archive-list {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .archive-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .archive-item:last-child {
+            border-bottom: none;
+        }
+
+        .archive-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .archive-info {
+            flex: 1;
+        }
+
+        .archive-name {
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .archive-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .archive-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-right: 20px;
+        }
+
+        .btn-restore {
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-restore:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/contacts.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+            <a href="/admin/communications.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Communications
+            </a>
+            <a href="/admin/templates.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Templates
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+            <a href="/admin/media.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Media
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+        </nav>
+
+        <!-- Dark Mode Toggle -->
+        <div style="padding: 14px 30px; margin-top: auto;">
+            <button onclick="toggleDarkMode()" id="darkModeBtn" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.2s;">
+                <span id="darkModeIcon">🌙</span>
+                <span id="darkModeText">Night Mode</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <h1>Archive</h1>
+            <p>Archived clients and past events</p>
+        </header>
+
+        <div class="archive-list" id="archiveList">
+            <!-- Populated by JS -->
+        </div>
+    </main>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Dark Mode - check saved preference on load
+        (function() {
+            const darkMode = localStorage.getItem('kgc_dark_mode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            document.addEventListener('DOMContentLoaded', updateDarkModeButton);
+        })();
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('kgc_dark_mode', isDark);
+            updateDarkModeButton();
+        }
+
+        function updateDarkModeButton() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (icon && text) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+                text.textContent = isDark ? 'Day Mode' : 'Night Mode';
+            }
+        }
+
+        // Load clients from API and sync to localStorage
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients();
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                loadArchive();
+                console.log('Archive: Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Archive: Using localStorage fallback:', error.message);
+            }
+        }
+
+        function loadArchive() {
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const archived = clients.filter(c => c.archived);
+            const container = document.getElementById('archiveList');
+
+            if (archived.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>No archived clients yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by archived date (most recent first)
+            archived.sort((a, b) => new Date(b.archivedAt || 0) - new Date(a.archivedAt || 0));
+
+            container.innerHTML = archived.map(client => {
+                const archivedDate = client.archivedAt ?
+                    new Date(client.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+                    'Unknown';
+                const eventDate = client.eventDate ?
+                    new Date(client.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+                    'No date';
+
+                return `
+                    <div class="archive-item">
+                        <div class="archive-info">
+                            <div class="archive-name">${client.name || 'Unnamed Client'}</div>
+                            <div class="archive-details">${client.eventType || 'Event'} · ${eventDate}</div>
+                        </div>
+                        <div class="archive-date">Archived ${archivedDate}</div>
+                        <button class="btn-restore" onclick="restoreClient(${client.id})">Restore</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function restoreClient(clientId) {
+            if (!confirm('Restore this client to active status?')) return;
+
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const client = clients.find(c => c.id === clientId);
+
+            if (client) {
+                client.archived = false;
+                delete client.archivedAt;
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                loadArchive();
+
+                // Sync to API in background
+                try {
+                    await saveClient(client);
+                    console.log('Client restored and synced to API:', client.name);
+                } catch (error) {
+                    console.log('API sync failed:', error.message);
+                }
+            }
+        }
+
+        // Initialize
+        loadArchive();
+
+        // Load from API in background
+        loadClientsFromAPI();
+    </script>
+</body>
+</html>

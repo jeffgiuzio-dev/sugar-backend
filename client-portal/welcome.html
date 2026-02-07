@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Full-screen container */
+        .intro-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Video background */
+        .video-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .video-wrapper.visible {
+            opacity: 1;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Image background (for return visits) */
+        .image-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            display: none;
+        }
+
+        .image-wrapper.visible {
+            opacity: 1;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Overlay gradient for readability */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
+        }
+
+        /* Center content */
+        .intro-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* Logo */
+        .intro-logo {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.5s ease-out;
+            margin-bottom: 40px;
+        }
+
+        .intro-logo.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .intro-logo img {
+            width: 280px;
+            max-width: 80vw;
+            filter: brightness(1.1);
+            transition: filter 1.5s ease-in-out;
+        }
+
+        /* Light mode for dark video sections */
+        .intro-logo.light-mode img {
+            filter: brightness(10) invert(1);
+        }
+
+        /* Tagline */
+        .intro-tagline {
+            font-family: 'Mr De Haviland', cursive;
+            font-size: 2rem;
+            color: rgba(255,255,255,0.85);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.2s ease-out;
+            transition-delay: 0.3s;
+            margin-bottom: 50px;
+        }
+
+        .intro-tagline.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Enter button */
+        .enter-button {
+            display: inline-block;
+            padding: 20px 56px;
+            background: rgba(107, 125, 100, 0.25);
+            border: none;
+            color: #1a2418;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.5s ease-out, transform 1.5s ease-out, background 1.5s, color 1.5s;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .enter-button.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .enter-button:hover {
+            background: rgba(107, 125, 100, 0.35);
+            color: #1a2418;
+        }
+
+        /* Light mode for dark video sections */
+        .enter-button.light-mode {
+            background: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .enter-button.light-mode:hover {
+            background: rgba(255,255,255,0.3);
+            color: #fff;
+        }
+
+        /* Skip button (subtle) */
+        .skip-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-decoration: none;
+            cursor: pointer;
+            z-index: 100;
+            transition: color 0.3s;
+        }
+
+        .skip-button:hover {
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Loading state */
+        .loading-spinner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-spinner.hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .intro-logo img {
+                width: 220px;
+            }
+
+            .intro-tagline {
+                font-size: 1.5rem;
+            }
+
+            .enter-button {
+                padding: 16px 36px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Fade out entire page when leaving */
+        .intro-container.leaving {
+            opacity: 0;
+            transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="intro-container" id="introContainer">
+        <!-- Loading spinner -->
+        <div class="loading-spinner" id="loadingSpinner"></div>
+
+        <!-- Video background (tasting intro) -->
+        <div class="video-wrapper" id="videoWrapper">
+            <video id="introVideo" muted playsinline>
+                <source src="videos/intro-fabric.mp4" type="video/mp4">
+            </video>
+            <div class="video-overlay"></div>
+        </div>
+
+        <!-- Image background (return visit intro) -->
+        <div class="image-wrapper" id="imageWrapper">
+            <img id="introImage" src="images/return-intro.jpg" alt="">
+            <div class="video-overlay"></div>
+        </div>
+
+        <!-- Center content -->
+        <div class="intro-content">
+            <div class="intro-logo" id="introLogo">
+                <img src="images/logo.png" alt="Kenna Giuzio Cake">
+            </div>
+            <a class="enter-button" id="enterButton" href="#">
+                Enter
+            </a>
+        </div>
+
+        <!-- Skip link -->
+        <a class="skip-button" id="skipButton">Skip</a>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('clientId');
+        const introType = params.get('type') || 'tasting'; // tasting, return, proposal
+        // Return visits default to portal, others to their specific dest
+        const destination = params.get('dest') || (introType === 'return' ? 'portal' : 'tasting');
+
+        // Determine destination URL
+        function getDestinationUrl() {
+            // Pass through all original query params except our intro params
+            const forwardParams = new URLSearchParams();
+            for (const [key, value] of params) {
+                if (!['dest', 'type'].includes(key)) {
+                    forwardParams.set(key, value);
+                }
+            }
+            // Add fade parameter so destination knows to fade in
+            forwardParams.set('fade', 'true');
+            const queryString = forwardParams.toString();
+
+            switch (destination) {
+                case 'tasting':
+                    return '/invoices/tasting-invoice.html?' + queryString;
+                case 'proposal':
+                    return '/proposals/proposal-builder.html?' + queryString;
+                case 'portal':
+                    // Add mode=client so they see client view, not admin view
+                    forwardParams.set('mode', 'client');
+                    return '/clients/view.html?' + forwardParams.toString();
+                default:
+                    return '/invoices/tasting-invoice.html?' + queryString;
+            }
+        }
+
+        // Navigate to destination with graceful fade
+        function goToDestination() {
+            const container = document.getElementById('introContainer');
+            container.classList.add('leaving');
+            setTimeout(() => {
+                window.location.href = getDestinationUrl();
+            }, 2500);
+        }
+
+        // Tasting intro always plays (clients share with family)
+        // Only skip for return visits to portal (not tasting or proposal intros)
+
+        // Elements
+        const video = document.getElementById('introVideo');
+        const videoWrapper = document.getElementById('videoWrapper');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const introImage = document.getElementById('introImage');
+        const spinner = document.getElementById('loadingSpinner');
+        const logo = document.getElementById('introLogo');
+        const enterButton = document.getElementById('enterButton');
+        const skipButton = document.getElementById('skipButton');
+
+        // Reveal timing depends on intro type (waterfall effect)
+        const isReturnVisit = introType === 'return';
+        const LOGO_REVEAL_TIME = isReturnVisit ? 2 : 3;      // Logo appears first
+        const BUTTON_REVEAL_TIME = isReturnVisit ? 3.5 : 4.5;  // Button follows 1.5s later
+
+        // Update button text for return visits
+        if (isReturnVisit) {
+            enterButton.textContent = 'Welcome Back';
+        }
+
+        let revealTriggered = false;
+
+        function triggerReveal() {
+            if (revealTriggered) return;
+            revealTriggered = true;
+
+            // Show logo
+            setTimeout(() => {
+                logo.classList.add('visible');
+            }, LOGO_REVEAL_TIME * 1000);
+
+            // Show button shortly after logo (in sage green)
+            setTimeout(() => {
+                enterButton.classList.add('visible');
+            }, BUTTON_REVEAL_TIME * 1000);
+        }
+
+        // Return visit - use image instead of video
+        if (isReturnVisit) {
+            videoWrapper.style.display = 'none';
+            imageWrapper.style.display = 'block';
+
+            introImage.onload = () => {
+                spinner.classList.add('hidden');
+                imageWrapper.classList.add('visible');
+                triggerReveal();
+            };
+
+            introImage.onerror = () => {
+                spinner.classList.add('hidden');
+                imageWrapper.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
+                imageWrapper.classList.add('visible');
+                triggerReveal();
+            };
+
+            // Fallback
+            setTimeout(() => {
+                if (!revealTriggered) {
+                    spinner.classList.add('hidden');
+                    imageWrapper.classList.add('visible');
+                    triggerReveal();
+                }
+            }, 2000);
+
+        } else {
+            // Tasting intro - use video
+            video.addEventListener('canplay', () => {
+                spinner.classList.add('hidden');
+                videoWrapper.classList.add('visible');
+                video.play().catch(() => {
+                    triggerReveal();
+                });
+                triggerReveal();
+            });
+
+            video.addEventListener('error', () => {
+                spinner.classList.add('hidden');
+                videoWrapper.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
+                videoWrapper.classList.add('visible');
+                triggerReveal();
+            });
+
+            // Fallback: if video doesn't load in 3 seconds, show content
+            setTimeout(() => {
+                if (!revealTriggered) {
+                    spinner.classList.add('hidden');
+                    videoWrapper.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
+                    videoWrapper.classList.add('visible');
+                    triggerReveal();
+                }
+            }, 3000);
+
+            video.load();
+
+            // Truncate video to set time, then fade to black
+            // Button only appears during black screen
+            const VIDEO_PLAY_TIME = 10; // seconds of video before black
+            const LOGO_TRANSITION_TIME = 9; // logo goes white 1 second earlier
+            const BLACK_PAUSE_TIME = 5000; // ms to hold on black
+            let isPaused = false;
+            let logoTransitioned = false;
+
+            video.addEventListener('timeupdate', () => {
+                // Logo and button transition to white 1 second before fade starts
+                if (video.currentTime >= LOGO_TRANSITION_TIME && !logoTransitioned) {
+                    logoTransitioned = true;
+                    logo.classList.add('light-mode');
+                    // Button transitions to white slightly after logo
+                    setTimeout(() => {
+                        enterButton.classList.add('light-mode');
+                    }, 400);
+                }
+
+                // After set time, start fading to black (video keeps playing)
+                if (video.currentTime >= VIDEO_PLAY_TIME && !isPaused) {
+                    isPaused = true;
+
+                    // Fade to black while video keeps playing
+                    videoWrapper.style.transition = 'opacity 1.5s ease-in-out';
+                    videoWrapper.style.opacity = '0';
+
+                    // After fade completes, pause video and hold on black
+                    setTimeout(() => {
+                        video.pause();
+
+                        // Hold on black, then restart
+                        setTimeout(() => {
+                            // Reset video while still hidden
+                            video.currentTime = 0;
+                            video.play();
+
+                            // Fade logo/button back to dark mode first
+                            logo.classList.remove('light-mode');
+                            enterButton.classList.remove('light-mode');
+
+                            // Small delay then fade video back in smoothly
+                            setTimeout(() => {
+                                videoWrapper.style.opacity = '1';
+                                isPaused = false;
+                                logoTransitioned = false;
+                            }, 300);
+                        }, BLACK_PAUSE_TIME);
+                    }, 1500); // Wait for fade to complete
+                }
+            });
+        }
+
+        // Enter button click
+        enterButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            goToDestination();
+        });
+
+        // Skip button
+        skipButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            goToDestination();
+        });
+    </script>
+</body>
+</html>

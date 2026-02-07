@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Tasting - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #eee;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+
+        .nav-item.active {
+            background: #fafafa;
+            color: #1a1a1a;
+            border-left-color: #b5956a;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 30px;
+        }
+
+        /* Main wrapper */
+        .main-wrapper {
+            margin-left: 260px;
+        }
+
+        /* Header */
+        .header {
+            background: #fff;
+            padding: 20px 40px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-link:hover {
+            color: #1a1a1a;
+        }
+
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        /* Hero Banner */
+        .page-hero {
+            grid-column: 1 / -1;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 140px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding-left: 30px;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            background: #b5956a;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #a38559;
+        }
+
+        .send-invoice-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px 24px;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            border-color: #999;
+            color: #1a1a1a;
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: calc(100vh - 73px);
+        }
+
+        @media (max-width: 1200px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+            .preview-panel {
+                display: none;
+            }
+        }
+
+        /* Form Panel */
+        .form-panel {
+            background: #fff;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .panel-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+
+        .panel-body {
+            padding: 32px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: #1a1a1a;
+            transition: border-color 0.2s;
+            background: #fff;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #b5956a;
+        }
+
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: #eee;
+            margin: 28px 0;
+        }
+
+        .form-note {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .client-summary {
+            background: #fafafa;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .client-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .client-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            background: #f0ece6;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .preview-container {
+            background: #fff;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .preview-header {
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .preview-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .preview-header img {
+            position: relative;
+            width: 100px;
+            z-index: 1;
+        }
+
+        .preview-contact {
+            text-align: center;
+            padding: 16px 24px;
+            font-size: 0.75rem;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-title-section {
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+        }
+
+        .preview-meta {
+            text-align: right;
+            font-size: 0.75rem;
+        }
+
+        .preview-meta-label {
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.6rem;
+        }
+
+        .preview-bill-to {
+            padding: 20px 24px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-size: 0.8rem;
+        }
+
+        .preview-bill-label {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .preview-line-item {
+            padding: 24px;
+        }
+
+        .preview-item-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .preview-item-desc {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .preview-tasting-box {
+            background: #fafafa;
+            padding: 16px;
+            font-size: 0.8rem;
+        }
+
+        .preview-tasting-label {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .preview-tasting-details {
+            color: #666;
+        }
+
+        .preview-item-price {
+            text-align: right;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            padding: 0 24px 24px;
+        }
+
+        .preview-totals {
+            padding: 20px 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.85rem;
+        }
+
+        .preview-total-row.fee {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        .preview-total-row.total {
+            border-top: 2px solid #1a1a1a;
+            margin-top: 8px;
+            padding-top: 12px;
+            font-weight: 400;
+        }
+
+        .preview-total-row.total .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+        }
+
+        .preview-footer {
+            background: #fff;
+            text-align: center;
+            padding: 24px;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-footer img {
+            width: 140px;
+            opacity: 0.7;
+            display: block;
+            margin: 0 auto 8px;
+        }
+
+        .preview-footer p {
+            font-size: 0.7rem;
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+            .preview-panel {
+                display: none;
+            }
+        }
+
+        /* Calendar Popup */
+        .calendar-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-popup-overlay.active {
+            display: flex;
+        }
+
+        .calendar-popup {
+            background: #fff;
+            width: 380px;
+            max-width: 95%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .calendar-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: move;
+            user-select: none;
+        }
+
+        .calendar-popup-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+        }
+
+        .calendar-popup-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 4px;
+        }
+
+        .calendar-popup-close:hover {
+            color: #1a1a1a;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #fafafa;
+        }
+
+        .calendar-nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .calendar-nav-btn:hover {
+            color: #b5956a;
+        }
+
+        .calendar-month-year {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+
+        .calendar-popup {
+            width: 700px;
+            max-width: 95vw;
+            min-width: 500px;
+            min-height: 400px;
+            resize: both;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-popup .calendar-grid {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .calendar-popup .calendar-days {
+            height: 100%;
+        }
+
+        .calendar-grid {
+            padding: 20px;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day {
+            min-height: 70px;
+            padding: 6px;
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .calendar-day:hover:not(.other-month):not(.past) {
+            border-color: #b5956a;
+            background: #faf8f5;
+        }
+
+        .calendar-day.other-month {
+            background: #fafafa;
+            color: #ccc;
+            cursor: default;
+        }
+
+        .calendar-day.past {
+            background: #fafafa;
+            color: #bbb;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.today {
+            border-color: #b5956a;
+        }
+
+        .calendar-day.today .day-number {
+            background: #b5956a;
+            color: #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-day.selected {
+            background: #f5f0e8;
+            border-color: #b5956a;
+            border-width: 2px;
+        }
+
+        .day-number {
+            font-size: 0.85rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .day-events {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .day-event {
+            font-size: 0.65rem;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .day-event.tasting {
+            background: #f5eee3;
+            color: #8b7355;
+        }
+
+        .day-event.event {
+            background: #e8ede5;
+            color: #5a6b52;
+        }
+
+        .day-event.personal {
+            background: #fae5e1;
+            color: #a05a4a;
+        }
+
+        .day-event.inquiry {
+            background: #e8e3f0;
+            color: #6b5b7a;
+        }
+
+        .day-event-more {
+            font-size: 0.6rem;
+            color: #999;
+            padding: 2px 4px;
+        }
+
+        .calendar-legend {
+            padding: 12px 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.75rem;
+            color: #666;
+            display: flex;
+            gap: 20px;
+            background: #fafafa;
+        }
+
+        .calendar-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .calendar-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .calendar-legend-dot.tasting { background: #f5eee3; border: 1px solid #dfc89f; }
+        .calendar-legend-dot.event { background: #e8ede5; border: 1px solid #a8b5a0; }
+        .calendar-legend-dot.personal { background: #fae5e1; border: 1px solid #e6a89c; }
+
+        .import-calendar-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .import-calendar-btn:hover {
+            border-color: #b5956a;
+            color: #b5956a;
+        }
+
+        .import-calendar-btn svg {
+            stroke: currentColor;
+        }
+
+        /* Event Detail Popup */
+        .event-detail-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            z-index: 1100;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .event-detail-popup.active {
+            display: block;
+        }
+
+        .event-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .event-detail-type {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .event-detail-type.tasting {
+            background: #f5eee3;
+            color: #8b7355;
+        }
+
+        .event-detail-type.event {
+            background: #e8ede5;
+            color: #5a6b52;
+        }
+
+        .event-detail-type.personal {
+            background: #fae5e1;
+            color: #a05a4a;
+        }
+
+        .event-detail-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .event-detail-close:hover {
+            color: #1a1a1a;
+        }
+
+        .event-detail-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+
+        .event-detail-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .event-detail-label {
+            color: #999;
+            min-width: 60px;
+        }
+
+        .event-detail-value {
+            color: #1a1a1a;
+        }
+
+        .event-detail-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1050;
+        }
+
+        .event-detail-backdrop.active {
+            display: block;
+        }
+
+        /* Make day events clickable */
+        .day-event {
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .day-event:hover {
+            transform: scale(1.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Make Default Button */
+        .make-default-btn {
+            display: block;
+            margin-top: 4px;
+            margin-left: auto;
+            padding: 3px 8px;
+            font-size: 0.65rem;
+            color: #aaa;
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .make-default-btn:hover {
+            color: #666;
+            border-color: #bbb;
+        }
+
+        .make-default-btn.saved {
+            color: #7a9a6a;
+            border-color: #a8c89a;
+        }
+
+        /* Locked state for sent invoices */
+        .form-locked .form-input,
+        .form-locked .form-select,
+        .form-locked .form-textarea {
+            background: #f5f5f5;
+            color: #666;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .locked-banner {
+            display: none;
+            background: #f5eee3;
+            border: 1px solid #dfc89f;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .locked-banner.visible {
+            display: flex;
+        }
+
+        .locked-banner-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #8b7355;
+        }
+
+        .locked-banner-text svg {
+            width: 20px;
+            height: 20px;
+            stroke: #8b7355;
+        }
+
+        .unlock-btn {
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px solid #dfc89f;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #8b7355;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .unlock-btn:hover {
+            background: #8b7355;
+            color: #fff;
+        }
+
+        .resend-notice {
+            display: none;
+            font-size: 0.75rem;
+            color: #a05a4a;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .resend-notice.visible {
+            display: block;
+        }
+        </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/contacts.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Proposals
+            </a>
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+            <a href="/admin/communications.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Communications
+            </a>
+            <a href="/admin/templates.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Templates
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+
+    <main class="main">
+        <!-- Hero Banner -->
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-hero-title">Schedule Tasting</h1>
+            </div>
+        </div>
+        <!-- Form Panel -->
+        <div class="form-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Client Information</h2>
+            </div>
+            <div class="panel-body">
+                <div class="client-summary" id="clientSummary">
+                    <div class="client-name" id="displayClientName">Loading...</div>
+                    <div class="client-details">
+                        <span id="displayClientEmail"></span><br>
+                        <span id="displayEventType"></span> - <span id="displayEventDate"></span>
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- Locked Banner (shown when invoice has been sent) -->
+                <div class="locked-banner" id="lockedBanner">
+                    <div class="locked-banner-text">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <span>Invoice has been sent. Fields are locked.</span>
+                    </div>
+                    <button class="unlock-btn" onclick="unlockForEditing()">Unlock for Editing</button>
+                </div>
+
+                <h3 class="panel-title" style="margin-bottom: 20px;">Tasting Details</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tasting Date</label>
+                        <input type="text" class="form-input" id="tastingDate" placeholder="Click to select date" readonly onclick="openCalendarPopup()" style="cursor: pointer;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tasting Time</label>
+                        <select class="form-select" id="tastingTime" onchange="updatePreview(); syncToClient();">
+                            <option value="09:00">9:00 AM</option>
+                            <option value="09:15">9:15 AM</option>
+                            <option value="09:30">9:30 AM</option>
+                            <option value="09:45">9:45 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="10:15">10:15 AM</option>
+                            <option value="10:30">10:30 AM</option>
+                            <option value="10:45">10:45 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="11:15">11:15 AM</option>
+                            <option value="11:30">11:30 AM</option>
+                            <option value="11:45">11:45 AM</option>
+                            <option value="12:00" selected>12:00 PM</option>
+                            <option value="12:15">12:15 PM</option>
+                            <option value="12:30">12:30 PM</option>
+                            <option value="12:45">12:45 PM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="13:15">1:15 PM</option>
+                            <option value="13:30">1:30 PM</option>
+                            <option value="13:45">1:45 PM</option>
+                            <option value="14:00">2:00 PM</option>
+                            <option value="14:15">2:15 PM</option>
+                            <option value="14:30">2:30 PM</option>
+                            <option value="14:45">2:45 PM</option>
+                            <option value="15:00">3:00 PM</option>
+                            <option value="15:15">3:15 PM</option>
+                            <option value="15:30">3:30 PM</option>
+                            <option value="15:45">3:45 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="16:15">4:15 PM</option>
+                            <option value="16:30">4:30 PM</option>
+                            <option value="16:45">4:45 PM</option>
+                            <option value="17:00">5:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Number of Guests</label>
+                        <select class="form-select" id="guestCount" oninput="updatePreview(); syncToClient();">
+                            <option value="1">1 guest (client only)</option>
+                            <option value="2" selected>2 guests</option>
+                            <option value="3">3 guests</option>
+                            <option value="4">4 guests</option>
+                            <option value="5">5 guests</option>
+                            <option value="6">6 guests (maximum)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tasting Fee</label>
+                        <input type="text" class="form-input" id="tastingFee" value="250" oninput="updatePreview()">
+                        <p class="form-note">Applied as credit to final order</p>
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-input" id="tastingLocation" value="Queen Anne Studio, Seattle" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Tasting Description</label>
+                        <textarea class="form-textarea" id="tastingDescription" oninput="autoSave()" style="min-height: 80px;">A bespoke tasting party and design consultation for you and your guests at my studio during which we will sample cakes, review designs and discuss your vision.</textarea>
+                        <button class="make-default-btn" onclick="makeDefault('description', this)">Make Default</button>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Arrival Instructions</label>
+                        <textarea class="form-textarea" id="arrivalInstructions" oninput="autoSave()" style="min-height: 60px;">The studio entrance is on the W 3rd Ave side of the house.
+I'll meet you there! At the tall white gate in front of my blue studio door.</textarea>
+                        <button class="make-default-btn" onclick="makeDefault('arrival', this)">Make Default</button>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Notes (internal - not shown on invoice)</label>
+                        <textarea class="form-textarea" id="internalNotes" oninput="autoSave()" placeholder="Any notes about this tasting..."></textarea>
+                        <button class="make-default-btn" onclick="makeDefault('notes', this)">Make Default</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <div class="preview-container">
+                <div class="preview-header">
+                    <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+                </div>
+                <div class="preview-contact">
+                    (206) 472-5401 | kenna@kennagiuziocake.com<br>
+                    Queen Anne, Seattle
+                </div>
+                <div class="preview-title-section">
+                    <h2 class="preview-title">Tasting Invoice</h2>
+                    <div class="preview-meta">
+                        <div class="preview-meta-label">Invoice #</div>
+                        <div id="previewInvoiceNum">TI-2026-001</div>
+                        <div class="preview-meta-label" style="margin-top: 8px;">Date</div>
+                        <div id="previewDate">January 28, 2026</div>
+                    </div>
+                </div>
+                <div class="preview-bill-to">
+                    <div>
+                        <div class="preview-bill-label">Bill To</div>
+                        <div id="previewClientName">Client Name</div>
+                        <div style="color: #666;" id="previewClientEmail">email@example.com</div>
+                    </div>
+                    <div>
+                        <div class="preview-bill-label">Event</div>
+                        <div id="previewEventInfo">Wedding - August 2026</div>
+                    </div>
+                </div>
+                <div class="preview-line-item">
+                    <h3 class="preview-item-title">Tasting Party</h3>
+                    <p class="preview-item-desc" id="previewDescription" style="white-space: pre-line;">A bespoke tasting party and design consultation for you and your guests at my studio during which we will sample cakes, review designs and discuss your vision.</p>
+                    <p style="font-size: 0.7rem; font-style: italic; color: #888; margin-top: 10px; margin-bottom: 14px;">Custom cake commissions begin at $2,500. This tasting is designed to explore fit, flavor, and creative direction before moving forward.</p>
+                    <div class="preview-tasting-box">
+                        <div class="preview-tasting-label">Tasting Details</div>
+                        <div class="preview-tasting-details">
+                            <div id="previewTastingDate">Select a date...</div>
+                            <div id="previewTastingTime">12:00 PM</div>
+                            <div id="previewLocation">Queen Anne Studio, Seattle</div>
+                        </div>
+                        <div class="preview-arrival-instructions">
+                            <div class="preview-tasting-label" style="margin-top: 12px;">Arrival</div>
+                            <div id="previewArrival" style="font-size: 0.85rem; color: #666; line-height: 1.5; white-space: pre-line;">The studio entrance is on the W 3rd Ave side of the house.
+I'll meet you there! At the tall white gate in front of my blue studio door.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-item-price">$<span id="previewFee">250</span></div>
+                <div class="preview-totals">
+                    <div class="preview-total-row">
+                        <span>Subtotal</span>
+                        <span>$<span id="previewSubtotal">250.00</span></span>
+                    </div>
+                    <div class="preview-total-row fee">
+                        <span>Processing Fee (3.4%)</span>
+                        <span>$<span id="previewProcessingFee">8.50</span></span>
+                    </div>
+                    <div class="preview-total-row total">
+                        <span>Total</span>
+                        <span class="amount">$<span id="previewTotal">258.50</span></span>
+                    </div>
+                </div>
+                <div class="preview-footer">
+                    <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+                    <p>Thank you for considering Kenna Giuzio Cake</p>
+                </div>
+                <button class="btn btn-primary send-invoice-btn" id="sendInvoiceBtn" onclick="sendInvoice()">Send Invoice</button>
+                <div class="resend-notice" id="resendNotice">Changes will be sent as a revision and logged in communication history.</div>
+            </div>
+        </div>
+    </main>
+    </div><!-- end main-wrapper -->
+
+    <!-- Event Detail Popup -->
+    <div class="event-detail-backdrop" id="eventDetailBackdrop" onclick="closeEventDetail()"></div>
+    <div class="event-detail-popup" id="eventDetailPopup">
+        <div class="event-detail-header">
+            <span class="event-detail-type" id="eventDetailType">Tasting</span>
+            <button class="event-detail-close" onclick="closeEventDetail()">&times;</button>
+        </div>
+        <h3 class="event-detail-title" id="eventDetailTitle">Client Name</h3>
+        <div class="event-detail-row">
+            <span class="event-detail-label">Date:</span>
+            <span class="event-detail-value" id="eventDetailDate">January 15, 2026</span>
+        </div>
+        <div class="event-detail-row" id="eventDetailTimeRow">
+            <span class="event-detail-label">Time:</span>
+            <span class="event-detail-value" id="eventDetailTime">2:00 PM</span>
+        </div>
+        <div class="event-detail-row" id="eventDetailInfoRow">
+            <span class="event-detail-label">Event:</span>
+            <span class="event-detail-value" id="eventDetailInfo">Wedding</span>
+        </div>
+    </div>
+
+    <!-- Calendar Popup -->
+    <div class="calendar-popup-overlay" id="calendarPopup">
+        <div class="calendar-popup">
+            <div class="calendar-popup-header">
+                <h3 class="calendar-popup-title">Select Tasting Date</h3>
+                <button class="calendar-popup-close" onclick="closeCalendarPopup()">&times;</button>
+            </div>
+            <div class="calendar-nav">
+                <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                <span class="calendar-month-year" id="calendarMonthYear">February 2026</span>
+                <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-weekdays">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+                <div class="calendar-days" id="calendarDays">
+                    <!-- Days populated by JS -->
+                </div>
+            </div>
+            <div class="calendar-legend">
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot tasting"></span>
+                    <span>Tasting</span>
+                </div>
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot event"></span>
+                    <span>Client Event</span>
+                </div>
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot personal"></span>
+                    <span>Personal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Sync client to API in background
+        async function syncClientToAPI(client) {
+            try {
+                await saveClient(client);
+                console.log('Client synced to API:', client.name || client.id);
+            } catch (error) {
+                console.log('API sync failed:', error.message);
+            }
+        }
+
+        // Load clients from API and sync to localStorage
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients();
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                loadClient(); // Reload with API data
+                console.log('Tasting scheduler: Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Tasting scheduler: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Get client ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('clientId');
+
+        // Load client data
+        function loadClient() {
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const client = clients.find(c => c.id == clientId || String(c.id) === String(clientId));
+
+            if (client) {
+                document.getElementById('displayClientName').textContent = client.name;
+                document.getElementById('displayClientEmail').textContent = client.email;
+                document.getElementById('displayEventType').textContent = client.eventType || 'Wedding';
+                document.getElementById('displayEventDate').textContent = formatDate(client.eventDate);
+
+                // Update preview
+                document.getElementById('previewClientName').textContent = client.name;
+                document.getElementById('previewClientEmail').textContent = client.email;
+                document.getElementById('previewEventInfo').textContent =
+                    (client.eventType || 'Wedding') + ' - ' + formatDate(client.eventDate);
+
+                // Store for later
+                window.currentClient = client;
+            } else {
+                document.getElementById('displayClientName').textContent = 'Client not found';
+            }
+
+            // Generate invoice number
+            const invoiceNum = 'TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+            document.getElementById('previewInvoiceNum').textContent = invoiceNum;
+
+            // Set today's date
+            document.getElementById('previewDate').textContent = new Date().toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
+
+            // Load draft if exists
+            loadDraft();
+
+            // Check if invoice has been sent and lock fields
+            checkIfInvoiceSent();
+        }
+
+        // API URL for backend
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        // Track if we're in editing mode (unlocked after send)
+        let isEditingMode = false;
+        let existingInvoice = null;
+
+        function checkIfInvoiceSent() {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            existingInvoice = invoices.find(i => i.clientId == clientId && i.type === 'tasting');
+
+            if (existingInvoice && existingInvoice.status === 'sent') {
+                lockFields();
+            }
+        }
+
+        function lockFields() {
+            // Add locked class to panel body
+            document.querySelector('.panel-body').classList.add('form-locked');
+
+            // Show locked banner
+            document.getElementById('lockedBanner').classList.add('visible');
+
+            // Update button text
+            document.getElementById('sendInvoiceBtn').textContent = 'Invoice Sent';
+            document.getElementById('sendInvoiceBtn').disabled = true;
+            document.getElementById('sendInvoiceBtn').style.opacity = '0.6';
+            document.getElementById('sendInvoiceBtn').style.cursor = 'not-allowed';
+        }
+
+        function unlockForEditing() {
+            isEditingMode = true;
+
+            // Remove locked class
+            document.querySelector('.panel-body').classList.remove('form-locked');
+
+            // Hide locked banner
+            document.getElementById('lockedBanner').classList.remove('visible');
+
+            // Update button for resend
+            const btn = document.getElementById('sendInvoiceBtn');
+            btn.textContent = 'Resend Invoice';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+
+            // Show resend notice
+            document.getElementById('resendNotice').classList.add('visible');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            const [hours, minutes] = timeStr.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hour12 = h % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        function guestCountText(count) {
+            const words = ['one', 'two', 'three', 'four', 'five', 'six'];
+            return words[parseInt(count) - 1] || count;
+        }
+
+        function updatePreview() {
+            const tastingDate = getTastingDateValue();
+            const tastingTime = document.getElementById('tastingTime').value;
+            const guestCount = document.getElementById('guestCount').value;
+            const tastingFee = parseFloat(document.getElementById('tastingFee').value) || 250;
+            const location = document.getElementById('tastingLocation').value;
+            const tastingDescription = document.getElementById('tastingDescription').value;
+            const arrivalInstructions = document.getElementById('arrivalInstructions').value;
+
+            // Update preview
+            document.getElementById('previewTastingDate').textContent =
+                tastingDate ? formatDate(tastingDate) : 'Select a date...';
+            document.getElementById('previewTastingTime').textContent = formatTime(tastingTime);
+            document.getElementById('previewLocation').textContent = location;
+            document.getElementById('previewDescription').textContent = tastingDescription;
+            document.getElementById('previewArrival').textContent = arrivalInstructions;
+            document.getElementById('previewFee').textContent = tastingFee.toFixed(0);
+
+            // Calculate totals
+            const processingFee = tastingFee * 0.034;
+            const total = tastingFee + processingFee;
+
+            document.getElementById('previewSubtotal').textContent = tastingFee.toFixed(2);
+            document.getElementById('previewProcessingFee').textContent = processingFee.toFixed(2);
+            document.getElementById('previewTotal').textContent = total.toFixed(2);
+        }
+
+        // Auto-save on any edit (debounced)
+        let autoSaveTimeout;
+        function autoSave() {
+            updatePreview();
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                saveDraft(false); // Save without alert
+            }, 500); // Debounce 500ms
+        }
+
+        // Make current text the new default
+        function makeDefault(field, btn) {
+            if (!confirm('Set this as the new default for all future clients?')) {
+                return;
+            }
+
+            const defaults = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
+
+            if (field === 'description') {
+                defaults.description = document.getElementById('tastingDescription').value;
+            } else if (field === 'arrival') {
+                defaults.arrival = document.getElementById('arrivalInstructions').value;
+            } else if (field === 'notes') {
+                defaults.notes = document.getElementById('internalNotes').value;
+            }
+
+            localStorage.setItem('kgc_tasting_defaults', JSON.stringify(defaults));
+
+            // Visual feedback
+            btn.textContent = 'Saved as Default';
+            btn.classList.add('saved');
+            setTimeout(() => {
+                btn.textContent = 'Make Default';
+                btn.classList.remove('saved');
+            }, 2000);
+        }
+
+        function saveDraft(showAlert = true) {
+            const tastingDate = getTastingDateValue();
+            const tastingTime = document.getElementById('tastingTime').value;
+            const guestCount = document.getElementById('guestCount').value;
+
+            const draft = {
+                clientId: clientId,
+                tastingDate: tastingDate,
+                tastingTime: tastingTime,
+                guestCount: guestCount,
+                tastingFee: document.getElementById('tastingFee').value,
+                tastingLocation: document.getElementById('tastingLocation').value,
+                tastingDescription: document.getElementById('tastingDescription').value,
+                arrivalInstructions: document.getElementById('arrivalInstructions').value,
+                internalNotes: document.getElementById('internalNotes').value,
+                savedAt: new Date().toISOString()
+            };
+
+            const drafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+            drafts[clientId] = draft;
+            localStorage.setItem('kgc_tasting_drafts', JSON.stringify(drafts));
+
+            // Also sync date/time/guests to client object for In Studio display
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const clientIndex = clients.findIndex(c => c.id == clientId || String(c.id) === String(clientId));
+            if (clientIndex >= 0) {
+                if (tastingDate) clients[clientIndex].tastingDate = tastingDate;
+                if (tastingTime) clients[clientIndex].tastingTime = tastingTime;
+                if (guestCount) clients[clientIndex].tastingGuests = guestCount;
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+            }
+
+            if (showAlert) alert('Draft saved!');
+        }
+
+        function loadDraft() {
+            const drafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+            const draft = drafts[clientId] || drafts[String(clientId)];
+
+            // Get tasting date/time from draft OR from client object (set via In Studio)
+            const tastingDate = draft?.tastingDate || window.currentClient?.tastingDate;
+            const tastingTime = draft?.tastingTime || window.currentClient?.tastingTime;
+            const tastingGuests = draft?.guestCount || window.currentClient?.tastingGuests;
+
+            if (tastingDate) {
+                const input = document.getElementById('tastingDate');
+                input.dataset.value = tastingDate;
+                input.value = formatDate(tastingDate);
+            }
+            if (tastingTime) document.getElementById('tastingTime').value = tastingTime;
+            if (tastingGuests) document.getElementById('guestCount').value = tastingGuests;
+
+            // Load stored defaults
+            const defaults = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
+
+            // These come from draft first, then defaults
+            if (draft) {
+                if (draft.tastingFee) document.getElementById('tastingFee').value = draft.tastingFee;
+                if (draft.tastingLocation) document.getElementById('tastingLocation').value = draft.tastingLocation;
+                if (draft.tastingDescription) document.getElementById('tastingDescription').value = draft.tastingDescription;
+                if (draft.arrivalInstructions) document.getElementById('arrivalInstructions').value = draft.arrivalInstructions;
+                if (draft.internalNotes) document.getElementById('internalNotes').value = draft.internalNotes;
+            }
+
+            // Apply stored defaults for fields that don't have draft values
+            if (!draft?.tastingDescription && defaults.description) {
+                document.getElementById('tastingDescription').value = defaults.description;
+            }
+            if (!draft?.arrivalInstructions && defaults.arrival) {
+                document.getElementById('arrivalInstructions').value = defaults.arrival;
+            }
+            if (!draft?.internalNotes && defaults.notes) {
+                document.getElementById('internalNotes').value = defaults.notes;
+            }
+
+            updatePreview();
+        }
+
+        function buildInvoiceUrl(preview = false) {
+            const tastingDate = getTastingDateValue();
+            const invoiceNumber = preview ? 'PREVIEW' : ('TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4));
+
+            const invoiceParams = new URLSearchParams({
+                clientId: clientId,
+                invoiceId: invoiceNumber,
+                name: window.currentClient.name,
+                email: window.currentClient.email,
+                eventType: window.currentClient.eventType || 'Wedding',
+                eventDate: formatDate(window.currentClient.eventDate),
+                tastingDate: formatDate(tastingDate),
+                tastingTime: formatTime(document.getElementById('tastingTime').value),
+                guestCount: document.getElementById('guestCount').value,
+                fee: document.getElementById('tastingFee').value,
+                location: document.getElementById('tastingLocation').value,
+                description: document.getElementById('tastingDescription').value,
+                arrival: document.getElementById('arrivalInstructions').value
+            });
+
+            if (preview) {
+                invoiceParams.set('preview', 'true');
+            }
+
+            return window.location.pathname.replace('tasting-scheduler.html', 'tasting-invoice.html') + '?' + invoiceParams.toString();
+        }
+
+        // Add entry to communication log
+        function addCommLogEntry(cId, type, title) {
+            const logs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+            if (!logs[cId]) logs[cId] = [];
+
+            logs[cId].unshift({
+                type: type,
+                title: title,
+                timestamp: new Date().toISOString()
+            });
+
+            localStorage.setItem('kgc_comm_logs', JSON.stringify(logs));
+        }
+
+        function openClientPreview() {
+            const tastingDate = getTastingDateValue();
+            if (!tastingDate) {
+                alert('Please select a tasting date before previewing.');
+                return;
+            }
+
+            if (!window.currentClient) {
+                alert('Client not found.');
+                return;
+            }
+
+            window.open(buildInvoiceUrl(true), '_blank');
+        }
+
+        function sendInvoice() {
+            const tastingDate = getTastingDateValue();
+            if (!tastingDate) {
+                alert('Please select a tasting date before sending.');
+                return;
+            }
+
+            if (!window.currentClient) {
+                alert('Client not found.');
+                return;
+            }
+
+            const isResend = isEditingMode && existingInvoice;
+            const confirmMsg = isResend
+                ? 'Resend revised invoice to ' + window.currentClient.name + '?'
+                : 'Send this invoice to ' + window.currentClient.name + '?';
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            // Save the tasting info (without showing alert)
+            saveDraft(false);
+
+            const tastingFee = parseFloat(document.getElementById('tastingFee').value) || 250;
+
+            // Update client status to "tasting" (sent tasting invoice)
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const clientIndex = clients.findIndex(c => c.id == clientId || String(c.id) === String(clientId));
+            if (clientIndex >= 0) {
+                clients[clientIndex].status = 'tasting';
+                clients[clientIndex].tastingDate = tastingDate;
+                clients[clientIndex].tastingTime = document.getElementById('tastingTime').value;
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+            }
+
+            // Save invoice to invoices list
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            let invoiceNumber;
+            let revisionNumber = 1;
+
+            if (isResend) {
+                // Update existing invoice
+                const invoiceIndex = invoices.findIndex(i => i.id === existingInvoice.id);
+                if (invoiceIndex >= 0) {
+                    // Increment revision number
+                    revisionNumber = (invoices[invoiceIndex].revision || 1) + 1;
+
+                    // Update the invoice
+                    invoices[invoiceIndex].amount = tastingFee;
+                    invoices[invoiceIndex].sentAt = new Date().toISOString();
+                    invoices[invoiceIndex].tastingDate = tastingDate;
+                    invoices[invoiceIndex].tastingTime = document.getElementById('tastingTime').value;
+                    invoices[invoiceIndex].guestCount = document.getElementById('guestCount').value;
+                    invoices[invoiceIndex].location = document.getElementById('tastingLocation').value;
+                    invoices[invoiceIndex].tastingDescription = document.getElementById('tastingDescription').value;
+                    invoices[invoiceIndex].arrivalInstructions = document.getElementById('arrivalInstructions').value;
+                    invoices[invoiceIndex].revision = revisionNumber;
+                    invoices[invoiceIndex].lastRevisedAt = new Date().toISOString();
+
+                    invoiceNumber = existingInvoice.id;
+                }
+                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+                // Log revision to communication log
+                addCommLogEntry(clientId, 'tasting_invoice_revised', 'Tasting invoice revision v' + revisionNumber + ' sent');
+            } else {
+                // Generate new invoice number
+                invoiceNumber = 'TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+
+                const invoiceData = {
+                    clientName: window.currentClient.name,
+                    clientEmail: window.currentClient.email,
+                    client_name: window.currentClient.name,
+                    client_email: window.currentClient.email,
+                    eventType: window.currentClient.eventType || 'Wedding',
+                    eventDate: formatDate(window.currentClient.eventDate),
+                    tastingDate: formatDate(tastingDate),
+                    tastingTime: formatTime(document.getElementById('tastingTime').value),
+                    guestCount: document.getElementById('guestCount').value,
+                    location: document.getElementById('tastingLocation').value,
+                    description: document.getElementById('tastingDescription').value,
+                    arrival: document.getElementById('arrivalInstructions').value,
+                    fee: tastingFee
+                };
+
+                const invoice = {
+                    id: invoiceNumber,
+                    type: 'tasting',
+                    clientId: clientId,
+                    clientName: window.currentClient.name,
+                    clientEmail: window.currentClient.email,
+                    amount: tastingFee,
+                    status: 'sent',
+                    sentAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    eventType: window.currentClient.eventType || 'Wedding',
+                    eventDate: window.currentClient.eventDate,
+                    tastingDate: tastingDate,
+                    tastingTime: document.getElementById('tastingTime').value,
+                    guestCount: document.getElementById('guestCount').value,
+                    location: document.getElementById('tastingLocation').value,
+                    tastingDescription: document.getElementById('tastingDescription').value,
+                    arrivalInstructions: document.getElementById('arrivalInstructions').value,
+                    revision: 1
+                };
+                invoices.push(invoice);
+                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+                // Also save to API for cross-device access
+                try {
+                    fetch(`${API_URL}/api/invoices`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            client_id: clientId,
+                            invoice_number: invoiceNumber,
+                            type: 'tasting',
+                            amount: tastingFee,
+                            status: 'sent',
+                            data: invoiceData
+                        })
+                    });
+                } catch (err) {
+                    console.log('API save failed, invoice still saved locally:', err);
+                }
+
+                // Log to communication log
+                addCommLogEntry(clientId, 'tasting_invoice_sent', 'Tasting invoice sent');
+            }
+
+            // Update existingInvoice reference
+            existingInvoice = invoices.find(i => i.id === invoiceNumber);
+
+            // Build invoice URL
+            const invoiceParams = new URLSearchParams({
+                clientId: clientId,
+                invoiceId: invoiceNumber,
+                name: window.currentClient.name,
+                email: window.currentClient.email,
+                eventType: window.currentClient.eventType || 'Wedding',
+                eventDate: formatDate(window.currentClient.eventDate),
+                tastingDate: formatDate(tastingDate),
+                tastingTime: formatTime(document.getElementById('tastingTime').value),
+                guestCount: document.getElementById('guestCount').value,
+                fee: document.getElementById('tastingFee').value,
+                location: document.getElementById('tastingLocation').value,
+                description: document.getElementById('tastingDescription').value,
+                arrival: document.getElementById('arrivalInstructions').value
+            });
+
+            const invoiceUrl = window.location.pathname.replace('tasting-scheduler.html', 'tasting-invoice.html') +
+                '?' + invoiceParams.toString();
+
+            // Build magic welcome link (with video intro)
+            const welcomeParams = new URLSearchParams({
+                dest: 'tasting',
+                clientId: clientId,
+                invoiceId: invoiceNumber
+            });
+            const baseUrl = window.location.origin;
+            const welcomeLink = baseUrl + '/welcome.html?' + welcomeParams.toString();
+
+            // Build email content
+            const clientFirstName = window.currentClient.name.split(' ')[0];
+            const tastingDateFormatted = formatDate(tastingDate);
+            const tastingTimeFormatted = formatTime(document.getElementById('tastingTime').value);
+
+            const emailSubject = `Your Tasting Invitation - ${tastingDateFormatted}`;
+            const emailBody = `Dear ${clientFirstName},
+
+Thank you so much for reaching out! I'm thrilled at the opportunity to create something beautiful for your ${window.currentClient.eventType || 'celebration'}.
+
+I'd love to invite you to a tasting party at my studio where we can sample cakes, explore designs, and discuss your vision together.
+
+Your tasting is scheduled for:
+${tastingDateFormatted} at ${tastingTimeFormatted}
+
+Click below to view your invoice and secure your date:
+${welcomeLink}
+
+I can't wait to meet you and hear all about what you're dreaming of!
+
+Warmly,
+Kenna
+
+Kenna Giuzio Cake
+(206) 472-5401
+kenna@kennagiuziocake.com`;
+
+            // Open Gmail compose directly
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(window.currentClient.email)}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+            window.open(gmailUrl, '_blank');
+
+            // Also log to communications
+            const comms = JSON.parse(localStorage.getItem('kgc_communications') || '[]');
+            comms.push({
+                id: Date.now().toString(),
+                type: 'email',
+                category: 'tasting',
+                clientId: clientId,
+                clientName: window.currentClient.name,
+                clientEmail: window.currentClient.email,
+                subject: emailSubject,
+                message: emailBody,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('kgc_communications', JSON.stringify(comms));
+
+            // Re-lock the fields after sending
+            isEditingMode = false;
+            document.getElementById('resendNotice').classList.remove('visible');
+            lockFields();
+
+            // Show success message
+            alert('Email opened in your mail app!\\n\\nThe invoice has been logged and the client link is ready.');
+        }
+
+        // Initialize
+        loadClient();
+        updatePreview();
+
+        // Load from API in background
+        loadClientsFromAPI();
+
+        // Auto-save draft on page load to mark as "draft" in In Studio
+        setTimeout(() => saveDraft(false), 100);
+
+        // Calendar Popup Functionality
+        let calendarCurrentMonth = new Date().getMonth();
+        let calendarCurrentYear = new Date().getFullYear();
+        let calendarSelectedDate = null;
+
+        function openCalendarPopup() {
+            // Start with current selection or today
+            const currentValue = getTastingDateValue();
+            if (currentValue) {
+                const d = new Date(currentValue + 'T00:00:00');
+                calendarCurrentMonth = d.getMonth();
+                calendarCurrentYear = d.getFullYear();
+                calendarSelectedDate = currentValue;
+            } else {
+                const now = new Date();
+                calendarCurrentMonth = now.getMonth();
+                calendarCurrentYear = now.getFullYear();
+                calendarSelectedDate = null;
+            }
+
+            // Reset popup position to center
+            const popup = document.querySelector('.calendar-popup');
+            popup.style.position = '';
+            popup.style.left = '';
+            popup.style.top = '';
+            popup.style.transform = '';
+
+            renderCalendar();
+            document.getElementById('calendarPopup').classList.add('active');
+        }
+
+        function closeCalendarPopup() {
+            document.getElementById('calendarPopup').classList.remove('active');
+        }
+
+        function changeMonth(delta) {
+            calendarCurrentMonth += delta;
+            if (calendarCurrentMonth > 11) {
+                calendarCurrentMonth = 0;
+                calendarCurrentYear++;
+            } else if (calendarCurrentMonth < 0) {
+                calendarCurrentMonth = 11;
+                calendarCurrentYear--;
+            }
+            renderCalendar();
+        }
+
+        function getEventsForMonth(year, month) {
+            // Get all clients with event dates or tasting dates
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const events = [];
+
+            clients.forEach(client => {
+                // Event dates (actual events like weddings, birthdays)
+                if (client.eventDate) {
+                    const d = new Date(client.eventDate + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: client.eventDate,
+                            type: 'event',
+                            name: client.name,
+                            eventType: client.eventType || 'Event',
+                            time: client.eventTime ? formatTime(client.eventTime) : null
+                        });
+                    }
+                }
+                // Tasting dates
+                if (client.tastingDate) {
+                    const d = new Date(client.tastingDate + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: client.tastingDate,
+                            type: 'tasting',
+                            name: client.name,
+                            eventType: 'Tasting',
+                            time: client.tastingTime ? formatTime(client.tastingTime) : null
+                        });
+                    }
+                }
+                // Inquiry dates (when client was created)
+                if (client.createdAt) {
+                    const inquiryDate = client.createdAt.split('T')[0];
+                    const d = new Date(inquiryDate + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        const lastName = client.name.split(' ').pop();
+                        events.push({
+                            date: inquiryDate,
+                            type: 'inquiry',
+                            name: lastName + ' Inquiry',
+                            eventType: 'Inquiry',
+                            time: null
+                        });
+                    }
+                }
+            });
+
+            // Also get custom calendar events if any
+            const customEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+            customEvents.forEach(evt => {
+                if (evt.date) {
+                    addEventForMonth(events, evt.date, evt.endDate, year, month, {
+                        type: evt.type || 'event',
+                        name: evt.title || 'Event',
+                        eventType: evt.eventType || 'Event',
+                        time: evt.time || null
+                    });
+                }
+            });
+
+            // Get events from imported calendars (only enabled ones)
+            const importedCalendars = JSON.parse(localStorage.getItem('kgc_imported_calendars') || '[]');
+            importedCalendars.forEach(cal => {
+                if (cal.enabled) {
+                    cal.events.forEach(evt => {
+                        if (evt.date) {
+                            addEventForMonth(events, evt.date, evt.endDate, year, month, {
+                                type: 'personal',
+                                name: evt.name || 'Personal Event',
+                                eventType: cal.name || 'Personal',
+                                time: evt.time || null,
+                                location: evt.location || null
+                            });
+                        }
+                    });
+                }
+            });
+
+            return events;
+        }
+
+        // Helper to add event entries for each day it spans within the month
+        function addEventForMonth(events, startDate, endDate, year, month, eventData) {
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+
+            const start = new Date(startDate + 'T00:00:00');
+            const end = endDate ? new Date(endDate + 'T00:00:00') : start;
+
+            // Iterate through each day of the event
+            const current = new Date(Math.max(start.getTime(), monthStart.getTime()));
+            const lastDay = new Date(Math.min(end.getTime(), monthEnd.getTime()));
+
+            while (current <= lastDay) {
+                if (current.getMonth() === month && current.getFullYear() === year) {
+                    const dateStr = current.getFullYear() + '-' +
+                        String(current.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(current.getDate()).padStart(2, '0');
+                    events.push({
+                        date: dateStr,
+                        ...eventData,
+                        isMultiDay: endDate && endDate !== startDate,
+                        isStart: dateStr === startDate,
+                        isEnd: dateStr === endDate
+                    });
+                }
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+
+            document.getElementById('calendarMonthYear').textContent =
+                monthNames[calendarCurrentMonth] + ' ' + calendarCurrentYear;
+
+            const events = getEventsForMonth(calendarCurrentYear, calendarCurrentMonth);
+
+            // Group events by date
+            const eventsByDate = {};
+            events.forEach(e => {
+                if (!eventsByDate[e.date]) eventsByDate[e.date] = [];
+                eventsByDate[e.date].push(e);
+            });
+
+            const firstDay = new Date(calendarCurrentYear, calendarCurrentMonth, 1);
+            const lastDay = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0);
+            const startDayOfWeek = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let html = '';
+
+            // Previous month's trailing days
+            const prevMonth = new Date(calendarCurrentYear, calendarCurrentMonth, 0);
+            const prevMonthDays = prevMonth.getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                html += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${calendarCurrentYear}-${String(calendarCurrentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const date = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+                const dayEvents = eventsByDate[dateStr] || [];
+
+                let classes = 'calendar-day';
+                if (date < today) classes += ' past';
+                if (date.getTime() === today.getTime()) classes += ' today';
+                if (dateStr === calendarSelectedDate) classes += ' selected';
+
+                // Build events HTML for this day
+                let eventsHtml = '<div class="day-events">';
+                const maxDisplay = 2; // Show max 2 events, then "+X more"
+                dayEvents.slice(0, maxDisplay).forEach((e, idx) => {
+                    const shortName = e.name.length > 12 ? e.name.substring(0, 10) + '...' : e.name;
+                    const eventData = encodeURIComponent(JSON.stringify(e));
+                    const tooltip = e.name + (e.time ? ' - ' + e.time : '') + (e.eventType ? ' (' + e.eventType + ')' : '');
+                    eventsHtml += `<div class="day-event ${e.type}" onclick="showEventDetail(event, '${eventData}')" title="${tooltip}">${shortName}</div>`;
+                });
+                if (dayEvents.length > maxDisplay) {
+                    const allEvents = encodeURIComponent(JSON.stringify(dayEvents));
+                    eventsHtml += `<div class="day-event-more" onclick="showAllEventsForDay(event, '${allEvents}')">+${dayEvents.length - maxDisplay} more</div>`;
+                }
+                eventsHtml += '</div>';
+
+                const clickable = date >= today;
+                html += `<div class="${classes}" ${clickable ? `onclick="selectCalendarDate('${dateStr}', event)"` : ''}>
+                    <span class="day-number">${day}</span>
+                    ${eventsHtml}
+                </div>`;
+            }
+
+            // Next month's leading days
+            const totalCells = startDayOfWeek + daysInMonth;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remainingCells; i++) {
+                html += `<div class="calendar-day other-month"><span class="day-number">${i}</span></div>`;
+            }
+
+            document.getElementById('calendarDays').innerHTML = html;
+        }
+
+        function selectCalendarDate(dateStr, e) {
+            // If clicked on an event, don't select the date
+            if (e && (e.target.classList.contains('day-event') || e.target.classList.contains('day-event-more'))) {
+                return;
+            }
+
+            calendarSelectedDate = dateStr;
+
+            // Store the ISO date as data attribute, show formatted date as value
+            const input = document.getElementById('tastingDate');
+            input.dataset.value = dateStr;
+            input.value = formatDate(dateStr);
+            updatePreview();
+            syncToClient(); // Sync to In Studio
+
+            // Brief visual feedback then close
+            renderCalendar();
+            setTimeout(() => {
+                closeCalendarPopup();
+            }, 200);
+        }
+
+        // Get the actual date value (ISO format) for saving
+        function getTastingDateValue() {
+            const input = document.getElementById('tastingDate');
+            return input.dataset.value || '';
+        }
+
+        // Sync tasting date/time/guests to client object for In Studio display
+        function syncToClient() {
+            const tastingDate = getTastingDateValue();
+            const tastingTime = document.getElementById('tastingTime').value;
+            const guestCount = document.getElementById('guestCount').value;
+
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const clientIndex = clients.findIndex(c => c.id == clientId || String(c.id) === String(clientId));
+            if (clientIndex >= 0) {
+                if (tastingDate) clients[clientIndex].tastingDate = tastingDate;
+                if (tastingTime) clients[clientIndex].tastingTime = tastingTime;
+                if (guestCount) clients[clientIndex].tastingGuests = guestCount;
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+            }
+        }
+
+        // Show event detail popup
+        function showEventDetail(e, eventDataEncoded) {
+            e.stopPropagation();
+            const eventData = JSON.parse(decodeURIComponent(eventDataEncoded));
+
+            // Set type label
+            let typeLabel = 'Event';
+            if (eventData.type === 'tasting') typeLabel = 'Tasting';
+            else if (eventData.type === 'personal') typeLabel = 'Personal';
+
+            document.getElementById('eventDetailType').textContent = typeLabel;
+            document.getElementById('eventDetailType').className =
+                'event-detail-type ' + eventData.type;
+            document.getElementById('eventDetailTitle').textContent = eventData.name;
+            document.getElementById('eventDetailDate').textContent = formatDate(eventData.date);
+
+            // Show/hide time row
+            const timeRow = document.getElementById('eventDetailTimeRow');
+            if (eventData.time) {
+                document.getElementById('eventDetailTime').textContent = eventData.time;
+                timeRow.style.display = 'flex';
+            } else {
+                timeRow.style.display = 'none';
+            }
+
+            // Show event type info (Wedding, Birthday, etc.) or location for personal
+            const infoRow = document.getElementById('eventDetailInfoRow');
+            if (eventData.type === 'personal' && eventData.location) {
+                document.getElementById('eventDetailInfoRow').querySelector('.event-detail-label').textContent = 'Location:';
+                document.getElementById('eventDetailInfo').textContent = eventData.location;
+                infoRow.style.display = 'flex';
+            } else if (eventData.eventType && eventData.eventType !== 'Tasting' && eventData.eventType !== 'Personal') {
+                document.getElementById('eventDetailInfoRow').querySelector('.event-detail-label').textContent = 'Event:';
+                document.getElementById('eventDetailInfo').textContent = eventData.eventType;
+                infoRow.style.display = 'flex';
+            } else {
+                infoRow.style.display = 'none';
+            }
+
+            document.getElementById('eventDetailBackdrop').classList.add('active');
+            document.getElementById('eventDetailPopup').classList.add('active');
+        }
+
+        function showAllEventsForDay(e, allEventsEncoded) {
+            e.stopPropagation();
+            const events = JSON.parse(decodeURIComponent(allEventsEncoded));
+            // Show first event for now, could enhance to show a list
+            if (events.length > 0) {
+                showEventDetail(e, encodeURIComponent(JSON.stringify(events[0])));
+            }
+        }
+
+        function closeEventDetail() {
+            document.getElementById('eventDetailBackdrop').classList.remove('active');
+            document.getElementById('eventDetailPopup').classList.remove('active');
+        }
+
+        // Import calendar - redirect to Calendar module
+        function importCalendarFile(input) {
+            input.value = ''; // Reset input
+            alert('To import calendars, please use the Calendar page under Settings → Personal Calendars → Import Calendar.\n\nThis scheduler reads from calendars imported there.');
+        }
+
+        // Close popup when clicking outside
+        document.getElementById('calendarPopup').addEventListener('click', function(e) {
+            if (e.target === this) closeCalendarPopup();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeEventDetail();
+                closeCalendarPopup();
+            }
+        });
+
+        // Drag functionality for calendar popup
+        (function() {
+            const popup = document.querySelector('.calendar-popup');
+            const header = document.querySelector('.calendar-popup-header');
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+
+            header.addEventListener('mousedown', function(e) {
+                if (e.target.classList.contains('calendar-popup-close')) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const rect = popup.getBoundingClientRect();
+                initialX = rect.left;
+                initialY = rect.top;
+
+                // Switch from centered to absolute positioning
+                popup.style.position = 'fixed';
+                popup.style.left = initialX + 'px';
+                popup.style.top = initialY + 'px';
+                popup.style.transform = 'none';
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                // Calculate new position
+                let newX = initialX + dx;
+                let newY = initialY + dy;
+
+                // Get popup dimensions
+                const rect = popup.getBoundingClientRect();
+                const popupWidth = rect.width;
+                const popupHeight = rect.height;
+
+                // Constrain to viewport with padding
+                const minY = 10; // Don't go into bookmark bar
+                const maxY = window.innerHeight - 50; // Keep at least 50px visible at bottom
+                const minX = -popupWidth + 100; // Keep at least 100px visible on left
+                const maxX = window.innerWidth - 100; // Keep at least 100px visible on right
+
+                newX = Math.max(minX, Math.min(maxX, newX));
+                newY = Math.max(minY, Math.min(maxY, newY));
+
+                popup.style.left = newX + 'px';
+                popup.style.top = newY + 'px';
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        })();
+    </script>
+</body>
+</html>

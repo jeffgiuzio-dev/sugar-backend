@@ -1,0 +1,4184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Builder - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- HEIC to JPEG converter for iPhone photos -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-left: 260px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #eee;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+
+        .nav-item.active {
+            background: #fafafa;
+            color: #1a1a1a;
+            border-left-color: #b5956a;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 30px;
+        }
+
+        /* Header */
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            width: 120px;
+        }
+
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Builder Panel */
+        .builder-panel {
+            background: #fff;
+            border: 1px solid #eee;
+        }
+
+        .panel-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+        }
+
+        .panel-body {
+            padding: 28px;
+        }
+
+        /* Form Elements */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: #1a1a1a;
+            transition: border-color 0.2s;
+            background: #fff;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #b5956a;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: #eee;
+            margin: 28px 0;
+        }
+
+        .form-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+
+        /* Line Items */
+        .line-items {
+            margin-bottom: 20px;
+        }
+
+        .line-item {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 40px;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 12px;
+        }
+
+        .line-item .form-input {
+            padding: 12px 14px;
+        }
+
+        .line-item-remove {
+            background: none;
+            border: 1px solid #ddd;
+            color: #999;
+            width: 40px;
+            height: 46px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .line-item-remove:hover {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .add-line-item {
+            background: none;
+            border: 1px dashed #ddd;
+            padding: 12px;
+            width: 100%;
+            color: #999;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-line-item:hover {
+            border-color: #b5956a;
+            color: #b5956a;
+        }
+
+        /* Quick Add */
+        .quick-add {
+            margin-bottom: 8px;
+        }
+
+        .quick-add-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .quick-add-btn {
+            padding: 10px 16px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-add-btn:hover {
+            border-color: #b5956a;
+            color: #b5956a;
+            background: #fff;
+        }
+
+        /* Item Card */
+        .item-card {
+            background: #fafafa;
+            padding: 20px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .item-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .item-card-title {
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+
+        .item-card-remove {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .item-card-remove:hover {
+            color: #e74c3c;
+        }
+
+        .item-card-row {
+            display: flex;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .item-card-row .form-group {
+            flex: 1;
+        }
+
+        .item-card-row .form-group.small {
+            flex: 0 0 100px;
+        }
+
+        .item-card-total {
+            text-align: right;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e5e5;
+            font-size: 0.9rem;
+        }
+
+        .item-card-total span {
+            font-weight: 400;
+        }
+
+        /* Service Fee Note */
+        .service-fee-note {
+            background: #fff8e7;
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            color: #8b6914;
+            margin-top: 16px;
+        }
+
+        .service-fee-note.zelle {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Input with prefix */
+        .input-with-prefix {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: 14px;
+            color: #999;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .input-with-prefix .form-input {
+            padding-left: 28px;
+            width: 100%;
+        }
+
+        /* Textarea in item card */
+        .item-card textarea.form-input {
+            min-height: 70px;
+            resize: vertical;
+        }
+
+        /* Design Sections */
+        .design-section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .design-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .design-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .design-section-title {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1a1a1a;
+        }
+
+        .design-section-note {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .design-premium {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .input-prefix-inline {
+            color: #b5956a;
+            font-weight: 500;
+        }
+
+        .form-input-small {
+            width: 100px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .design-narrative {
+            margin-top: 12px;
+        }
+
+        .design-narrative textarea {
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        /* Sketch Gallery */
+        .sketch-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .sketch-gallery:empty {
+            display: none;
+        }
+
+        .sketch-item {
+            position: relative;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            max-width: 280px;
+        }
+
+        .sketch-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .sketch-item-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sketch-item-remove:hover {
+            background: rgba(180,50,50,0.9);
+        }
+
+        /* Sketch Upload */
+        .sketch-upload {
+            border: 2px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sketch-upload:hover {
+            border-color: #b5956a;
+        }
+
+        .sketch-upload-text {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .sketch-upload-icon {
+            font-size: 2rem;
+            color: #ddd;
+            margin-bottom: 8px;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            position: sticky;
+            top: 30px;
+        }
+
+        .preview-container {
+            background: #fff;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Preview Styles */
+        .preview-hero {
+            height: 120px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+        }
+
+        .preview-hero img {
+            width: 100px;
+        }
+
+        .preview-header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .preview-header p {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .preview-client {
+            padding: 20px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            font-size: 0.8rem;
+        }
+
+        .preview-label {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .preview-designs-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 0;
+            background: #fff;
+        }
+
+        .preview-sketch {
+            padding: 20px;
+            text-align: center;
+            background: #fff;
+        }
+
+        .preview-sketch img {
+            max-width: 100%;
+            max-height: 250px;
+            border: 1px solid #eee;
+        }
+
+        .preview-sketch-placeholder {
+            min-height: 120px;
+            background: #fafafa;
+            border: 1px dashed #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            color: #ccc;
+            font-size: 0.8rem;
+        }
+
+        .preview-sketch-placeholder:has(.preview-design-section) {
+            height: auto;
+            min-height: 0;
+            background: #fff;
+            border: none;
+            padding: 0;
+        }
+
+        .preview-vision-header {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 300;
+            text-align: center;
+            color: #1a1a1a;
+            padding: 20px 0 10px;
+            letter-spacing: 1px;
+        }
+
+        .preview-design-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preview-design-section:hover {
+            border-color: #e5ddd0;
+            background: #fafafa;
+        }
+
+        .preview-design-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .preview-design-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .preview-design-price {
+            font-size: 0.85rem;
+            color: #b5956a;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .preview-design-label {
+            display: none;
+        }
+
+        .preview-design-image {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .preview-design-image img {
+            max-width: 100%;
+            max-height: 220px;
+            border: 1px solid #eee;
+            margin: 4px;
+        }
+
+        .preview-design-narrative {
+            font-size: 0.8rem;
+            color: #888;
+            font-style: italic;
+            line-height: 1.5;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .preview-design-section.selected-design {
+            background: #fdf9f3;
+            border-color: #b5956a;
+        }
+
+        .preview-design-section.selected-design::before {
+            display: none;
+        }
+
+        .design-select-checkbox {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px 20px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .design-select-checkbox:hover {
+            border-color: #b5956a;
+            background: #fdf9f3;
+        }
+
+        .design-select-checkbox input[type="radio"] {
+            display: none;
+        }
+
+        .design-select-checkbox input[type="radio"]:checked + span {
+            color: #b5956a;
+            font-weight: 500;
+        }
+
+        .preview-design-section.selected-design .design-select-checkbox {
+            background: #b5956a;
+            border-color: #b5956a;
+            color: #fff;
+        }
+
+        .preview-design-section.selected-design .design-select-checkbox input[type="radio"]:checked + span {
+            color: #fff;
+        }
+
+        .preview-options {
+            padding: 16px;
+            background: #fdf9f3;
+            border-left: 1px solid #eee;
+            position: sticky;
+            top: 20px;
+            align-self: start;
+        }
+
+        .preview-options h4 {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #b5956a;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .preview-options .options-note {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .preview-option-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            border: 2px solid #e5ddd0;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preview-option-row:hover {
+            border-color: #b5956a;
+            background: #fff;
+        }
+
+        .preview-option-row.selected {
+            border-color: #b5956a;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(181, 149, 106, 0.2);
+        }
+
+        .preview-option-row.selected::before {
+            content: '✓';
+            margin-right: 10px;
+            color: #b5956a;
+            font-weight: bold;
+        }
+
+        .preview-option-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .preview-option-row .option-name {
+            color: #1a1a1a;
+        }
+
+        .preview-option-row .option-premium {
+            color: #b5956a;
+            font-weight: 500;
+        }
+
+        .preview-option-row .option-included {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        .preview-description {
+            padding: 20px;
+            font-size: 0.85rem;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-line-items {
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-line-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .preview-line-item-desc {
+            font-size: 0.75rem;
+            color: #999;
+            padding-bottom: 8px;
+            font-style: italic;
+        }
+
+        .preview-totals {
+            padding: 20px;
+            border-top: 2px solid #1a1a1a;
+        }
+
+        .preview-total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.85rem;
+        }
+
+        .preview-total-row.total {
+            font-weight: 400;
+            font-size: 1.1rem;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-total-row.total span:last-child {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+        }
+
+        .preview-deposit {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed #ddd;
+        }
+
+        .preview-deposit .preview-total-row {
+            color: #b5956a;
+            font-weight: 400;
+        }
+
+        .preview-terms {
+            padding: 20px;
+            background: #fafafa;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .preview-terms h4 {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        /* Signature Section */
+        .preview-signature {
+            padding: 24px 20px;
+            border-top: 1px solid #eee;
+            background: #fdf9f3;
+        }
+
+        .preview-signature h4 {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #b5956a;
+            margin-bottom: 16px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .signature-agreement {
+            margin-bottom: 16px;
+        }
+
+        .signature-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .signature-checkbox input {
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .signature-box {
+            margin-bottom: 12px;
+        }
+
+        .signature-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            font-family: 'Mr De Haviland', cursive;
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            background: #fff;
+            text-align: center;
+        }
+
+        .signature-input:disabled {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .signature-input:focus {
+            outline: none;
+            border-color: #b5956a;
+        }
+
+        .signature-date {
+            font-size: 0.75rem;
+            color: #999;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .sign-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sign-btn:hover:not(:disabled) {
+            background: #a38559;
+        }
+
+        .sign-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Locked Proposal */
+        .proposal-locked {
+            padding: 30px 20px;
+            text-align: center;
+            background: #e8f5e9;
+            border-top: 1px solid #c8e6c9;
+        }
+
+        .proposal-locked .locked-icon {
+            width: 50px;
+            height: 50px;
+            background: #4caf50;
+            color: #fff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .proposal-locked h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+
+        .proposal-locked p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .proposal-locked .signed-date {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* Locked state - disable interactions */
+        .locked .preview-option-row {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .locked .preview-signature {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #a38559;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            border-color: #999;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+            .preview-panel {
+                position: relative;
+                top: 0;
+            }
+        }
+
+        /* Calendar Popup */
+        .calendar-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .calendar-popup-overlay.active {
+            display: flex;
+        }
+        .calendar-popup {
+            background: #fff;
+            width: 700px;
+            max-width: 95vw;
+            min-width: 500px;
+            min-height: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .calendar-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .calendar-popup-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+        }
+        .calendar-popup-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 4px;
+        }
+        .calendar-popup-close:hover {
+            color: #1a1a1a;
+        }
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #fafafa;
+        }
+        .calendar-nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        .calendar-nav-btn:hover {
+            color: #b5956a;
+        }
+        .calendar-month-year {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+        .calendar-grid {
+            padding: 20px;
+            flex: 1;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day {
+            min-height: 70px;
+            padding: 6px;
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+        .calendar-day:hover:not(.other-month):not(.past) {
+            border-color: #b5956a;
+            background: #faf8f5;
+        }
+        .calendar-day.other-month {
+            background: #fafafa;
+            color: #ccc;
+            cursor: default;
+        }
+        .calendar-day.past {
+            background: #fafafa;
+            color: #bbb;
+            cursor: not-allowed;
+        }
+        .calendar-day.today {
+            border-color: #b5956a;
+        }
+        .calendar-day.today .day-number {
+            background: #b5956a;
+            color: #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-day.selected {
+            background: #f5f0e8;
+            border-color: #b5956a;
+            border-width: 2px;
+        }
+        .day-number {
+            font-size: 0.85rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+        .day-events {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .day-event {
+            font-size: 0.65rem;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .day-event.tasting {
+            background: #f5eee3;
+            color: #8b7355;
+        }
+        .day-event.event {
+            background: #e8ede5;
+            color: #5a6b52;
+        }
+        .day-event.personal {
+            background: #fae5e1;
+            color: #a05a4a;
+        }
+        .day-event.inquiry {
+            background: #e8e3f0;
+            color: #6b5b7a;
+        }
+        .day-event-more {
+            font-size: 0.6rem;
+            color: #999;
+            padding: 2px 4px;
+        }
+        .calendar-legend {
+            padding: 12px 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.75rem;
+            color: #666;
+            display: flex;
+            gap: 20px;
+            background: #fafafa;
+        }
+        .calendar-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .calendar-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+        .calendar-legend-dot.tasting { background: #f5eee3; border: 1px solid #dfc89f; }
+        .calendar-legend-dot.event { background: #e8ede5; border: 1px solid #a8b5a0; }
+        .calendar-legend-dot.personal { background: #fae5e1; border: 1px solid #e6a89c; }
+
+        /* Client Information Summary */
+        .client-summary {
+            background: #fafafa;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .client-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        .client-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .client-details span {
+            color: #b5956a;
+        }
+
+        /* Send Proposal Footer */
+        .send-proposal-footer {
+            background: #fff;
+            text-align: center;
+            padding: 24px;
+            border-top: 1px solid #eee;
+        }
+        .send-proposal-footer img {
+            width: 140px;
+            opacity: 0.7;
+            display: block;
+            margin: 0 auto 8px;
+        }
+        .send-proposal-footer p {
+            font-size: 0.7rem;
+            color: #999;
+        }
+        .send-to-client-btn {
+            display: block;
+            width: 100%;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            font-size: 0.8rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+        }
+        .send-to-client-btn:hover {
+            background: #a38559;
+        }
+
+        .preview-proposal-btn {
+            display: block;
+            width: 100%;
+            background: #666;
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            font-size: 0.8rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .preview-proposal-btn:hover {
+            background: #555;
+        }
+
+        /* Page Hero Banner */
+        .page-hero {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 140px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding-left: 30px;
+            margin-bottom: 0;
+        }
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.15);
+        }
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        .page-hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/contacts.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="#" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Proposals
+            </a>
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Hero Banner -->
+    <div class="page-hero">
+        <div class="page-hero-content">
+            <h1 class="page-hero-title">Proposal Builder</h1>
+        </div>
+    </div>
+
+    <main class="main">
+        <!-- Builder Panel -->
+        <div class="builder-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Client Information</h2>
+                <span id="proposalNumberDisplay" style="font-size: 0.85rem; color: #b5956a; font-weight: 400;"></span>
+            </div>
+            <div class="panel-body">
+                <div class="client-summary" id="clientSummary">
+                    <div class="client-name" id="displayClientName">Loading...</div>
+                    <div class="client-address" id="displayClientAddress" style="font-size: 0.85rem; color: #b5956a;"></div>
+                    <div class="client-details">
+                        <span id="displayClientEmail"></span><br>
+                        <span id="displayEventType"></span> - <span id="displayEventDate"></span>
+                    </div>
+                    <div class="client-venue" id="displayVenue" style="margin-top: 4px; color: #666;"></div>
+                    <div class="client-venue-address" id="displayVenueAddress" style="font-size: 0.85rem; color: #b5956a;"></div>
+                </div>
+
+                <!-- Hidden fields for client data (loaded from In Studio) -->
+                <input type="hidden" id="clientName">
+                <input type="hidden" id="clientEmail">
+                <input type="hidden" id="eventType" value="Wedding">
+                <input type="hidden" id="eventDate">
+                <input type="hidden" id="venue">
+                <input type="hidden" id="venueAddress">
+                <input type="hidden" id="clientAddress">
+            </div>
+
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="panel-title">Display Cake Options</h2>
+                <!-- TEMP: Remove this button later -->
+                <button onclick="loadTestCakeData()" style="padding: 6px 12px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; cursor: pointer; border-radius: 4px;">+ Test Data</button>
+            </div>
+            <div class="panel-body">
+                <!-- Display Cake Base -->
+                <div class="design-section">
+                    <div class="design-section-header">
+                        <span class="design-section-title">Display Cake</span>
+                        <div class="design-premium">
+                            <span class="input-prefix-inline">$</span>
+                            <input type="text" class="form-input-small" id="basePrice" placeholder="0" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div id="sketchGalleryBase" class="sketch-gallery" data-design="base"></div>
+                    <div class="sketch-upload" data-design="base" onclick="document.getElementById('sketchInputBase').click()">
+                        <div class="sketch-upload-icon">+</div>
+                        <div class="sketch-upload-text">Click or drag to add sketch</div>
+                    </div>
+                    <input type="file" id="sketchInputBase" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'base')" multiple>
+                    <div class="design-narrative">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="baseNarrative" rows="3" placeholder="Describe the base cake design..." oninput="updatePreview()"></textarea>
+                    </div>
+                </div>
+
+                <!-- Option 1 -->
+                <div class="design-section">
+                    <div class="design-section-header">
+                        <span class="design-section-title">Display Cake Option 2</span>
+                        <div class="design-premium">
+                            <span class="input-prefix-inline">$</span>
+                            <input type="text" class="form-input-small" id="option1Price" placeholder="0" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div id="sketchGalleryOption1" class="sketch-gallery" data-design="option1"></div>
+                    <div class="sketch-upload" data-design="option1" onclick="document.getElementById('sketchInputOption1').click()">
+                        <div class="sketch-upload-icon">+</div>
+                        <div class="sketch-upload-text">Click or drag to add sketch</div>
+                    </div>
+                    <input type="file" id="sketchInputOption1" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'option1')" multiple>
+                    <div class="design-narrative">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="option1Narrative" rows="3" placeholder="Describe option 1..." oninput="updatePreview()"></textarea>
+                    </div>
+                </div>
+
+                <!-- Option 2 -->
+                <div class="design-section">
+                    <div class="design-section-header">
+                        <span class="design-section-title">Display Cake Option 3</span>
+                        <div class="design-premium">
+                            <span class="input-prefix-inline">$</span>
+                            <input type="text" class="form-input-small" id="option2Price" placeholder="0" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div id="sketchGalleryOption2" class="sketch-gallery" data-design="option2"></div>
+                    <div class="sketch-upload" data-design="option2" onclick="document.getElementById('sketchInputOption2').click()">
+                        <div class="sketch-upload-icon">+</div>
+                        <div class="sketch-upload-text">Click or drag to add sketch</div>
+                    </div>
+                    <input type="file" id="sketchInputOption2" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'option2')" multiple>
+                    <div class="design-narrative">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="option2Narrative" rows="3" placeholder="Describe option 2..." oninput="updatePreview()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-header">
+                <h2 class="panel-title">Additional Services</h2>
+            </div>
+            <div class="panel-body">
+                <div class="quick-add">
+                    <span class="form-label">Quick Add</span>
+                    <div class="quick-add-buttons">
+                        <button class="quick-add-btn" onclick="addItem('cutting')">+ Cutting Cake</button>
+                        <button class="quick-add-btn" onclick="addItem('cloche')">+ Flower Cloche</button>
+                        <button class="quick-add-btn" onclick="addItem('other')">+ Other</button>
+                        <button class="quick-add-btn" onclick="addItem('delivery')">+ Delivery</button>
+                        <button class="quick-add-btn" onclick="addItem('travel')">+ Travel</button>
+                    </div>
+                    <!-- TEMP: Test buttons - remove later -->
+                    <div class="quick-add-buttons" style="margin-top: 8px;">
+                        <button onclick="loadTestAddOn('cutting')" style="padding: 4px 8px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-size: 0.7rem; cursor: pointer; border-radius: 3px;">Test Cutting</button>
+                        <button onclick="loadTestAddOn('cloche')" style="padding: 4px 8px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-size: 0.7rem; cursor: pointer; border-radius: 3px;">Test Cloche</button>
+                        <button onclick="loadTestAddOn('other')" style="padding: 4px 8px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-size: 0.7rem; cursor: pointer; border-radius: 3px;">Test Other</button>
+                        <button onclick="loadTestAddOn('delivery')" style="padding: 4px 8px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-size: 0.7rem; cursor: pointer; border-radius: 3px;">Test Delivery</button>
+                        <button onclick="loadTestAddOn('travel')" style="padding: 4px 8px; background: #f0f0f0; color: #666; border: 1px dashed #ccc; font-size: 0.7rem; cursor: pointer; border-radius: 3px;">Test Travel</button>
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <div class="line-items" id="lineItems">
+                    <!-- Items added here -->
+                </div>
+
+                <div class="form-divider"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tasting Credit</label>
+                        <input type="number" class="form-input" id="tastingCredit" value="250" oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-input" id="paymentMethod" onchange="updatePreview()">
+                            <option value="card">Credit Card (+3.4% fee)</option>
+                            <option value="zelle">Zelle (No fee)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="service-fee-note" id="serviceFeeNote">
+                    Service fee of <strong id="serviceFeeAmount">$0.00</strong> will be added for credit card payment.
+                </div>
+            </div>
+
+            <div class="panel-header">
+                <h2 class="panel-title">Contract Terms</h2>
+            </div>
+            <div class="panel-body">
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Terms & Conditions</label>
+                        <textarea class="form-textarea" id="terms" style="min-height: 400px; font-size: 0.85rem; line-height: 1.8;">PAYMENT TERMS
+A 50% deposit is required to secure your date. The remaining balance is due 30 days before your event. Payment may be made by credit card (3.4% processing fee applies) or Zelle (no fee).
+
+CANCELLATION POLICY
+Cancellations made more than 90 days before the event will receive a full refund of the deposit. Cancellations made 60-90 days before the event will receive a 50% refund of the deposit. Cancellations within 60 days are non-refundable.
+
+DESIGN CHANGES
+Design changes may be requested up to 30 days before the event, subject to availability and potential price adjustments. Changes requested within 30 days cannot be guaranteed.
+
+DELIVERY & SETUP
+Delivery and setup are included within 30 miles of Seattle. Additional mileage is charged at $2/mile. Setup includes placement and assembly of cake at venue. Client is responsible for ensuring venue access and appropriate display surface.
+
+DISPLAY CONDITIONS
+Client is responsible for ensuring the cake is displayed in a cool, climate-controlled environment away from direct sunlight, heat sources, and outdoor elements. Kenna Giuzio Cake is not responsible for damage due to improper display conditions.
+
+FORCE MAJEURE
+In the event of circumstances beyond our control (natural disasters, severe weather, illness, etc.), Kenna Giuzio Cake will work with you to reschedule or provide a full refund.
+
+FLOWER CLOCHES
+Preserved sugar flower cloches are available for purchase after your event. These are delicate art pieces and should be handled with care. Not edible.
+
+By accepting this proposal, you agree to these terms and conditions.</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <div class="preview-container">
+                <div class="preview-hero">
+                    <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+                </div>
+
+                <div class="preview-header">
+                    <h2 id="previewTitle">Wedding Cake Proposal</h2>
+                    <p id="previewDate">Proposal Date</p>
+                    <p id="previewProposalNumber" style="color: #b5956a; font-size: 0.8rem; margin-top: 4px;"></p>
+                </div>
+
+                <div class="preview-client">
+                    <div>
+                        <div class="preview-label">Prepared For</div>
+                        <div id="previewClient">Client Name</div>
+                        <div id="previewClientAddress" style="color: #888; margin-top: 2px;"></div>
+                    </div>
+                    <div>
+                        <div class="preview-label">Event Date</div>
+                        <div id="previewEventDate">Event Date</div>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div class="preview-label">Venue</div>
+                        <div id="previewVenue">Venue</div>
+                        <div id="previewVenueAddress" style="color: #888; margin-top: 2px;"></div>
+                    </div>
+                </div>
+
+                <div class="preview-sketch">
+                    <div class="preview-sketch-placeholder" id="previewSketch">
+                        Cake sketch will appear here
+                    </div>
+                </div>
+
+                <!-- Hidden: Selection options (now inline with designs) -->
+                <div class="preview-options" id="previewOptions" style="display: none;">
+                    <div id="optionsList"></div>
+                </div>
+
+                <div class="preview-description" id="previewDescription"></div>
+
+                <div class="preview-line-items" id="previewLineItems">
+                    <div class="preview-line-item">
+                        <span>Wedding Cake</span>
+                        <span>$0.00</span>
+                    </div>
+                </div>
+
+                <div class="preview-totals">
+                    <div class="preview-total-row">
+                        <span>Subtotal</span>
+                        <span id="previewSubtotal">$0.00</span>
+                    </div>
+                    <div class="preview-total-row" id="upgradeRow" style="display: none; color: #b5956a;">
+                        <span>Design Upgrade</span>
+                        <span id="previewUpgrade">+$0.00</span>
+                    </div>
+                    <div class="preview-total-row" id="serviceFeeRow">
+                        <span>Service Fee (3.4%)</span>
+                        <span id="previewServiceFee">$0.00</span>
+                    </div>
+                    <div class="preview-total-row">
+                        <span>Tasting Credit</span>
+                        <span id="previewTastingCredit">-$250.00</span>
+                    </div>
+                    <div class="preview-total-row total">
+                        <span>Total Due</span>
+                        <span id="previewTotal">$0.00</span>
+                    </div>
+                    <div class="preview-deposit" id="previewDeposit">
+                        <div class="preview-total-row">
+                            <span>50% Deposit to Book</span>
+                            <span id="depositAmount">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms & Conditions (before signature so "above" makes sense) -->
+                <div class="preview-terms">
+                    <h4>Terms & Conditions</h4>
+                    <div id="previewTerms">Terms will appear here...</div>
+                </div>
+
+                <!-- Signature Section -->
+                <div class="preview-signature" id="signatureSection">
+                    <h4>Accept Proposal</h4>
+                    <div class="signature-agreement">
+                        <label class="signature-checkbox">
+                            <input type="checkbox" id="agreeTerms">
+                            <span>I agree to the terms and conditions above</span>
+                        </label>
+                    </div>
+                    <div class="signature-box">
+                        <label class="form-label">Signature</label>
+                        <input type="text" class="signature-input" id="clientSignature" placeholder="Type your full name" disabled>
+                    </div>
+                    <div class="signature-date" id="signatureDate"></div>
+                    <button class="sign-btn" id="signBtn" onclick="signProposal()" disabled>Sign & Accept Proposal</button>
+                </div>
+
+                <!-- Locked confirmation -->
+                <div class="proposal-locked" id="proposalLocked" style="display: none;">
+                    <div class="locked-icon">&#10003;</div>
+                    <h4>Proposal Accepted</h4>
+                    <p>Signed by <span id="signedByName"></span></p>
+                    <p class="signed-date" id="signedOnDate"></p>
+                    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
+                        <p style="font-size: 0.85rem; color: #666; margin-bottom: 16px;">
+                            To reserve your date, please pay the 50% deposit:
+                        </p>
+                        <a href="#" id="depositInvoiceLink" class="sign-btn" style="display: inline-block; text-decoration: none; text-align: center;" target="_blank">
+                            Pay Deposit to Reserve Date
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="send-proposal-footer">
+                    <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+                    <p>Thank you for considering Kenna Giuzio Cake</p>
+                </div>
+            </div>
+            <!-- Admin buttons outside preview-container -->
+            <div class="admin-buttons" style="margin-top: 0;">
+                <button class="send-to-client-btn" id="sendSection" onclick="sendProposal()">Send Proposal</button>
+                <button class="preview-proposal-btn" onclick="previewProposal()">Preview Proposal</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Sync client to API in background
+        async function syncClientToAPI(client) {
+            try {
+                await saveClient(client);
+                console.log('Client synced to API:', client.name || client.id);
+            } catch (error) {
+                console.log('API sync failed:', error.message);
+            }
+        }
+
+        // Load clients from API and sync to localStorage
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients();
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                console.log('Proposal builder: Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Proposal builder: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Track selected design option
+        let selectedDesign = 'base';
+        let selectedDesignPrice = 0;
+        let isProposalLocked = false;
+
+        // Format currency with commas
+        function formatCurrency(num) {
+            return '$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // Format number with commas (for display in inputs)
+        function formatNumberWithCommas(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // Parse number from formatted string
+        function parseFormattedNumber(str) {
+            return parseFloat(str.replace(/,/g, '')) || 0;
+        }
+
+        // Add comma formatting to price inputs
+        document.addEventListener('blur', function(e) {
+            if (e.target.classList.contains('item-price') || e.target.classList.contains('item-rate')) {
+                const val = parseFormattedNumber(e.target.value);
+                if (val > 0) {
+                    e.target.value = formatNumberWithCommas(val);
+                }
+            }
+        }, true);
+
+        document.addEventListener('focus', function(e) {
+            if (e.target.classList.contains('item-price') || e.target.classList.contains('item-rate')) {
+                // Remove commas on focus for easier editing
+                e.target.value = e.target.value.replace(/,/g, '');
+            }
+        }, true);
+
+        // Item templates
+        const itemTemplates = {
+            cake: {
+                name: 'Display Cake',
+                type: 'cakeWithDesc',
+                placeholder: 'Three-tier wedding cake with hand-crafted sugar flowers...'
+            },
+            cutting: {
+                name: 'Cutting Cake',
+                type: 'cuttingWithFlavors',
+                pricePerServing: 8,
+                placeholder: 'e.g., Vanilla bean with raspberry filling, Chocolate with salted caramel'
+            },
+            cloche: {
+                name: 'Flower Cloche',
+                type: 'clocheWithDesc',
+                priceEach: 150
+            },
+            other: {
+                name: 'Other',
+                type: 'otherWithDesc',
+                placeholder: 'Describe the service or add-on...'
+            },
+            delivery: {
+                name: 'Delivery & Setup',
+                type: 'fixed',
+                defaultPrice: 150
+            },
+            travel: {
+                name: 'Travel Fee',
+                type: 'fixed',
+                description: 'Additional mileage beyond 30 miles'
+            }
+        };
+
+        // Set today's date
+        document.getElementById('previewDate').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric'
+        });
+
+        function addItem(type) {
+            const template = itemTemplates[type];
+            const lineItems = document.getElementById('lineItems');
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.dataset.type = template.type;
+
+            let fieldsHtml = '';
+
+            if (template.type === 'fixed') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-input item-desc" value="${template.description || ''}" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">Price</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-price" value="${template.defaultPrice || ''}" placeholder="0" oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (template.type === 'cakeWithDesc') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-input item-desc" rows="3" placeholder="${template.placeholder}" oninput="updatePreview()"></textarea>
+                        </div>
+                    </div>
+                    <div class="item-card-row">
+                        <div class="form-group small">
+                            <label class="form-label">Price</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-price" placeholder="0" oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (template.type === 'perServing') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group small">
+                            <label class="form-label">Servings</label>
+                            <input type="number" class="form-input item-qty" placeholder="0" oninput="updateItemTotal(this); updatePreview()">
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">$ Per Serving</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-rate" value="${template.pricePerServing}" oninput="updateItemTotal(this); updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-card-total">Total: <span>$0.00</span></div>
+                `;
+            } else if (template.type === 'cuttingWithFlavors') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group">
+                            <label class="form-label">Flavors</label>
+                            <textarea class="form-input item-desc" rows="2" placeholder="${template.placeholder}" oninput="updatePreview()"></textarea>
+                        </div>
+                    </div>
+                    <div class="item-card-row">
+                        <div class="form-group small">
+                            <label class="form-label">Servings</label>
+                            <input type="number" class="form-input item-qty" placeholder="0" oninput="updateItemTotal(this); updatePreview()">
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">$ Per Serving</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-rate" value="${template.pricePerServing}" oninput="updateItemTotal(this); updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-card-total">Total: <span>$0.00</span></div>
+                `;
+            } else if (template.type === 'otherWithDesc') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-input item-desc" rows="2" placeholder="${template.placeholder}" oninput="updatePreview()"></textarea>
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">Price</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-price" value="0" placeholder="0" oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (template.type === 'clocheWithDesc') {
+                fieldsHtml = `
+                    <div class="item-card-row">
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-input item-desc" placeholder="e.g., Preserved peonies and roses" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div class="item-card-row">
+                        <div class="form-group small">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-input item-qty" value="1" oninput="updateItemTotal(this); updatePreview()">
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">$ Each</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="text" class="form-input item-rate" value="${template.priceEach}" oninput="updateItemTotal(this); updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-card-total">Total: <span>$0.00</span></div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="item-card-header">
+                    <span class="item-card-title">${template.name}</span>
+                    <button class="item-card-remove" onclick="removeItem(this)">&times;</button>
+                </div>
+                <input type="hidden" class="item-name" value="${template.name}">
+                ${fieldsHtml}
+            `;
+
+            // Insert in correct hierarchy: Cutting Cake, Flower Cloche, Other, Delivery, Travel
+            const itemOrder = { 'Cutting Cake': 1, 'Flower Cloche': 2, 'Other': 3, 'Delivery & Setup': 4, 'Travel Fee': 5 };
+            const newItemOrder = itemOrder[template.name] || 3;
+
+            const existingCards = Array.from(lineItems.querySelectorAll('.item-card'));
+            let insertBefore = null;
+
+            for (const existingCard of existingCards) {
+                const existingName = existingCard.querySelector('.item-name').value;
+                const existingOrder = itemOrder[existingName] || 3;
+                if (existingOrder > newItemOrder) {
+                    insertBefore = existingCard;
+                    break;
+                }
+            }
+
+            if (insertBefore) {
+                lineItems.insertBefore(card, insertBefore);
+            } else {
+                lineItems.appendChild(card);
+            }
+
+            updatePreview();
+        }
+
+        function updateItemTotal(input) {
+            const card = input.closest('.item-card');
+            const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+            const rate = parseFloat(card.querySelector('.item-rate')?.value) || 0;
+            const totalEl = card.querySelector('.item-card-total span');
+            if (totalEl) {
+                totalEl.textContent = formatCurrency(qty * rate);
+            }
+        }
+
+        function removeItem(btn) {
+            btn.closest('.item-card').remove();
+            updatePreview();
+        }
+
+        function getItemTotal(card) {
+            const type = card.dataset.type;
+            if (type === 'fixed' || type === 'cakeWithDesc' || type === 'otherWithDesc') {
+                return parseFormattedNumber(card.querySelector('.item-price')?.value || '0');
+            } else {
+                const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+                const rate = parseFormattedNumber(card.querySelector('.item-rate')?.value || '0');
+                return qty * rate;
+            }
+        }
+
+        function updatePreview() {
+            // Dynamic title based on event type and client name
+            const clientName = document.getElementById('clientName').value || 'Client';
+            const clientEmail = document.getElementById('clientEmail').value || '';
+            const eventType = document.getElementById('eventType').value;
+            const eventDateInput = document.getElementById('eventDate');
+            const eventDateDisplay = eventDateInput.value || 'TBD';
+
+            // Update client information summary
+            const venue = document.getElementById('venue').value || '';
+            const venueAddress = document.getElementById('venueAddress').value || '';
+            const clientAddress = document.getElementById('clientAddress').value || '';
+            document.getElementById('displayClientName').textContent = clientName;
+            document.getElementById('displayClientEmail').textContent = clientEmail;
+            document.getElementById('displayEventType').textContent = eventType;
+            document.getElementById('displayEventDate').textContent = eventDateDisplay;
+            document.getElementById('displayVenue').textContent = venue;
+            document.getElementById('displayVenueAddress').textContent = venueAddress;
+            document.getElementById('displayClientAddress').textContent = clientAddress;
+
+            let titleText = '';
+            switch(eventType) {
+                case 'Wedding':
+                    titleText = `${clientName} Wedding Cake Proposal`;
+                    break;
+                case 'Anniversary':
+                    titleText = `${clientName} Anniversary Cake Proposal`;
+                    break;
+                case 'Birthday':
+                    titleText = `${clientName} Birthday Cake Proposal`;
+                    break;
+                case 'Milestone':
+                    titleText = `${clientName} Milestone Celebration`;
+                    break;
+                case 'Corporate':
+                    titleText = `${clientName} Corporate Event`;
+                    break;
+                case 'Editorial':
+                    titleText = `${clientName} Editorial Cake Proposal`;
+                    break;
+                default:
+                    titleText = `${clientName} Cake Proposal`;
+            }
+            document.getElementById('previewTitle').textContent = titleText;
+
+            // Update proposal number in preview (read from draft)
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            const draft = drafts[clientId];
+            if (draft && draft.proposalNumber) {
+                const previewNumEl = document.getElementById('previewProposalNumber');
+                if (previewNumEl) {
+                    previewNumEl.textContent = 'Proposal #P-' + draft.proposalNumber;
+                }
+            }
+
+            // Client info
+            document.getElementById('previewClient').textContent = clientName;
+            document.getElementById('previewClientAddress').textContent = clientAddress;
+
+            const eventDate = document.getElementById('eventDate').value;
+            document.getElementById('previewEventDate').textContent = eventDate ?
+                new Date(eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) :
+                'Event Date';
+
+            document.getElementById('previewVenue').textContent =
+                document.getElementById('venue').value || 'Venue';
+            document.getElementById('previewVenueAddress').textContent =
+                document.getElementById('venueAddress').value || '';
+
+            // Line items - collect and sort (Delivery & Travel always last)
+            const itemCards = Array.from(document.querySelectorAll('#lineItems .item-card'));
+            let lineItemsHtml = '';
+            let subtotal = 0;
+            let cakeDescription = '';
+
+            // Sort: Cutting Cake, Flower Cloche, Other, then Delivery, Travel
+            const sortOrder = { 'Cutting Cake': 1, 'Flower Cloche': 2, 'Other': 3, 'Delivery & Setup': 4, 'Travel Fee': 5 };
+            itemCards.sort((a, b) => {
+                const nameA = a.querySelector('.item-name').value;
+                const nameB = b.querySelector('.item-name').value;
+                return (sortOrder[nameA] || 3) - (sortOrder[nameB] || 3);
+            });
+
+            itemCards.forEach(card => {
+                const name = card.querySelector('.item-name').value;
+                const type = card.dataset.type;
+                const total = getItemTotal(card);
+                const desc = card.querySelector('.item-desc')?.value || '';
+                subtotal += total;
+
+                let displayName = name;
+                let subText = '';
+
+                if (type === 'cakeWithDesc') {
+                    cakeDescription = desc;
+                    subText = desc ? `<div class="preview-line-item-desc">${desc}</div>` : '';
+                } else if (type === 'perServing') {
+                    const qty = card.querySelector('.item-qty')?.value || 0;
+                    displayName = `${name} (${qty} servings)`;
+                } else if (type === 'cuttingWithFlavors') {
+                    const qty = card.querySelector('.item-qty')?.value || 0;
+                    displayName = `${name} (${qty} servings)`;
+                    if (desc) subText = `<div class="preview-line-item-desc">${desc}</div>`;
+                } else if (type === 'clocheWithDesc') {
+                    const qty = card.querySelector('.item-qty')?.value || 0;
+                    if (qty > 1) displayName = `${name} x${qty}`;
+                    if (desc) subText = `<div class="preview-line-item-desc">${desc}</div>`;
+                } else if (type === 'otherWithDesc') {
+                    if (desc) subText = `<div class="preview-line-item-desc">${desc}</div>`;
+                }
+
+                if (total > 0 || type === 'cakeWithDesc' || type === 'otherWithDesc') {
+                    lineItemsHtml += `
+                        <div class="preview-line-item">
+                            <span>${displayName}</span>
+                            <span>${formatCurrency(total)}</span>
+                        </div>
+                        ${subText}
+                    `;
+                }
+            });
+
+            // Totals (including selected design price)
+            const tastingCredit = parseFloat(document.getElementById('tastingCredit').value) || 0;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+
+            // Get the selected design price
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const opt1Price = parseFloat(document.getElementById('option1Price').value) || 0;
+            const opt2Price = parseFloat(document.getElementById('option2Price').value) || 0;
+
+            // Set selectedDesignPrice based on selected option
+            if (selectedDesign === 'base') {
+                selectedDesignPrice = basePrice;
+            } else if (selectedDesign === 'option1') {
+                selectedDesignPrice = opt1Price;
+            } else if (selectedDesign === 'option2') {
+                selectedDesignPrice = opt2Price;
+            }
+
+            // Add the selected cake as the first line item
+            let selectedCakeName = 'Display Cake';
+            if (selectedDesign === 'option1') selectedCakeName = 'Display Cake Option 2';
+            else if (selectedDesign === 'option2') selectedCakeName = 'Display Cake Option 3';
+            else selectedCakeName = 'Display Cake';
+
+            const cakeLineItem = selectedDesignPrice > 0 ? `
+                <div class="preview-line-item">
+                    <span>${selectedCakeName}</span>
+                    <span>${formatCurrency(selectedDesignPrice)}</span>
+                </div>
+            ` : '';
+
+            document.getElementById('previewLineItems').innerHTML = cakeLineItem + lineItemsHtml || '<div class="preview-line-item"><span>No items added</span><span>-</span></div>';
+            document.getElementById('previewDescription').textContent = cakeDescription;
+            document.getElementById('previewDescription').style.display = cakeDescription ? 'block' : 'none';
+
+            const subtotalWithCake = subtotal + selectedDesignPrice;
+            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+            const serviceFee = subtotalWithCake * serviceFeeRate;
+            const total = subtotalWithCake + serviceFee - tastingCredit;
+
+            document.getElementById('previewSubtotal').textContent = formatCurrency(subtotalWithCake);
+
+            // Hide the upgrade row (no longer using premium system)
+            const upgradeRow = document.getElementById('upgradeRow');
+            upgradeRow.style.display = 'none';
+
+            document.getElementById('previewServiceFee').textContent = formatCurrency(serviceFee);
+            document.getElementById('previewTastingCredit').textContent = '-' + formatCurrency(tastingCredit);
+            document.getElementById('previewTotal').textContent = formatCurrency(Math.max(0, total));
+
+            // Show/hide service fee row
+            document.getElementById('serviceFeeRow').style.display = paymentMethod === 'card' ? 'flex' : 'none';
+
+            // Deposit amount
+            document.getElementById('depositAmount').textContent = formatCurrency(Math.max(0, total) / 2);
+
+            // Service fee note
+            const feeNote = document.getElementById('serviceFeeNote');
+            if (paymentMethod === 'zelle') {
+                feeNote.className = 'service-fee-note zelle';
+                feeNote.innerHTML = '<strong>No service fee</strong> — Client pays by Zelle';
+            } else {
+                feeNote.className = 'service-fee-note';
+                feeNote.innerHTML = `Service fee of <strong>${formatCurrency(serviceFee)}</strong> (3.4%) added for credit card payment.`;
+            }
+
+            // Terms
+            document.getElementById('previewTerms').textContent =
+                document.getElementById('terms').value;
+
+            // Update sketches preview (to refresh premium labels)
+            updatePreviewSketches();
+
+            // Update options section
+            const previewOptions = document.getElementById('previewOptions');
+            const optionsList = document.getElementById('optionsList');
+
+            // Get narratives
+            const baseNarrative = document.getElementById('baseNarrative').value || '';
+            const opt1Narrative = document.getElementById('option1Narrative').value || '';
+            const opt2Narrative = document.getElementById('option2Narrative').value || '';
+
+            // Show options section if we have any design with sketch or price
+            const hasBase = designs.base.length > 0 || basePrice > 0;
+            const hasOpt1 = designs.option1.length > 0 || opt1Price > 0;
+            const hasOpt2 = designs.option2.length > 0 || opt2Price > 0;
+
+            if (hasBase || hasOpt1 || hasOpt2) {
+                let optionsHtml = '';
+
+                // Display Cake Base
+                if (hasBase) {
+                    optionsHtml += `<div class="preview-option-row ${selectedDesign === 'base' ? 'selected' : ''}" onclick="selectDesign('base')">
+                        <span class="option-name">Display Cake</span>
+                        <span class="option-premium">${formatCurrency(basePrice)}</span>
+                    </div>`;
+                }
+
+                // Option 1
+                if (hasOpt1) {
+                    optionsHtml += `<div class="preview-option-row ${selectedDesign === 'option1' ? 'selected' : ''}" onclick="selectDesign('option1')">
+                        <span class="option-name">Display Cake Option 2</span>
+                        <span class="option-premium">${formatCurrency(opt1Price)}</span>
+                    </div>`;
+                }
+
+                // Option 2
+                if (hasOpt2) {
+                    optionsHtml += `<div class="preview-option-row ${selectedDesign === 'option2' ? 'selected' : ''}" onclick="selectDesign('option2')">
+                        <span class="option-name">Display Cake Option 3</span>
+                        <span class="option-premium">${formatCurrency(opt2Price)}</span>
+                    </div>`;
+                }
+
+                optionsList.innerHTML = optionsHtml;
+                // Hide the old options list - selection is now done by clicking designs
+                previewOptions.style.display = 'none';
+            } else {
+                previewOptions.style.display = 'none';
+            }
+        }
+
+        function selectDesign(design) {
+            if (isProposalLocked) return; // Don't allow changes if locked
+            selectedDesign = design;
+            updatePreview();
+        }
+
+        // Alias for clicking design cards
+        function selectDesignOption(design) {
+            selectDesign(design);
+        }
+
+        // Lock proposal UI when booked/paid
+        function lockProposalUI(reason) {
+            // Disable all form inputs
+            document.querySelectorAll('.edit-panel input, .edit-panel textarea, .edit-panel select, .edit-panel button').forEach(el => {
+                if (!el.classList.contains('preview-proposal-btn')) {
+                    el.disabled = true;
+                    el.style.opacity = '0.6';
+                    el.style.pointerEvents = 'none';
+                }
+            });
+
+            // Hide send button, show locked status
+            const sendBtn = document.getElementById('sendSection');
+            if (sendBtn) sendBtn.style.display = 'none';
+
+            // Add booked banner to preview
+            const previewContainer = document.querySelector('.preview-container');
+            if (previewContainer && reason === 'booked') {
+                const bookedBanner = document.createElement('div');
+                bookedBanner.style.cssText = 'background: #d4edda; color: #155724; text-align: center; padding: 12px; font-weight: 500; letter-spacing: 1px;';
+                bookedBanner.innerHTML = '✓ DEPOSIT PAID - DATE RESERVED';
+                previewContainer.insertBefore(bookedBanner, previewContainer.firstChild);
+
+                // Change deposit button to "View Paid Invoice"
+                const depositLink = document.getElementById('depositInvoiceLink');
+                if (depositLink) {
+                    depositLink.textContent = 'View Paid Invoice';
+                }
+                // Update the message above the button
+                const depositMsg = depositLink?.previousElementSibling;
+                if (depositMsg && depositMsg.tagName === 'P') {
+                    depositMsg.textContent = 'Your deposit has been received:';
+                }
+            }
+
+            // Hide signature section
+            const sigSection = document.getElementById('signatureSection');
+            if (sigSection) sigSection.style.display = 'none';
+        }
+
+        // Sketch management - separate arrays for each design option
+        let designs = {
+            base: [],
+            option1: [],
+            option2: []
+        };
+
+        function handleSketchUpload(input, designType) {
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    processSketchFile(file, designType);
+                });
+                input.value = ''; // Reset input
+            }
+        }
+
+        function processSketchFile(file, designType) {
+            // Check for HEIC files (iPhone format) and convert automatically
+            const fileName = file.name.toLowerCase();
+            const isHeic = fileName.endsWith('.heic') || fileName.endsWith('.heif') ||
+                           file.type === 'image/heic' || file.type === 'image/heif';
+
+            if (isHeic) {
+                // Show converting message
+                const galleryId = designType === 'base' ? 'sketchGalleryBase' :
+                                  designType === 'option1' ? 'sketchGalleryOption1' : 'sketchGalleryOption2';
+                const gallery = document.getElementById(galleryId);
+                const tempMsg = document.createElement('div');
+                tempMsg.className = 'sketch-item';
+                tempMsg.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:0.8rem;">Converting...</div>';
+                gallery.appendChild(tempMsg);
+
+                // Convert HEIC to JPEG
+                heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 })
+                    .then(convertedBlob => {
+                        tempMsg.remove();
+                        readAndAddImage(convertedBlob, designType);
+                    })
+                    .catch(err => {
+                        tempMsg.remove();
+                        console.error('HEIC conversion failed:', err);
+                        alert('Could not convert iPhone photo. Try exporting it as JPEG first.');
+                    });
+            } else {
+                readAndAddImage(file, designType);
+            }
+        }
+
+        function readAndAddImage(file, designType) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Verify the image can actually be displayed
+                const testImg = new Image();
+                testImg.onload = function() {
+                    designs[designType].push(e.target.result);
+                    renderSketches();
+                    saveSketches();
+                };
+                testImg.onerror = function() {
+                    alert('This image format is not supported.');
+                };
+                testImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderSketches() {
+            // Render each design gallery
+            ['base', 'option1', 'option2'].forEach(designType => {
+                const galleryId = designType === 'base' ? 'sketchGalleryBase' :
+                                  designType === 'option1' ? 'sketchGalleryOption1' : 'sketchGalleryOption2';
+                const gallery = document.getElementById(galleryId);
+                const uploadBox = document.querySelector(`.sketch-upload[data-design="${designType}"]`);
+
+                if (gallery) {
+                    gallery.innerHTML = designs[designType].map((src, index) => `
+                        <div class="sketch-item">
+                            <img src="${src}" alt="Sketch ${index + 1}">
+                            <button class="sketch-item-remove" onclick="removeSketch('${designType}', ${index})" title="Remove">&times;</button>
+                        </div>
+                    `).join('');
+                }
+
+                // Hide upload box if sketch exists, show if no sketch
+                if (uploadBox) {
+                    uploadBox.style.display = designs[designType].length > 0 ? 'none' : 'block';
+                }
+            });
+
+            // Update preview
+            updatePreviewSketches();
+        }
+
+        function truncateText(text, maxLength = 150) {
+            if (!text || text.length <= maxLength) return text;
+            return text.substring(0, maxLength).trim() + '...';
+        }
+
+        function updatePreviewSketches() {
+            const previewSketch = document.getElementById('previewSketch');
+            let html = '';
+
+            // Get prices and narratives
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const opt1Price = parseFloat(document.getElementById('option1Price').value) || 0;
+            const opt2Price = parseFloat(document.getElementById('option2Price').value) || 0;
+            const baseNarrative = document.getElementById('baseNarrative').value || '';
+            const opt1Narrative = document.getElementById('option1Narrative').value || '';
+            const opt2Narrative = document.getElementById('option2Narrative').value || '';
+
+            // Check if we have any designs
+            const hasDesigns = designs.base.length > 0 || designs.option1.length > 0 || designs.option2.length > 0 || basePrice > 0 || opt1Price > 0 || opt2Price > 0;
+
+            if (hasDesigns) {
+                // Add elegant header
+                html += `<div class="preview-vision-header">Select Your Vision</div>`;
+            }
+
+            // Base design
+            if (designs.base.length > 0 || basePrice > 0) {
+                html += `<div class="preview-design-section ${selectedDesign === 'base' ? 'selected-design' : ''}" data-design="base">`;
+                html += `<div class="preview-design-title">Display Cake</div>`;
+                if (basePrice > 0) html += `<div class="preview-design-price">$${basePrice.toLocaleString()}</div>`;
+                if (designs.base.length > 0) {
+                    html += `<div class="preview-design-image">`;
+                    html += designs.base.map(src => `<img src="${src}" alt="Display Cake">`).join('');
+                    html += `</div>`;
+                }
+                if (baseNarrative) {
+                    html += `<div class="preview-design-narrative" data-full="${baseNarrative.replace(/"/g, '&quot;')}">${truncateText(baseNarrative)}</div>`;
+                }
+                html += `<label class="design-select-checkbox" onclick="event.stopPropagation(); selectDesignOption('base')">
+                    <input type="radio" name="designChoice" value="base" ${selectedDesign === 'base' ? 'checked' : ''}>
+                    <span>Select Display Cake</span>
+                </label>`;
+                html += '</div>';
+            }
+
+            // Option 1
+            if (designs.option1.length > 0 || opt1Price > 0) {
+                html += `<div class="preview-design-section ${selectedDesign === 'option1' ? 'selected-design' : ''}" data-design="option1">`;
+                html += `<div class="preview-design-title">Option 2</div>`;
+                if (opt1Price > 0) html += `<div class="preview-design-price">$${opt1Price.toLocaleString()}</div>`;
+                if (designs.option1.length > 0) {
+                    html += `<div class="preview-design-image">`;
+                    html += designs.option1.map(src => `<img src="${src}" alt="Option 2">`).join('');
+                    html += `</div>`;
+                }
+                if (opt1Narrative) {
+                    html += `<div class="preview-design-narrative" data-full="${opt1Narrative.replace(/"/g, '&quot;')}">${truncateText(opt1Narrative)}</div>`;
+                }
+                html += `<label class="design-select-checkbox" onclick="event.stopPropagation(); selectDesignOption('option1')">
+                    <input type="radio" name="designChoice" value="option1" ${selectedDesign === 'option1' ? 'checked' : ''}>
+                    <span>Select Option 2</span>
+                </label>`;
+                html += '</div>';
+            }
+
+            // Option 2
+            if (designs.option2.length > 0 || opt2Price > 0) {
+                html += `<div class="preview-design-section ${selectedDesign === 'option2' ? 'selected-design' : ''}" data-design="option2">`;
+                html += `<div class="preview-design-title">Option 3</div>`;
+                if (opt2Price > 0) html += `<div class="preview-design-price">$${opt2Price.toLocaleString()}</div>`;
+                if (designs.option2.length > 0) {
+                    html += `<div class="preview-design-image">`;
+                    html += designs.option2.map(src => `<img src="${src}" alt="Option 3">`).join('');
+                    html += `</div>`;
+                }
+                if (opt2Narrative) {
+                    html += `<div class="preview-design-narrative" data-full="${opt2Narrative.replace(/"/g, '&quot;')}">${truncateText(opt2Narrative)}</div>`;
+                }
+                html += `<label class="design-select-checkbox" onclick="event.stopPropagation(); selectDesignOption('option2')">
+                    <input type="radio" name="designChoice" value="option2" ${selectedDesign === 'option2' ? 'checked' : ''}>
+                    <span>Select Option 3</span>
+                </label>`;
+                html += '</div>';
+            }
+
+            previewSketch.innerHTML = html || '<div style="color:#999;text-align:center;padding:20px;">Add sketches above</div>';
+        }
+
+        function removeSketch(designType, index) {
+            designs[designType].splice(index, 1);
+            renderSketches();
+            saveSketches();
+        }
+
+        function saveSketches() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            try {
+                localStorage.setItem('proposal_designs_' + clientId, JSON.stringify(designs));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('Storage is full! Sketches will appear in this session but may not be saved. Try removing some old proposal drafts or reducing image sizes.');
+                }
+                console.error('Could not save sketches:', e);
+            }
+        }
+
+        function loadSketches() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            const saved = localStorage.getItem('proposal_designs_' + clientId);
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                // Restore designs, filtering out any invalid sketches
+                ['base', 'option1', 'option2'].forEach(type => {
+                    if (loaded[type]) {
+                        designs[type] = loaded[type].filter(s => s && s.startsWith('data:image'));
+                    }
+                });
+                renderSketches();
+            }
+        }
+
+        // Drag and drop for all sketch upload areas
+        document.querySelectorAll('.sketch-upload').forEach(upload => {
+            const designType = upload.dataset.design;
+
+            upload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                upload.style.borderColor = '#b5956a';
+                upload.style.background = '#fafafa';
+            });
+
+            upload.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                upload.style.borderColor = '#ddd';
+                upload.style.background = '';
+            });
+
+            upload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                upload.style.borderColor = '#ddd';
+                upload.style.background = '';
+
+                if (e.dataTransfer.files) {
+                    Array.from(e.dataTransfer.files).forEach(file => {
+                        processSketchFile(file, designType);
+                    });
+                }
+            });
+        });
+
+        function saveProposal() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+
+            // Gather all line items
+            const items = [];
+            document.querySelectorAll('#lineItems .item-card').forEach(card => {
+                const item = {
+                    name: card.querySelector('.item-name').value,
+                    type: card.dataset.type,
+                    desc: card.querySelector('.item-desc')?.value || '',
+                    price: card.querySelector('.item-price')?.value || '',
+                    qty: card.querySelector('.item-qty')?.value || '',
+                    rate: card.querySelector('.item-rate')?.value || ''
+                };
+                items.push(item);
+            });
+
+            const draft = {
+                clientId: clientId,
+                clientName: document.getElementById('clientName').value,
+                clientEmail: document.getElementById('clientEmail').value,
+                eventType: document.getElementById('eventType').value,
+                eventDate: document.getElementById('eventDate').dataset.value || document.getElementById('eventDate').value,
+                venue: document.getElementById('venue').value,
+                venueAddress: document.getElementById('venueAddress').value,
+                clientAddress: document.getElementById('clientAddress').value,
+                items: items,
+                tastingCredit: document.getElementById('tastingCredit').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                terms: document.getElementById('terms').value,
+                designs: designs,
+                basePrice: document.getElementById('basePrice').value,
+                option1Price: document.getElementById('option1Price').value,
+                option2Price: document.getElementById('option2Price').value,
+                baseNarrative: document.getElementById('baseNarrative').value,
+                option1Narrative: document.getElementById('option1Narrative').value,
+                option2Narrative: document.getElementById('option2Narrative').value,
+                savedAt: new Date().toISOString()
+            };
+
+            // Save draft
+            try {
+                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                drafts[clientId] = draft;
+                localStorage.setItem('kgc_proposal_drafts', JSON.stringify(drafts));
+                alert('Draft saved!');
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('Storage is full! Could not save draft. Try removing some old drafts or reducing sketch image sizes.\n\nGo to Dashboard and delete old clients to free up space.');
+                } else {
+                    alert('Error saving draft: ' + e.message);
+                }
+                console.error('Could not save draft:', e);
+            }
+        }
+
+        // Silent save (no alert) - used before preview
+        function saveProposalSilent() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+
+            const items = [];
+            document.querySelectorAll('#lineItems .item-card').forEach(card => {
+                const item = {
+                    name: card.querySelector('.item-name').value,
+                    type: card.dataset.type,
+                    desc: card.querySelector('.item-desc')?.value || '',
+                    price: card.querySelector('.item-price')?.value || '',
+                    qty: card.querySelector('.item-qty')?.value || '',
+                    rate: card.querySelector('.item-rate')?.value || ''
+                };
+                items.push(item);
+            });
+
+            const draft = {
+                clientId: clientId,
+                clientName: document.getElementById('clientName').value,
+                clientEmail: document.getElementById('clientEmail').value,
+                eventType: document.getElementById('eventType').value,
+                eventDate: document.getElementById('eventDate').dataset.value || document.getElementById('eventDate').value,
+                venue: document.getElementById('venue').value,
+                venueAddress: document.getElementById('venueAddress').value,
+                clientAddress: document.getElementById('clientAddress').value,
+                items: items,
+                tastingCredit: document.getElementById('tastingCredit').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                terms: document.getElementById('terms').value,
+                designs: designs,
+                basePrice: document.getElementById('basePrice').value,
+                option1Price: document.getElementById('option1Price').value,
+                option2Price: document.getElementById('option2Price').value,
+                baseNarrative: document.getElementById('baseNarrative').value,
+                option1Narrative: document.getElementById('option1Narrative').value,
+                option2Narrative: document.getElementById('option2Narrative').value,
+                savedAt: new Date().toISOString()
+            };
+
+            try {
+                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                drafts[clientId] = draft;
+                localStorage.setItem('kgc_proposal_drafts', JSON.stringify(drafts));
+            } catch (e) {
+                console.error('Could not auto-save draft:', e);
+            }
+        }
+
+        function loadDraft() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            const draft = drafts[clientId];
+
+            if (!draft) return false;
+
+            // Display proposal number if assigned
+            if (draft.proposalNumber) {
+                const displayEl = document.getElementById('proposalNumberDisplay');
+                if (displayEl) {
+                    displayEl.textContent = '#P-' + draft.proposalNumber;
+                }
+                const previewNumEl = document.getElementById('previewProposalNumber');
+                if (previewNumEl) {
+                    previewNumEl.textContent = 'Proposal #P-' + draft.proposalNumber;
+                }
+            }
+
+            // Restore form fields
+            document.getElementById('clientName').value = draft.clientName || '';
+            document.getElementById('clientEmail').value = draft.clientEmail || '';
+            document.getElementById('eventType').value = draft.eventType || 'Wedding';
+            if (draft.eventDate) {
+                const input = document.getElementById('eventDate');
+                input.dataset.value = draft.eventDate;
+                input.value = formatDate(draft.eventDate);
+            }
+            document.getElementById('venue').value = draft.venue || '';
+            document.getElementById('venueAddress').value = draft.venueAddress || '';
+            document.getElementById('clientAddress').value = draft.clientAddress || '';
+            document.getElementById('tastingCredit').value = draft.tastingCredit || '';
+            document.getElementById('paymentMethod').value = draft.paymentMethod || 'zelle';
+            document.getElementById('terms').value = draft.terms || document.getElementById('terms').value;
+
+            // Restore line items
+            if (draft.items && draft.items.length > 0) {
+                draft.items.forEach(item => {
+                    // Find which template type this matches
+                    let templateKey = null;
+                    for (const [key, tmpl] of Object.entries(itemTemplates)) {
+                        if (tmpl.name === item.name) {
+                            templateKey = key;
+                            break;
+                        }
+                    }
+
+                    if (templateKey) {
+                        addItem(templateKey);
+                        const cards = document.querySelectorAll('#lineItems .item-card');
+                        const card = cards[cards.length - 1];
+
+                        if (card.querySelector('.item-desc')) card.querySelector('.item-desc').value = item.desc;
+                        if (card.querySelector('.item-price')) card.querySelector('.item-price').value = item.price;
+                        if (card.querySelector('.item-qty')) card.querySelector('.item-qty').value = item.qty;
+                        if (card.querySelector('.item-rate')) card.querySelector('.item-rate').value = item.rate;
+
+                        // Update item total display
+                        const totalEl = card.querySelector('.item-card-total span');
+                        if (totalEl) {
+                            const qty = parseFloat(item.qty) || 0;
+                            const rate = parseFormattedNumber(item.rate || '0');
+                            totalEl.textContent = formatCurrency(qty * rate);
+                        }
+                    }
+                });
+            }
+
+            // Restore designs (filter out any invalid ones)
+            if (draft.designs) {
+                ['base', 'option1', 'option2'].forEach(type => {
+                    if (draft.designs[type]) {
+                        designs[type] = draft.designs[type].filter(s => s && s.startsWith('data:image'));
+                    }
+                });
+                renderSketches();
+            } else if (draft.sketches && draft.sketches.length > 0) {
+                // Backwards compatibility - put old sketches in base
+                designs.base = draft.sketches.filter(s => s && s.startsWith('data:image'));
+                renderSketches();
+            }
+
+            // Restore prices and narratives
+            if (draft.basePrice) {
+                document.getElementById('basePrice').value = draft.basePrice;
+            }
+            if (draft.option1Price) {
+                document.getElementById('option1Price').value = draft.option1Price;
+            }
+            if (draft.option2Price) {
+                document.getElementById('option2Price').value = draft.option2Price;
+            }
+            if (draft.baseNarrative) {
+                document.getElementById('baseNarrative').value = draft.baseNarrative;
+            }
+            if (draft.option1Narrative) {
+                document.getElementById('option1Narrative').value = draft.option1Narrative;
+            }
+            if (draft.option2Narrative) {
+                document.getElementById('option2Narrative').value = draft.option2Narrative;
+            }
+
+            // Backwards compatibility - convert old premium-based drafts
+            if (draft.option1Premium && !draft.option1Price) {
+                document.getElementById('option1Price').value = draft.option1Premium;
+            }
+            if (draft.option2Premium && !draft.option2Price) {
+                document.getElementById('option2Price').value = draft.option2Premium;
+            }
+
+            updatePreview();
+            return true;
+        }
+
+        function goToDashboard() {
+            // Auto-save before leaving
+            saveProposalSilent();
+            window.location.href = '/admin/';
+        }
+
+        function sendProposal() {
+            const email = document.getElementById('clientEmail').value;
+            if (!email) {
+                alert('Please enter client email address');
+                return;
+            }
+
+            // Save the draft first
+            saveProposalSilent();
+
+            // Update client status to "proposal"
+            const clientId = new URLSearchParams(window.location.search).get('clientId');
+            if (clientId) {
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+                if (clientIndex !== -1 && clients[clientIndex].status !== 'Signed' && clients[clientIndex].status !== 'booked') {
+                    clients[clientIndex].status = 'proposal';
+                    clients[clientIndex].proposalSentAt = new Date().toISOString();
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                }
+            }
+
+            // Open the client view in a new tab (same as preview but simulates what client sees)
+            previewProposal();
+        }
+
+        function previewProposal() {
+            // Auto-save draft before preview so data persists if client signs
+            saveProposalSilent();
+
+            // Clone the preview content (buttons are now outside preview-container)
+            const previewClone = document.querySelector('.preview-container').cloneNode(true);
+            // Restore full descriptions from data-full attribute
+            previewClone.querySelectorAll('.preview-design-narrative[data-full]').forEach(el => {
+                el.textContent = el.getAttribute('data-full');
+            });
+            const previewHtml = previewClone.outerHTML;
+            const termsText = document.getElementById('terms').value;
+
+            // Open new window with full client view (as separate popup window)
+            const win = window.open('', 'ProposalPreview', 'width=750,height=900,scrollbars=yes,resizable=yes');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Proposal - ${document.getElementById('clientName').value || 'Client'}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: 'Montserrat', sans-serif;
+                            font-weight: 300;
+                            background: #f5f5f5;
+                            padding: 40px 20px;
+                            color: #1a1a1a;
+                            line-height: 1.6;
+                        }
+                        .preview-container {
+                            max-width: 650px;
+                            margin: 0 auto;
+                            background: #fff;
+                            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+                        }
+                        .preview-hero {
+                            height: 160px;
+                            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+                            display: flex;
+                            align-items: center;
+                            padding-left: 25px;
+                        }
+                        .preview-hero img { width: 150px; }
+                        .preview-header {
+                            text-align: center;
+                            padding: 30px 20px;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .preview-header h2 {
+                            font-family: 'Cormorant Garamond', serif;
+                            font-size: 1.8rem;
+                            font-weight: 400;
+                            margin-bottom: 8px;
+                        }
+                        .preview-header p { font-size: 0.85rem; color: #999; }
+                        .preview-client {
+                            padding: 24px 30px;
+                            background: #fafafa;
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 20px;
+                            font-size: 0.9rem;
+                        }
+                        .preview-label {
+                            font-size: 0.65rem;
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                            color: #999;
+                            margin-bottom: 4px;
+                        }
+                        .preview-sketch {
+                            padding: 30px;
+                            text-align: center;
+                            background: #fff;
+                        }
+                        .preview-sketch img {
+                            max-width: 100%;
+                            max-height: 350px;
+                            border: 1px solid #eee;
+                            cursor: pointer;
+                            transition: opacity 0.2s;
+                        }
+                        .preview-sketch img:hover {
+                            opacity: 0.9;
+                        }
+                        .lightbox {
+                            display: none;
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(0,0,0,0.9);
+                            z-index: 1000;
+                            justify-content: center;
+                            align-items: center;
+                            flex-direction: column;
+                        }
+                        .lightbox.active { display: flex; }
+                        .lightbox img, .lightbox canvas {
+                            max-width: 90%;
+                            max-height: 80%;
+                            object-fit: contain;
+                        }
+                        .lightbox-close {
+                            position: absolute;
+                            top: 20px;
+                            right: 30px;
+                            color: #fff;
+                            font-size: 40px;
+                            cursor: pointer;
+                        }
+                        .lightbox-download {
+                            margin-top: 20px;
+                            padding: 12px 24px;
+                            background: #b5956a;
+                            color: #fff;
+                            border: none;
+                            font-family: 'Montserrat', sans-serif;
+                            font-size: 0.85rem;
+                            cursor: pointer;
+                            text-decoration: none;
+                        }
+                        .lightbox-download:hover { background: #a38559; }
+                        .lightbox-hint {
+                            color: #999;
+                            font-size: 0.75rem;
+                            margin-top: 12px;
+                        }
+                        .preview-description {
+                            padding: 24px 30px;
+                            font-size: 0.9rem;
+                            color: #666;
+                            border-top: 1px solid #eee;
+                            line-height: 1.8;
+                        }
+                        .preview-line-items { padding: 24px 30px; border-top: 1px solid #eee; }
+                        .preview-line-item {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 10px 0;
+                            font-size: 0.9rem;
+                        }
+                        .preview-line-item-desc {
+                            font-size: 0.8rem;
+                            color: #999;
+                            padding-bottom: 10px;
+                            font-style: italic;
+                        }
+                        .preview-totals { padding: 24px 30px; border-top: 2px solid #1a1a1a; }
+                        .preview-total-row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 8px 0;
+                            font-size: 0.9rem;
+                        }
+                        .preview-total-row.total {
+                            font-weight: 400;
+                            font-size: 1.2rem;
+                            padding-top: 16px;
+                            margin-top: 12px;
+                            border-top: 1px solid #eee;
+                        }
+                        .preview-total-row.total span:last-child {
+                            font-family: 'Cormorant Garamond', serif;
+                            font-size: 1.6rem;
+                        }
+                        .preview-deposit {
+                            margin-top: 20px;
+                            padding-top: 16px;
+                            border-top: 1px dashed #ddd;
+                        }
+                        .preview-deposit .preview-total-row {
+                            color: #b5956a;
+                            font-weight: 400;
+                        }
+                        .preview-terms {
+                            padding: 30px;
+                            background: #fafafa;
+                            font-size: 0.8rem;
+                            color: #666;
+                            line-height: 1.9;
+                            white-space: pre-line;
+                        }
+                        .preview-terms h4 {
+                            font-size: 0.65rem;
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                            color: #999;
+                            margin-bottom: 12px;
+                            font-weight: 500;
+                        }
+                        .accept-section {
+                            padding: 30px;
+                            text-align: center;
+                            border-top: 1px solid #eee;
+                        }
+                        .accept-btn {
+                            display: inline-block;
+                            padding: 16px 48px;
+                            background: #b5956a;
+                            color: #fff;
+                            border: none;
+                            font-family: 'Montserrat', sans-serif;
+                            font-size: 0.9rem;
+                            letter-spacing: 1px;
+                            cursor: pointer;
+                        }
+                        .accept-btn:hover { background: #a38559; }
+                        .preview-sketch-placeholder {
+                            min-height: 0;
+                            background: transparent;
+                            border: none;
+                        }
+                        .preview-sketch-placeholder:empty { display: none; }
+                        .preview-sketch-placeholder img {
+                            cursor: pointer;
+                            transition: opacity 0.2s;
+                        }
+                        .preview-sketch-placeholder img:hover { opacity: 0.9; }
+                        .preview-vision-header { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; text-align: center; color: #1a1a1a; padding: 30px 0 20px; letter-spacing: 1px; }
+                        .preview-design-section { margin-bottom: 30px; padding: 24px; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+                        .preview-design-section:hover { border-color: #e5ddd0; background: #fafafa; }
+                        .preview-design-section:last-child { margin-bottom: 0; }
+                        .preview-design-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; text-align: center; color: #1a1a1a; margin-bottom: 6px; }
+                        .preview-design-price { font-size: 0.9rem; color: #b5956a; text-align: center; margin-bottom: 20px; font-weight: 500; }
+                        .preview-design-label { display: none; }
+                        .preview-design-narrative { font-size: 0.9rem; color: #666; margin-top: 16px; line-height: 1.7; text-align: center; font-style: italic; }
+                        .preview-design-image { text-align: center; margin-bottom: 16px; }
+                        .preview-design-image img { max-width: 100%; max-height: 320px; border: 1px solid #eee; margin: 4px; }
+                        .preview-design-section.selected-design { background: #fdf9f3; border-color: #b5956a; }
+                        .preview-design-section.selected-design::before { display: none; }
+                        .design-select-checkbox { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; padding: 12px 20px; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 0.85rem; color: #666; transition: all 0.2s; }
+                        .design-select-checkbox:hover { border-color: #b5956a; background: #fdf9f3; }
+                        .design-select-checkbox input[type="radio"] { display: none; }
+                        .design-select-checkbox input[type="radio"]:checked + span { color: #b5956a; font-weight: 500; }
+                        .preview-design-section.selected-design .design-select-checkbox { background: #b5956a; border-color: #b5956a; color: #fff; }
+                        .preview-design-section.selected-design .design-select-checkbox input[type="radio"]:checked + span { color: #fff; }
+                        .preview-options { display: none; }
+                        .preview-option-row { display: none; }
+                        .preview-option-row:hover { border-color: #b5956a; background: #fff; }
+                        .preview-option-row.selected { border-color: #b5956a; background: #fff; box-shadow: 0 2px 8px rgba(181, 149, 106, 0.2); }
+                        .preview-option-row.selected::before { content: '\\2713'; margin-right: 10px; color: #b5956a; font-weight: bold; }
+                        .preview-option-row .option-name { color: #1a1a1a; font-size: 0.75rem; }
+                        .preview-option-row .option-premium { color: #b5956a; font-weight: 500; font-size: 0.8rem; margin-top: 2px; }
+                        .preview-signature { padding: 24px 30px; border-top: 1px solid #eee; background: #fdf9f3; }
+                        .preview-signature h4 { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; color: #b5956a; margin-bottom: 16px; font-weight: 500; text-align: center; }
+                        .signature-agreement { margin-bottom: 16px; }
+                        .signature-checkbox { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: #666; cursor: pointer; }
+                        .signature-checkbox input { margin-top: 3px; cursor: pointer; }
+                        .signature-box { margin-bottom: 12px; }
+                        .signature-box .form-label { font-size: 0.65rem; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: #999; margin-bottom: 8px; display: block; }
+                        .signature-input { width: 100%; padding: 14px 16px; border: 1px solid #ddd; font-family: 'Mr De Haviland', cursive; font-size: 1.8rem; color: #1a1a1a; background: #fff; text-align: center; }
+                        .signature-input:disabled { background: #f5f5f5; color: #999; }
+                        .signature-input:focus { outline: none; border-color: #b5956a; }
+                        .signature-date { font-size: 0.75rem; color: #999; text-align: center; margin-bottom: 16px; }
+                        .sign-btn { width: 100%; padding: 14px 24px; background: #b5956a; color: #fff; border: none; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 400; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+                        .sign-btn:hover:not(:disabled) { background: #a38559; }
+                        .sign-btn:disabled { background: #ccc; cursor: not-allowed; }
+                        .proposal-locked { padding: 30px; text-align: center; background: #e8f5e9; border-top: 1px solid #c8e6c9; }
+                        .proposal-locked .locked-icon { width: 50px; height: 50px; background: #4caf50; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
+                        .proposal-locked h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: #2e7d32; margin-bottom: 8px; }
+                        .proposal-locked p { font-size: 0.85rem; color: #666; }
+                        .proposal-locked .signed-date { font-size: 0.75rem; color: #999; margin-top: 4px; }
+                        .locked .preview-option-row { pointer-events: none; opacity: 0.7; }
+                        .locked .preview-signature { display: none; }
+                        .send-proposal-footer { text-align: center; padding: 30px 20px; border-top: 1px solid #eee; }
+                        .send-proposal-footer img { width: 120px; height: auto; margin-bottom: 10px; }
+                        .send-proposal-footer p { font-size: 0.7rem; color: #999; }
+                        @media print {
+                            body { padding: 0; background: #fff; }
+                            .preview-container { box-shadow: none; }
+                            .accept-section { display: none; }
+                            .preview-signature { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${previewHtml}
+
+                    <!-- Lightbox for viewing sketches -->
+                    <div class="lightbox" id="lightbox">
+                        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+                        <canvas id="lightboxCanvas" style="max-width: 90%; max-height: 80%;"></canvas>
+                        <a class="lightbox-download" id="lightboxDownload" href="" download="cake-sketch.jpg">Download Sketch</a>
+                        <div class="lightbox-hint">Click outside image or press ESC to close</div>
+                    </div>
+
+                    <script>
+                        // Embedded data from proposal builder
+                        let clientName = '${(document.getElementById('clientName')?.value || '').replace(/'/g, "\\'")}';
+                        let clientEmail = '${(document.getElementById('clientEmail')?.value || '').replace(/'/g, "\\'")}';
+                        let eventType = '${(document.getElementById('eventType')?.value || '').replace(/'/g, "\\'")}';
+                        let eventDate = '${document.getElementById('eventDate')?.value || ''}';
+                        let venue = '${(document.getElementById('venue')?.value || '').replace(/'/g, "\\'")}';
+
+                        // If client data not embedded, try to load from localStorage
+                        const clientId = '${new URLSearchParams(window.location.search).get('clientId') || 'new'}';
+                        if ((!clientName || clientName === 'Client') && clientId && clientId !== 'new') {
+                            try {
+                                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                                const client = clients.find(c => String(c.id) === clientId);
+                                if (client) {
+                                    clientName = client.name || clientName;
+                                    clientEmail = client.email || clientEmail;
+                                    eventType = client.eventType || eventType;
+                                    eventDate = client.eventDate || eventDate;
+                                    venue = client.venue || venue;
+                                }
+                            } catch(e) { console.log('Could not load client data:', e); }
+                        }
+                        // Set defaults
+                        clientName = clientName || 'Client';
+                        eventType = eventType || 'Wedding';
+
+                        // Check if client is booked (deposit paid)
+                        let isBooked = false;
+                        try {
+                            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                            const client = clients.find(c => String(c.id) === clientId);
+                            if (client && client.status === 'booked') {
+                                isBooked = true;
+                            }
+                        } catch(e) {}
+
+                        // Show booked banner if paid
+                        if (isBooked) {
+                            const banner = document.createElement('div');
+                            banner.style.cssText = 'background: #d4edda; color: #155724; text-align: center; padding: 12px; font-weight: 500; letter-spacing: 1px;';
+                            banner.innerHTML = '✓ DEPOSIT PAID - DATE RESERVED';
+                            document.querySelector('.preview-container').insertBefore(banner, document.querySelector('.preview-container').firstChild);
+
+                            // Hide signature section
+                            const sigSection = document.getElementById('signatureSection');
+                            if (sigSection) sigSection.style.display = 'none';
+
+                            // Change deposit button to "View Paid Invoice"
+                            const depositLink = document.getElementById('depositInvoiceLink');
+                            if (depositLink) {
+                                depositLink.textContent = 'View Paid Invoice';
+                            }
+                            // Update the message above the button
+                            const depositMsg = depositLink?.previousElementSibling;
+                            if (depositMsg && depositMsg.tagName === 'P') {
+                                depositMsg.textContent = 'Your deposit has been received:';
+                            }
+                        }
+
+                        const prices = {
+                            base: ${parseFloat(document.getElementById('basePrice')?.value) || 0},
+                            option1: ${parseFloat(document.getElementById('option1Price')?.value) || 0},
+                            option2: ${parseFloat(document.getElementById('option2Price')?.value) || 0}
+                        };
+                        const additionalServicesTotal = ${(() => {
+                            let total = 0;
+                            document.querySelectorAll('#lineItems .item-card').forEach(card => {
+                                const type = card.dataset.type;
+                                if (type === 'fixed' || type === 'cakeWithDesc' || type === 'otherWithDesc') {
+                                    total += parseFloat(card.querySelector('.item-price')?.value?.replace(/,/g, '') || 0);
+                                } else {
+                                    const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+                                    const rate = parseFloat(card.querySelector('.item-rate')?.value?.replace(/,/g, '') || 0);
+                                    total += qty * rate;
+                                }
+                            });
+                            return total;
+                        })()};
+                        const tastingCredit = ${parseFloat(document.getElementById('tastingCredit')?.value) || 0};
+                        const paymentMethod = '${document.getElementById('paymentMethod')?.value || 'card'}';
+                        // clientId already declared above
+                        let currentSelection = '${selectedDesign || 'base'}';
+
+                        function formatMoney(num) {
+                            return '$' + num.toFixed(2).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
+                        }
+
+                        function recalculateTotals(design) {
+                            currentSelection = design;
+                            const selectedPrice = prices[design] || 0;
+                            const subtotal = additionalServicesTotal + selectedPrice;
+                            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+                            const serviceFee = subtotal * serviceFeeRate;
+                            const total = Math.max(0, subtotal + serviceFee - tastingCredit);
+
+                            // Update line item
+                            const lineItemsEl = document.getElementById('previewLineItems');
+                            if (lineItemsEl) {
+                                let cakeName = 'Display Cake';
+                                if (design === 'option1') cakeName = 'Display Cake Option 2';
+                                else if (design === 'option2') cakeName = 'Display Cake Option 3';
+
+                                const existingItems = lineItemsEl.querySelectorAll('.preview-line-item');
+                                let additionalHtml = '';
+                                existingItems.forEach((item, i) => {
+                                    if (i > 0) additionalHtml += item.outerHTML;
+                                });
+
+                                lineItemsEl.innerHTML = '<div class="preview-line-item"><span>' + cakeName + '</span><span>' + formatMoney(selectedPrice) + '</span></div>' + additionalHtml;
+                            }
+
+                            // Update totals
+                            const subtotalEl = document.getElementById('previewSubtotal');
+                            if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
+
+                            const feeEl = document.getElementById('previewServiceFee');
+                            if (feeEl) feeEl.textContent = formatMoney(serviceFee);
+
+                            const totalEl = document.getElementById('previewTotal');
+                            if (totalEl) totalEl.textContent = formatMoney(total);
+
+                            const depositEl = document.getElementById('depositAmount');
+                            if (depositEl) depositEl.textContent = formatMoney(total / 2);
+                        }
+
+                        // Lightbox
+                        function closeLightbox() {
+                            document.getElementById('lightbox').classList.remove('active');
+                        }
+
+                        // Add watermark to image and display in lightbox
+                        function showWithWatermark(imgSrc, title) {
+                            const img = new Image();
+                            img.crossOrigin = 'anonymous';
+                            img.onload = function() {
+                                const canvas = document.getElementById('lightboxCanvas');
+                                const ctx = canvas.getContext('2d');
+
+                                // Set canvas size to image size
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+
+                                // Draw the image
+                                ctx.drawImage(img, 0, 0);
+
+                                // Add title at top - subtle
+                                if (title) {
+                                    const titleFontSize = Math.max(18, img.width / 40);
+                                    ctx.font = 'italic ' + titleFontSize + 'px Cormorant Garamond, Georgia, serif';
+                                    const titleWidth = ctx.measureText(title).width;
+                                    const titleX = (img.width - titleWidth) / 2;
+                                    const titleY = titleFontSize + 12;
+                                    ctx.fillStyle = 'rgba(60, 60, 60, 0.7)';
+                                    ctx.fillText(title, titleX, titleY);
+                                }
+
+                                // Add watermark - small but legible legal style
+                                const watermarkText = '© Kenna Giuzio Cake. All Rights Reserved.';
+                                const fontSize = Math.max(10, img.width / 100);
+                                ctx.font = fontSize + 'px Arial, sans-serif';
+
+                                // Position in bottom right corner
+                                const textWidth = ctx.measureText(watermarkText).width;
+                                const padding = 8;
+                                const x = img.width - textWidth - padding;
+                                const y = img.height - padding;
+
+                                // Draw subtle watermark
+                                ctx.fillStyle = 'rgba(80, 80, 80, 0.6)';
+                                ctx.fillText(watermarkText, x, y);
+
+                                // Update download link with watermarked image
+                                document.getElementById('lightboxDownload').href = canvas.toDataURL('image/jpeg', 0.9);
+                                document.getElementById('lightbox').classList.add('active');
+                            };
+                            img.src = imgSrc;
+                        }
+
+                        document.querySelectorAll('.preview-sketch img, #previewSketch img').forEach(img => {
+                            img.style.cursor = 'pointer';
+                            img.onclick = function() {
+                                // Find the design title from parent section
+                                const section = this.closest('.preview-design-section');
+                                let title = '';
+                                if (section) {
+                                    const titleEl = section.querySelector('.preview-design-title');
+                                    if (titleEl) title = titleEl.textContent;
+                                }
+                                showWithWatermark(this.src, title);
+                            };
+                        });
+
+                        document.getElementById('lightbox').onclick = function(e) {
+                            if (e.target === this) closeLightbox();
+                        };
+
+                        document.onkeydown = function(e) {
+                            if (e.key === 'Escape') closeLightbox();
+                        };
+
+                        // Design selection - function for onclick handlers
+                        function selectDesign(design) {
+                            if (document.querySelector('.preview-container').classList.contains('locked')) return;
+
+                            // Update design section highlights using data-design attribute
+                            document.querySelectorAll('.preview-design-section').forEach(section => {
+                                section.classList.remove('selected-design');
+                                if (section.dataset.design === design) {
+                                    section.classList.add('selected-design');
+                                }
+                            });
+
+                            // Update radio buttons
+                            document.querySelectorAll('.design-select-checkbox input[type="radio"]').forEach(radio => {
+                                radio.checked = (radio.value === design);
+                            });
+
+                            recalculateTotals(design);
+                        }
+
+                        // Alias for onclick handlers
+                        function selectDesignOption(design) {
+                            selectDesign(design);
+                        }
+
+                        // Signature
+                        const agreeBox = document.getElementById('agreeTerms');
+                        const sigInput = document.getElementById('clientSignature');
+                        const signBtn = document.getElementById('signBtn');
+
+                        if (agreeBox) {
+                            agreeBox.addEventListener('change', function() {
+                                if (this.checked) {
+                                    sigInput.disabled = false;
+                                    sigInput.focus();
+                                } else {
+                                    sigInput.disabled = true;
+                                    sigInput.value = '';
+                                    signBtn.disabled = true;
+                                }
+                            });
+                        }
+
+                        if (sigInput) {
+                            sigInput.addEventListener('input', function() {
+                                signBtn.disabled = !(agreeBox.checked && this.value.trim().length > 0);
+                            });
+                        }
+
+                        function signProposal() {
+                            try {
+                                const signature = sigInput.value.trim();
+                                if (!signature) {
+                                    alert('Please type your full name to sign.');
+                                    return;
+                                }
+
+                                console.log('Signing proposal. ClientId:', clientId, 'Selection:', currentSelection, 'Prices:', prices);
+
+                                // Lock the UI (with null checks for elements that may not exist in preview)
+                                const sigSection = document.getElementById('signatureSection');
+                                const lockedSection = document.getElementById('proposalLocked');
+                                const sendSection = document.getElementById('sendSection');
+                                const signedByEl = document.getElementById('signedByName');
+                                const signedDateEl = document.getElementById('signedOnDate');
+                                const previewContainer = document.querySelector('.preview-container');
+
+                                if (sigSection) sigSection.style.display = 'none';
+                                if (lockedSection) lockedSection.style.display = 'block';
+                                if (sendSection) sendSection.style.display = 'none';
+                                if (signedByEl) signedByEl.textContent = signature;
+                                if (signedDateEl) signedDateEl.textContent = new Date().toLocaleDateString('en-US', {
+                                    month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                                });
+                                if (previewContainer) previewContainer.classList.add('locked');
+
+                                // Save to localStorage directly
+                                const selectedPrice = prices[currentSelection] || 0;
+                                const subtotal = additionalServicesTotal + selectedPrice;
+                                const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+                                const serviceFee = subtotal * serviceFeeRate;
+                                const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
+
+                                const signatureData = {
+                                    signature: signature,
+                                    selectedDesign: currentSelection,
+                                    selectedDesignName: currentSelection === 'option1' ? 'Display Cake Option 2' : currentSelection === 'option2' ? 'Display Cake Option 3' : 'Display Cake',
+                                    selectedPrice: selectedPrice,
+                                    totalDue: totalDue,
+                                    additionalServicesTotal: additionalServicesTotal,
+                                    tastingCredit: tastingCredit,
+                                    paymentMethod: paymentMethod,
+                                    prices: prices,
+                                    signedAt: new Date().toISOString()
+                                };
+
+                                // Save signature
+                                const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+                                signatures[clientId] = signatureData;
+                                localStorage.setItem('kgc_signatures', JSON.stringify(signatures));
+                                console.log('Saved signature for clientId:', clientId);
+
+                                // Also update the draft with the final selection
+                                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                                if (drafts[clientId]) {
+                                    drafts[clientId].selectedDesign = currentSelection;
+                                    drafts[clientId].basePrice = prices.base;
+                                    drafts[clientId].option1Price = prices.option1;
+                                    drafts[clientId].option2Price = prices.option2;
+                                    localStorage.setItem('kgc_proposal_drafts', JSON.stringify(drafts));
+                                    console.log('Updated draft');
+                                } else {
+                                    console.log('No draft found for clientId:', clientId);
+                                }
+
+                                // Update client status - use number comparison for reliability
+                                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                                const clientIdNum = parseInt(clientId, 10);
+                                console.log('Looking for clientId:', clientId, 'as number:', clientIdNum);
+
+                                // Find by number ID or string ID
+                                const clientIndex = clients.findIndex(c => c.id === clientIdNum || c.id === clientId || String(c.id) === String(clientId));
+                                console.log('Client index:', clientIndex, 'of', clients.length, 'clients');
+
+                                if (clientIndex !== -1) {
+                                    clients[clientIndex].status = 'Signed';
+                                    clients[clientIndex].signedAt = signatureData.signedAt;
+                                    clients[clientIndex].selectedDesign = signatureData.selectedDesignName;
+                                    clients[clientIndex].totalDue = totalDue;
+                                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                                    console.log('Updated client status to Signed:', clients[clientIndex].name);
+                                } else {
+                                    console.log('Client not found! Available IDs:', clients.map(c => c.id));
+                                }
+
+                                // Update parent window if available
+                                if (window.opener && !window.opener.closed) {
+                                    try {
+                                        window.opener.selectedDesign = currentSelection;
+                                        if (window.opener.updatePreview) window.opener.updatePreview();
+                                        if (window.opener.loadSignature) window.opener.loadSignature();
+                                    } catch(e) {
+                                        console.log('Could not update parent window:', e);
+                                    }
+                                }
+
+                                // Generate deposit invoice link
+                                const depositParams = new URLSearchParams({
+                                    clientId: clientId,
+                                    name: clientName,
+                                    email: clientEmail,
+                                    eventType: eventType,
+                                    eventDate: eventDate,
+                                    venue: venue,
+                                    total: totalDue + tastingCredit,
+                                    tastingCredit: tastingCredit
+                                });
+                                const depositLink = document.getElementById('depositInvoiceLink');
+                                if (depositLink) {
+                                    // Use relative path from proposals folder
+                                    const depositUrl = '../invoices/deposit-invoice.html?' + depositParams.toString();
+                                    depositLink.href = depositUrl;
+                                    console.log('Deposit link set to:', depositUrl);
+                                    console.log('Client data:', { clientId, clientName, clientEmail, eventType });
+                                }
+                            } catch(err) {
+                                console.error('Error signing proposal:', err);
+                                alert('Error signing: ' + err.message);
+                            }
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        // Load client data from URL params or localStorage
+        function loadClientData() {
+            const params = new URLSearchParams(window.location.search);
+            const clientId = params.get('clientId');
+
+            // Check if client is booked (deposit paid) - lock proposal if so
+            if (clientId) {
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const client = clients.find(c => String(c.id) === String(clientId));
+                if (client && client.status === 'booked') {
+                    isProposalLocked = true;
+                    lockProposalUI('booked');
+                }
+            }
+
+            // Try to load saved draft first
+            const hasDraft = loadDraft();
+
+            // Check if draft has actual content (not just proposal number)
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            const draft = drafts[clientId];
+            const hasFullDraft = draft && draft.clientName;
+
+            if (hasDraft && hasFullDraft) {
+                console.log('Loaded saved draft for client:', clientId);
+                // Still sync addresses from latest client data
+                if (clientId) {
+                    const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                    const client = clients.find(c => String(c.id) === String(clientId));
+                    if (client) {
+                        document.getElementById('venueAddress').value = client.venueAddress || '';
+                        document.getElementById('clientAddress').value = client.address || '';
+                        document.getElementById('venue').value = client.venue || '';
+                        updatePreview();
+                    }
+                }
+                return;
+            }
+
+            // If we only have proposal number but no client data, display proposal number
+            if (draft && draft.proposalNumber) {
+                const displayEl = document.getElementById('proposalNumberDisplay');
+                if (displayEl) {
+                    displayEl.textContent = '#P-' + draft.proposalNumber;
+                }
+                const previewNumEl = document.getElementById('previewProposalNumber');
+                if (previewNumEl) {
+                    previewNumEl.textContent = 'Proposal #P-' + draft.proposalNumber;
+                }
+            }
+
+            console.log('No draft found, loading client data. clientId:', clientId);
+
+            // Check for URL params first (from dashboard link)
+            if (clientId) {
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                console.log('Clients in storage:', clients.length, clients);
+                const client = clients.find(c => String(c.id) === String(clientId));
+                console.log('Found client:', client);
+
+                if (client) {
+                    document.getElementById('clientName').value = client.name || '';
+                    document.getElementById('clientEmail').value = client.email || '';
+                    if (client.eventType) {
+                        document.getElementById('eventType').value = client.eventType;
+                    }
+                    if (client.eventDate) {
+                        const input = document.getElementById('eventDate');
+                        input.dataset.value = client.eventDate;
+                        input.value = formatDate(client.eventDate);
+                    }
+                    document.getElementById('venue').value = client.venue || '';
+                    document.getElementById('venueAddress').value = client.venueAddress || '';
+                    document.getElementById('clientAddress').value = client.address || '';
+                    updatePreview();
+                }
+            } else {
+                // Or use direct URL params
+                if (params.get('name')) {
+                    document.getElementById('clientName').value = params.get('name');
+                }
+                if (params.get('email')) {
+                    document.getElementById('clientEmail').value = params.get('email');
+                }
+                if (params.get('eventType')) {
+                    document.getElementById('eventType').value = params.get('eventType');
+                }
+                if (params.get('eventDate')) {
+                    const input = document.getElementById('eventDate');
+                    input.dataset.value = params.get('eventDate');
+                    input.value = formatDate(params.get('eventDate'));
+                }
+                if (params.get('venue')) {
+                    document.getElementById('venue').value = params.get('venue');
+                }
+                updatePreview();
+            }
+        }
+
+        // Signature functionality
+        document.getElementById('agreeTerms').addEventListener('change', function() {
+            const sigInput = document.getElementById('clientSignature');
+            const signBtn = document.getElementById('signBtn');
+
+            if (this.checked) {
+                sigInput.disabled = false;
+                sigInput.focus();
+            } else {
+                sigInput.disabled = true;
+                sigInput.value = '';
+                signBtn.disabled = true;
+            }
+        });
+
+        document.getElementById('clientSignature').addEventListener('input', function() {
+            const signBtn = document.getElementById('signBtn');
+            const agreeBox = document.getElementById('agreeTerms');
+            signBtn.disabled = !(agreeBox.checked && this.value.trim().length > 0);
+        });
+
+        function signProposal() {
+            const signature = document.getElementById('clientSignature').value.trim();
+            if (!signature) {
+                alert('Please type your full name to sign.');
+                return;
+            }
+
+            // Make sure a design is selected
+            if (!selectedDesign) {
+                alert('Please select a design option before signing.');
+                return;
+            }
+
+            // Lock the proposal
+            isProposalLocked = true;
+
+            // Show the locked confirmation
+            document.getElementById('signatureSection').style.display = 'none';
+            document.getElementById('proposalLocked').style.display = 'block';
+            document.getElementById('sendSection').style.display = 'none';
+            document.getElementById('signedByName').textContent = signature;
+            document.getElementById('signedOnDate').textContent = new Date().toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+            });
+
+            // Add locked class to container
+            document.querySelector('.preview-container').classList.add('locked');
+
+            // Save the signed state
+            saveSignature(signature);
+
+            // Generate deposit invoice link
+            generateDepositInvoiceLink();
+
+            alert('Proposal accepted! Thank you for choosing Kenna Giuzio Cake.\n\nPlease pay the 50% deposit to officially reserve your date.');
+        }
+
+        function saveSignature(signature) {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+
+            // Calculate the final total for the selected design
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const opt1Price = parseFloat(document.getElementById('option1Price').value) || 0;
+            const opt2Price = parseFloat(document.getElementById('option2Price').value) || 0;
+            let finalPrice = basePrice;
+            if (selectedDesign === 'option1') finalPrice = opt1Price;
+            else if (selectedDesign === 'option2') finalPrice = opt2Price;
+
+            // Add additional services
+            let additionalTotal = 0;
+            document.querySelectorAll('#lineItems .item-card').forEach(card => {
+                const type = card.dataset.type;
+                if (type === 'fixed' || type === 'cakeWithDesc' || type === 'otherWithDesc') {
+                    additionalTotal += parseFloat(card.querySelector('.item-price')?.value?.replace(/,/g, '') || 0);
+                } else {
+                    const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+                    const rate = parseFloat(card.querySelector('.item-rate')?.value?.replace(/,/g, '') || 0);
+                    additionalTotal += qty * rate;
+                }
+            });
+
+            const subtotal = finalPrice + additionalTotal;
+            const tastingCredit = parseFloat(document.getElementById('tastingCredit').value) || 0;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const serviceFee = paymentMethod === 'card' ? subtotal * 0.034 : 0;
+            const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
+
+            const signatureData = {
+                signature: signature,
+                selectedDesign: selectedDesign,
+                selectedDesignName: selectedDesign === 'option1' ? 'Display Cake Option 2' : selectedDesign === 'option2' ? 'Display Cake Option 3' : 'Display Cake',
+                selectedPrice: finalPrice,
+                totalDue: totalDue,
+                signedAt: new Date().toISOString()
+            };
+
+            try {
+                // Save signature data
+                const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+                signatures[clientId] = signatureData;
+                localStorage.setItem('kgc_signatures', JSON.stringify(signatures));
+
+                // Update client status in dashboard - use number comparison for reliability
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIdNum = parseInt(clientId, 10);
+                const clientIndex = clients.findIndex(c => c.id === clientIdNum || c.id === clientId || String(c.id) === String(clientId));
+                if (clientIndex !== -1) {
+                    clients[clientIndex].status = 'Signed';
+                    clients[clientIndex].signedAt = signatureData.signedAt;
+                    clients[clientIndex].selectedDesign = signatureData.selectedDesignName;
+                    clients[clientIndex].totalDue = totalDue;
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                }
+            } catch (e) {
+                console.error('Could not save signature:', e);
+            }
+        }
+
+        function generateDepositInvoiceLink() {
+            // Get client info
+            const clientName = document.getElementById('clientName').value || 'Client';
+            const clientEmail = document.getElementById('clientEmail').value || '';
+            const eventType = document.getElementById('eventType').value || 'Event';
+            const eventDate = document.getElementById('eventDate').value || '';
+            const venue = document.getElementById('venue').value || '';
+
+            // Calculate totals based on selected design
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const opt1Price = parseFloat(document.getElementById('option1Price').value) || 0;
+            const opt2Price = parseFloat(document.getElementById('option2Price').value) || 0;
+            let designPrice = basePrice;
+            if (selectedDesign === 'option1') designPrice = opt1Price;
+            else if (selectedDesign === 'option2') designPrice = opt2Price;
+
+            // Add additional services
+            let additionalTotal = 0;
+            document.querySelectorAll('#lineItems .item-card').forEach(card => {
+                const type = card.dataset.type;
+                if (type === 'fixed' || type === 'cakeWithDesc' || type === 'otherWithDesc') {
+                    additionalTotal += parseFloat(card.querySelector('.item-price')?.value?.replace(/,/g, '') || 0);
+                } else {
+                    const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+                    const rate = parseFloat(card.querySelector('.item-rate')?.value?.replace(/,/g, '') || 0);
+                    additionalTotal += qty * rate;
+                }
+            });
+
+            const proposalTotal = designPrice + additionalTotal;
+            const tastingCredit = parseFloat(document.getElementById('tastingCredit').value) || 250;
+
+            // Build the deposit invoice URL
+            const urlClientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            const params = new URLSearchParams({
+                clientId: urlClientId,
+                name: clientName,
+                email: clientEmail,
+                eventType: eventType,
+                eventDate: eventDate,
+                venue: venue,
+                total: proposalTotal,
+                tastingCredit: tastingCredit
+            });
+
+            const depositLink = document.getElementById('depositInvoiceLink');
+            depositLink.href = '/invoices/deposit-invoice.html?' + params.toString();
+        }
+
+        function loadSignature() {
+            const clientId = new URLSearchParams(window.location.search).get('clientId') || 'new';
+            const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+            const sig = signatures[clientId];
+
+            if (sig) {
+                isProposalLocked = true;
+                selectedDesign = sig.selectedDesign || 'base';
+
+                // Restore prices from signature if available (in case draft wasn't saved properly)
+                if (sig.prices) {
+                    if (sig.prices.base !== undefined) {
+                        document.getElementById('basePrice').value = sig.prices.base;
+                    }
+                    if (sig.prices.option1 !== undefined) {
+                        document.getElementById('option1Price').value = sig.prices.option1;
+                    }
+                    if (sig.prices.option2 !== undefined) {
+                        document.getElementById('option2Price').value = sig.prices.option2;
+                    }
+                }
+
+                // Restore tasting credit and payment method
+                if (sig.tastingCredit !== undefined) {
+                    document.getElementById('tastingCredit').value = sig.tastingCredit;
+                }
+                if (sig.paymentMethod) {
+                    document.getElementById('paymentMethod').value = sig.paymentMethod;
+                }
+
+                document.getElementById('signatureSection').style.display = 'none';
+                document.getElementById('proposalLocked').style.display = 'block';
+                document.getElementById('sendSection').style.display = 'none';
+                document.getElementById('signedByName').textContent = sig.signature;
+                document.getElementById('signedOnDate').textContent = new Date(sig.signedAt).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                });
+                document.querySelector('.preview-container').classList.add('locked');
+
+                updatePreview();
+
+                // Generate the deposit invoice link for signed proposals
+                setTimeout(() => generateDepositInvoiceLink(), 100);
+            }
+        }
+
+        // Initialize
+        loadClientData();
+
+        // Load from API in background
+        loadClientsFromAPI();
+
+        // Load any separately saved sketches (if not loaded via draft)
+        if (designs.base.length === 0 && designs.option1.length === 0 && designs.option2.length === 0) {
+            loadSketches();
+        }
+        // Check for saved signature
+        loadSignature();
+
+        // Auto-save draft on page load to mark as "draft" in In Studio
+        setTimeout(() => saveProposalSilent(), 100);
+
+        // ===== CALENDAR POPUP FUNCTIONALITY =====
+        let calendarCurrentMonth = new Date().getMonth();
+        let calendarCurrentYear = new Date().getFullYear();
+        let calendarSelectedDate = null;
+
+        function openCalendarPopup() {
+            const input = document.getElementById('eventDate');
+            const currentValue = input.dataset.value || ''; // Get stored ISO date
+            if (currentValue) {
+                const d = new Date(currentValue + 'T00:00:00');
+                if (!isNaN(d)) {
+                    calendarCurrentMonth = d.getMonth();
+                    calendarCurrentYear = d.getFullYear();
+                    calendarSelectedDate = currentValue;
+                }
+            } else {
+                const now = new Date();
+                calendarCurrentMonth = now.getMonth();
+                calendarCurrentYear = now.getFullYear();
+                calendarSelectedDate = null;
+            }
+            renderCalendar();
+            document.getElementById('calendarPopup').classList.add('active');
+        }
+
+        function closeCalendarPopup() {
+            document.getElementById('calendarPopup').classList.remove('active');
+        }
+
+        function changeMonth(delta) {
+            calendarCurrentMonth += delta;
+            if (calendarCurrentMonth > 11) {
+                calendarCurrentMonth = 0;
+                calendarCurrentYear++;
+            } else if (calendarCurrentMonth < 0) {
+                calendarCurrentMonth = 11;
+                calendarCurrentYear--;
+            }
+            renderCalendar();
+        }
+
+        function getEventsForMonth(year, month) {
+            const events = [];
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+
+            // Add client events
+            clients.forEach(client => {
+                if (client.eventDate) {
+                    const d = new Date(client.eventDate + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: client.eventDate,
+                            type: 'event',
+                            name: client.name,
+                            eventType: client.eventType
+                        });
+                    }
+                }
+                // Tasting dates
+                if (client.tastingDate) {
+                    const d = new Date(client.tastingDate + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: client.tastingDate,
+                            type: 'tasting',
+                            name: client.name + ' Tasting'
+                        });
+                    }
+                }
+            });
+
+            // Get custom calendar events
+            const customEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+            customEvents.forEach(evt => {
+                if (evt.date) {
+                    const d = new Date(evt.date + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: evt.date,
+                            type: evt.type || 'personal',
+                            name: evt.title
+                        });
+                    }
+                }
+            });
+
+            return events;
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+            document.getElementById('calendarMonthYear').textContent =
+                monthNames[calendarCurrentMonth] + ' ' + calendarCurrentYear;
+
+            const events = getEventsForMonth(calendarCurrentYear, calendarCurrentMonth);
+
+            // Group events by date
+            const eventsByDate = {};
+            events.forEach(e => {
+                if (!eventsByDate[e.date]) eventsByDate[e.date] = [];
+                eventsByDate[e.date].push(e);
+            });
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const firstDay = new Date(calendarCurrentYear, calendarCurrentMonth, 1);
+            const lastDay = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0);
+            const startDay = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+
+            let html = '';
+
+            // Previous month days
+            const prevMonth = new Date(calendarCurrentYear, calendarCurrentMonth, 0);
+            for (let i = startDay - 1; i >= 0; i--) {
+                const day = prevMonth.getDate() - i;
+                html += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${calendarCurrentYear}-${String(calendarCurrentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const date = new Date(calendarCurrentYear, calendarCurrentMonth, day);
+                const isPast = date < today;
+                const isToday = date.getTime() === today.getTime();
+
+                let classes = 'calendar-day';
+                if (isPast) classes += ' past';
+                if (isToday) classes += ' today';
+                if (dateStr === calendarSelectedDate) classes += ' selected';
+
+                const dayEvents = eventsByDate[dateStr] || [];
+
+                // Build events HTML for this day
+                let eventsHtml = '<div class="day-events">';
+                const maxDisplay = 2;
+                dayEvents.slice(0, maxDisplay).forEach(e => {
+                    const shortName = e.name.length > 12 ? e.name.substring(0, 10) + '...' : e.name;
+                    eventsHtml += `<div class="day-event ${e.type}" title="${e.name}">${shortName}</div>`;
+                });
+                if (dayEvents.length > maxDisplay) {
+                    eventsHtml += `<div class="day-event-more">+${dayEvents.length - maxDisplay} more</div>`;
+                }
+                eventsHtml += '</div>';
+
+                const clickable = !isPast;
+                html += `<div class="${classes}" ${clickable ? `onclick="selectCalendarDate('${dateStr}', event)"` : ''}>
+                    <span class="day-number">${day}</span>
+                    ${eventsHtml}
+                </div>`;
+            }
+
+            // Next month days
+            const totalCells = startDay + daysInMonth;
+            const remaining = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="calendar-day other-month"><span class="day-number">${i}</span></div>`;
+            }
+
+            document.getElementById('calendarDays').innerHTML = html;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        function selectCalendarDate(dateStr, e) {
+            // If clicked on an event label, don't select
+            if (e && (e.target.classList.contains('day-event') || e.target.classList.contains('day-event-more'))) {
+                return;
+            }
+
+            calendarSelectedDate = dateStr;
+            const input = document.getElementById('eventDate');
+            input.dataset.value = dateStr; // Store ISO date
+            input.value = formatDate(dateStr); // Display formatted date
+
+            // Sync date to client record in In Studio
+            syncEventDateToClient(dateStr);
+
+            updatePreview();
+            renderCalendar();
+
+            setTimeout(() => {
+                closeCalendarPopup();
+            }, 200);
+        }
+
+        function syncEventDateToClient(dateStr) {
+            const clientId = new URLSearchParams(window.location.search).get('clientId');
+            if (!clientId) return;
+
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const clientIdNum = parseInt(clientId, 10);
+            const clientIndex = clients.findIndex(c => c.id === clientIdNum || c.id === clientId || String(c.id) === String(clientId));
+
+            if (clientIndex !== -1) {
+                clients[clientIndex].eventDate = dateStr;
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+            }
+        }
+
+        // Close on overlay click
+        document.getElementById('calendarPopup')?.addEventListener('click', function(e) {
+            if (e.target === this) closeCalendarPopup();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCalendarPopup();
+            }
+        });
+
+        // Test function: Load sample cake data (call button or console: loadTestCakeData())
+        window.loadTestCakeData = function() {
+            // Add test images to each design option
+            designs.base = ['../images/cake-01.jpg'];
+            designs.option1 = ['../images/cake-02.jpg'];
+            designs.option2 = ['../images/cake-03.jpg'];
+
+            // Set prices
+            document.getElementById('basePrice').value = '850';
+            document.getElementById('option1Price').value = '950';
+            document.getElementById('option2Price').value = '1100';
+
+            // Set descriptions
+            document.getElementById('baseNarrative').value = 'Classic three-tier buttercream cake with fresh seasonal flowers. Elegant ivory finish with subtle texture, adorned with garden roses, ranunculus, and eucalyptus. Serves 120 guests.';
+            document.getElementById('option1Narrative').value = 'Semi-naked four-tier design with cascading sugar flowers. Hand-painted gold leaf accents on each tier. Features handcrafted peonies, dahlias, and sweet peas in soft blush tones. Serves 150 guests.';
+            document.getElementById('option2Narrative').value = 'Modern minimalist five-tier cake with sharp edges and geometric details. Features an asymmetrical fresh flower arrangement with orchids, calla lilies, and monstera leaves. Gold geometric topper included. Serves 180 guests.';
+
+            // Render and update
+            renderSketches();
+            updatePreview();
+            console.log('Test cake data loaded!');
+        };
+
+        // Test function: Load sample data for individual add-on
+        window.loadTestAddOn = function(type) {
+            addItem(type);
+            const cards = document.querySelectorAll('#lineItems .item-card');
+            const card = cards[cards.length - 1];
+
+            switch(type) {
+                case 'cutting':
+                    card.querySelector('.item-desc').value = 'Vanilla bean with Madagascar vanilla buttercream, Chocolate fudge with salted caramel filling';
+                    card.querySelector('.item-qty').value = '100';
+                    card.querySelector('.item-rate').value = '8';
+                    updateItemTotal(card.querySelector('.item-qty'));
+                    break;
+                case 'cloche':
+                    card.querySelector('.item-desc').value = 'Preserved garden roses and peonies in glass dome';
+                    card.querySelector('.item-qty').value = '2';
+                    card.querySelector('.item-rate').value = '150';
+                    updateItemTotal(card.querySelector('.item-qty'));
+                    break;
+                case 'other':
+                    card.querySelector('.item-desc').value = 'Custom cake topper - hand-lettered gold acrylic';
+                    card.querySelector('.item-price').value = '75';
+                    break;
+                case 'delivery':
+                    card.querySelector('.item-desc').value = 'Delivery & Setup';
+                    card.querySelector('.item-price').value = '150';
+                    break;
+                case 'travel':
+                    card.querySelector('.item-desc').value = 'Additional 25 miles beyond Seattle (25 mi × $2/mi)';
+                    card.querySelector('.item-price').value = '50';
+                    break;
+            }
+
+            updatePreview();
+            console.log('Test ' + type + ' added!');
+        };
+    </script>
+
+    <!-- Calendar Popup -->
+    <div class="calendar-popup-overlay" id="calendarPopup">
+        <div class="calendar-popup">
+            <div class="calendar-popup-header">
+                <h3 class="calendar-popup-title">Select Event Date</h3>
+                <button class="calendar-popup-close" onclick="closeCalendarPopup()">&times;</button>
+            </div>
+            <div class="calendar-nav">
+                <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                <span class="calendar-month-year" id="calendarMonthYear">February 2026</span>
+                <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-weekdays">
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+                    <span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+                <div class="calendar-days" id="calendarDays">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+            <div class="calendar-legend">
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot tasting"></span>
+                    <span>Tasting</span>
+                </div>
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot event"></span>
+                    <span>Event</span>
+                </div>
+                <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot personal"></span>
+                    <span>Personal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

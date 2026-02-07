@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Colors - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            background: #fafafa;
+            z-index: 100;
+            padding-top: 20px;
+            margin-top: -20px;
+        }
+
+        .header-date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        .back-link {
+            color: #b5956a;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Active Palette Banner */
+        .active-banner {
+            background: linear-gradient(135deg, #f8f7f5 0%, #fff 100%);
+            border: 2px solid #b5956a;
+            border-radius: 12px;
+            padding: 24px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .active-banner-left h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .active-banner-left h2 .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #b5956a;
+            border-radius: 50%;
+        }
+
+        .active-banner-left p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .active-colors-preview {
+            display: flex;
+            gap: 6px;
+        }
+
+        .active-color-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .implement-btn {
+            background: linear-gradient(135deg, #b5956a 0%, #a38559 100%);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(181, 149, 106, 0.3);
+        }
+
+        .implement-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(181, 149, 106, 0.4);
+        }
+
+        .implement-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .changes-badge {
+            display: inline-block;
+            background: #c2185b;
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .color-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .color-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .color-swatch {
+            height: 100px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .color-swatch:hover::after {
+            content: 'Click to edit';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .color-info {
+            padding: 12px;
+        }
+
+        .color-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .color-name input {
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            width: 100%;
+            padding: 2px 0;
+        }
+
+        .color-name input:focus {
+            outline: none;
+            border-bottom: 1px solid #b5956a;
+        }
+
+        .color-hex {
+            font-size: 0.75rem;
+            color: #666;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-hex input {
+            border: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: inherit;
+            color: inherit;
+            width: 80px;
+            padding: 2px 0;
+        }
+
+        .color-hex input:focus {
+            outline: none;
+            border-bottom: 1px solid #b5956a;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+        }
+
+        .color-usage {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #b5956a;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #a07f5a;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Color picker modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+
+        .color-picker-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            width: 100%;
+            height: 150px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Inspiration Section */
+        .inspiration-upload {
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .upload-area:hover {
+            border-color: #b5956a;
+            background: #faf9f7;
+        }
+
+        .upload-hint {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .inspiration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .inspiration-card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .inspiration-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .inspiration-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .inspiration-content {
+            padding: 16px;
+        }
+
+        .inspiration-colors {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .extracted-color {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .extracted-color:hover {
+            transform: scale(1.15);
+        }
+
+        .inspiration-description {
+            width: 100%;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 60px;
+            line-height: 1.5;
+        }
+
+        .inspiration-description:focus {
+            outline: none;
+            border-color: #b5956a;
+        }
+
+        .inspiration-description::placeholder {
+            color: #aaa;
+        }
+
+        .inspiration-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .inspiration-date {
+            font-size: 0.7rem;
+            color: #999;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #c2185b;
+        }
+
+        .empty-inspiration {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        /* Image Preview Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
+        .image-modal img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .image-modal-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 2rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Brand Color Palette</h1>
+                <p class="header-date" id="headerDate"></p>
+            </div>
+            <a href="/admin/in-studio.html" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to In Studio
+            </a>
+        </div>
+
+        <!-- Active Palette Banner -->
+        <div class="active-banner">
+            <div class="active-banner-left">
+                <h2><span class="status-dot"></span> Active Palette</h2>
+                <p>These colors are currently live on the platform</p>
+            </div>
+            <div class="active-colors-preview" id="activeColorsPreview">
+                <!-- Populated by JavaScript -->
+            </div>
+            <button class="implement-btn" id="implementBtn" onclick="implementNewPalette()">
+                Implement New Palette
+            </button>
+        </div>
+
+        <!-- Working Palette Header -->
+        <div class="section" style="background: transparent; box-shadow: none; padding: 0 0 10px 0; margin-bottom: 20px;">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Working Palette <span class="changes-badge" id="changesBadge" style="display: none;">Unsaved Changes</span></h2>
+                    <p class="section-subtitle" style="margin-bottom: 0;">Edit colors below, then click "Implement New Palette" to make them live</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Colors -->
+        <div class="section">
+            <h2 class="section-title">Primary Brand Colors</h2>
+            <p class="section-subtitle">The core colors that define your brand identity. Use these for major elements like buttons, headers, and key accents.</p>
+            <div class="color-grid" id="primaryColors">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Secondary Colors -->
+        <div class="section">
+            <h2 class="section-title">Secondary Colors</h2>
+            <p class="section-subtitle">Supporting colors for backgrounds, borders, text variations, and subtle accents.</p>
+            <div class="color-grid" id="secondaryColors">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Color Inspiration -->
+        <div class="section">
+            <h2 class="section-title">Color Inspiration</h2>
+            <p class="section-subtitle">Upload photos with colors you love and describe what draws you to them. We'll use these to refine your palette.</p>
+
+            <div class="inspiration-upload">
+                <label for="inspirationInput" class="upload-area">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#b5956a" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span>Click to upload inspiration photos</span>
+                    <span class="upload-hint">JPG, PNG up to 5MB</span>
+                </label>
+                <input type="file" id="inspirationInput" accept="image/*" multiple style="display: none;">
+            </div>
+
+            <div class="inspiration-grid" id="inspirationGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="saveColors()">Save Working Palette</button>
+            <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+            <button class="btn btn-secondary" onclick="exportColors()">Export CSS</button>
+        </div>
+
+        <!-- Data Management -->
+        <div class="section" style="margin-top: 40px; border-top: 2px solid #eee; padding-top: 30px;">
+            <h2 class="section-title" style="color: #c2185b;">Data Management</h2>
+            <p class="section-subtitle">Manage your portal data. Use with caution - these actions cannot be undone.</p>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;">
+                <button class="btn" onclick="clearAllData()" style="background: #fff; color: #c2185b; border: 1px solid #c2185b;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Clear All Client Data
+                </button>
+                <button class="btn" onclick="clearCalendarOnly()" style="background: #fff; color: #666; border: 1px solid #ddd;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Clear Calendar Events Only
+                </button>
+                <button class="btn" onclick="loadSampleData()" style="background: #fff; color: #b5956a; border: 1px solid #b5956a;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Load Sample Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Picker Modal -->
+    <div class="modal-overlay" id="colorPickerModal">
+        <div class="modal">
+            <h3 class="modal-title">Choose Color</h3>
+            <div class="color-picker-wrapper">
+                <input type="color" id="colorPickerInput" value="#b5956a">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeColorPicker()">Cancel</button>
+                <button class="btn btn-primary" onclick="applyColor()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Image Preview Modal -->
+    <div class="image-modal" id="imageModal" onclick="closeImageModal()">
+        <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
+        <img id="imageModalImg" src="" alt="Inspiration photo">
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        // Default color palette based on Kenna's website
+        const defaultColors = {
+            primary: [
+                { name: 'Brand Gold', hex: '#b5956a', usage: 'Primary brand color, buttons, accents' },
+                { name: 'Deep Charcoal', hex: '#1a1a1a', usage: 'Headlines, primary text' },
+                { name: 'Warm Cream', hex: '#f8f7f5', usage: 'Background sections' },
+                { name: 'Soft White', hex: '#fafafa', usage: 'Page backgrounds' },
+                { name: 'Elegant Rose', hex: '#c2185b', usage: 'Special highlights, signatures' }
+            ],
+            secondary: [
+                // Neutrals (for text, borders, backgrounds)
+                { name: 'Medium Gray', hex: '#666666', usage: 'Body text, descriptions', isNeutral: true },
+                { name: 'Light Gray', hex: '#999999', usage: 'Subtle text, captions', isNeutral: true },
+                { name: 'Border Gray', hex: '#eeeeee', usage: 'Borders, dividers', isNeutral: true },
+                { name: 'Soft Gray', hex: '#cccccc', usage: 'Disabled states, hints', isNeutral: true },
+                // Accent colors (used for event types on calendar)
+                { name: 'Sage Green', hex: '#a8b5a0', usage: 'Events - Main events', isAccent: true },
+                { name: 'Champagne', hex: '#dfc89f', usage: 'Events - Tastings', isAccent: true },
+                { name: 'Dusty Rose', hex: '#d4a5a5', usage: 'Events - Signed', isAccent: true },
+                { name: 'Soft Blue', hex: '#a5c4d4', usage: 'Events - Proposals', isAccent: true },
+                { name: 'Muted Mauve', hex: '#b8a9c9', usage: 'Events - Inquiries', isAccent: true },
+                { name: 'Warm Taupe', hex: '#c9b99a', usage: 'Events - Custom', isAccent: true }
+            ]
+        };
+
+        // Active palette = what's live on the platform
+        // Working palette = what Kenna is editing
+        let activePalette = JSON.parse(localStorage.getItem('kgc_active_palette')) || JSON.parse(JSON.stringify(defaultColors));
+        let currentColors = JSON.parse(localStorage.getItem('kgc_brand_colors')) || JSON.parse(JSON.stringify(defaultColors));
+        let editingColor = null;
+
+        // Initialize active palette if it doesn't exist
+        if (!localStorage.getItem('kgc_active_palette')) {
+            localStorage.setItem('kgc_active_palette', JSON.stringify(defaultColors));
+        }
+
+        // Load palettes from API in background
+        async function loadPalettesFromAPI() {
+            try {
+                const apiActive = await getSetting('active_palette');
+                if (apiActive) {
+                    activePalette = apiActive;
+                    localStorage.setItem('kgc_active_palette', JSON.stringify(activePalette));
+                }
+                const apiColors = await getSetting('brand_colors');
+                if (apiColors) {
+                    currentColors = apiColors;
+                    localStorage.setItem('kgc_brand_colors', JSON.stringify(currentColors));
+                }
+                renderColors();
+                console.log('Brand colors: Loaded palettes from API');
+            } catch (error) {
+                console.log('Brand colors: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderColors();
+            renderInspirations();
+            loadPalettesFromAPI();
+        });
+
+        function renderColors() {
+            renderColorSection('primaryColors', currentColors.primary);
+            renderColorSection('secondaryColors', currentColors.secondary);
+            renderActivePreview();
+            updateChangesBadge();
+        }
+
+        // Derive event colors from accent colors in secondary palette
+        function getEventColors(palette) {
+            const accents = (palette.secondary || []).filter(c => c.isAccent);
+            // Map accent colors to event types
+            // Order: Event, Tasting, Inquiry, Proposal, Signed, Custom
+            return [
+                accents[0] || { hex: '#a8b5a0' }, // Sage Green - Events
+                accents[1] || { hex: '#dfc89f' }, // Champagne - Tastings
+                accents[4] || { hex: '#b8a9c9' }, // Muted Mauve - Inquiries
+                accents[3] || { hex: '#a5c4d4' }, // Soft Blue - Proposals
+                accents[2] || { hex: '#d4a5a5' }, // Dusty Rose - Signed
+                accents[5] || { hex: '#c9b99a' }  // Warm Taupe - Custom
+            ];
+        }
+
+        function renderActivePreview() {
+            const container = document.getElementById('activeColorsPreview');
+            // Show first 5 primary colors from active palette
+            container.innerHTML = activePalette.primary.map(c =>
+                `<div class="active-color-dot" style="background: ${c.hex};" title="${c.name}: ${c.hex}"></div>`
+            ).join('');
+        }
+
+        function hasChanges() {
+            return JSON.stringify(currentColors) !== JSON.stringify(activePalette);
+        }
+
+        function updateChangesBadge() {
+            const badge = document.getElementById('changesBadge');
+            const btn = document.getElementById('implementBtn');
+            if (hasChanges()) {
+                badge.style.display = 'inline-block';
+                btn.disabled = false;
+            } else {
+                badge.style.display = 'none';
+                btn.disabled = true;
+            }
+        }
+
+        async function implementNewPalette() {
+            if (!hasChanges()) {
+                showToast('No changes to implement');
+                return;
+            }
+
+            if (confirm('Implement this palette across the platform?\n\nThis will update all colors used in the calendar, dashboard, and client portal.')) {
+                // Copy working palette to active
+                activePalette = JSON.parse(JSON.stringify(currentColors));
+                localStorage.setItem('kgc_active_palette', JSON.stringify(activePalette));
+                localStorage.setItem('kgc_brand_colors', JSON.stringify(currentColors));
+
+                // Save to API
+                try {
+                    await saveSetting('active_palette', activePalette);
+                    await saveSetting('brand_colors', currentColors);
+                    console.log('Brand colors: Saved to API');
+                } catch (error) {
+                    console.log('Brand colors: API save failed, localStorage only:', error.message);
+                }
+
+                renderActivePreview();
+                updateChangesBadge();
+                showToast('New palette implemented! Colors are now live.');
+            }
+        }
+
+        function renderColorSection(containerId, colors) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = colors.map((color, index) => `
+                <div class="color-card">
+                    <div class="color-swatch" style="background: ${color.hex};" onclick="openColorPicker('${containerId}', ${index})"></div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <input type="text" value="${color.name}" onchange="updateColorName('${containerId}', ${index}, this.value)">
+                        </div>
+                        <div class="color-hex">
+                            <input type="text" value="${color.hex}" onchange="updateColorHex('${containerId}', ${index}, this.value)">
+                            <button class="copy-btn" onclick="copyToClipboard('${color.hex}')" title="Copy hex code">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="color-usage">${color.usage}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openColorPicker(section, index) {
+            editingColor = { section, index };
+            const colors = section === 'primaryColors' ? currentColors.primary : currentColors.secondary;
+            document.getElementById('colorPickerInput').value = colors[index].hex;
+            document.getElementById('colorPickerModal').classList.add('active');
+        }
+
+        function closeColorPicker() {
+            document.getElementById('colorPickerModal').classList.remove('active');
+            editingColor = null;
+        }
+
+        function applyColor() {
+            if (!editingColor) return;
+            const newColor = document.getElementById('colorPickerInput').value;
+            updateColorHex(editingColor.section, editingColor.index, newColor);
+            closeColorPicker();
+        }
+
+        function updateColorName(section, index, name) {
+            const colors = section === 'primaryColors' ? currentColors.primary : currentColors.secondary;
+            colors[index].name = name;
+        }
+
+        function updateColorHex(section, index, hex) {
+            const colors = section === 'primaryColors' ? currentColors.primary : currentColors.secondary;
+            colors[index].hex = hex;
+            renderColors();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard!');
+        }
+
+        async function saveColors() {
+            localStorage.setItem('kgc_brand_colors', JSON.stringify(currentColors));
+            // Also save to API
+            try {
+                await saveSetting('brand_colors', currentColors);
+            } catch (error) {
+                console.log('Brand colors: API save failed:', error.message);
+            }
+            updateChangesBadge();
+            showToast('Working palette saved!');
+        }
+
+        async function resetToDefaults() {
+            if (confirm('Reset all colors to defaults? This cannot be undone.')) {
+                currentColors = JSON.parse(JSON.stringify(defaultColors));
+                localStorage.setItem('kgc_brand_colors', JSON.stringify(currentColors));
+                // Also save to API
+                try {
+                    await saveSetting('brand_colors', currentColors);
+                } catch (error) {
+                    console.log('Brand colors: API save failed:', error.message);
+                }
+                renderColors();
+                showToast('Colors reset to defaults');
+            }
+        }
+
+        function exportColors() {
+            let css = '/* Kenna Giuzio Cake - Brand Colors */\n\n:root {\n';
+
+            css += '  /* Primary Colors */\n';
+            currentColors.primary.forEach((c, i) => {
+                css += `  --color-primary-${i + 1}: ${c.hex}; /* ${c.name} */\n`;
+            });
+
+            css += '\n  /* Secondary Colors (includes accent colors for events) */\n';
+            currentColors.secondary.forEach((c, i) => {
+                const varName = c.name.toLowerCase().replace(/\s+/g, '-');
+                css += `  --color-${varName}: ${c.hex}; /* ${c.usage} */\n`;
+            });
+
+            css += '}\n';
+
+            // Download as file
+            const blob = new Blob([css], { type: 'text/css' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kgc-brand-colors.css';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('CSS file downloaded!');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('colorPickerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeColorPicker();
+        });
+
+        // ==================== INSPIRATION SECTION ====================
+
+        let inspirations = JSON.parse(localStorage.getItem('kgc_inspirations')) || [];
+
+        // Load inspirations from API in background
+        async function loadInspirationsFromAPI() {
+            try {
+                const apiInspirations = await getSetting('inspirations');
+                if (apiInspirations) {
+                    inspirations = apiInspirations;
+                    localStorage.setItem('kgc_inspirations', JSON.stringify(inspirations));
+                    renderInspirations();
+                }
+            } catch (error) {
+                console.log('Inspirations: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', loadInspirationsFromAPI);
+
+        // File upload handler
+        document.getElementById('inspirationInput').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+
+            for (const file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`${file.name} is too large (max 5MB)`);
+                    continue;
+                }
+
+                try {
+                    const base64 = await fileToBase64(file);
+                    const colors = await extractColors(base64);
+
+                    const inspiration = {
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        image: base64,
+                        colors: colors,
+                        description: '',
+                        dateAdded: new Date().toISOString()
+                    };
+
+                    inspirations.unshift(inspiration);
+                    saveInspirations();
+                    renderInspirations();
+                    showToast('Photo uploaded! Add a description of what you like about the colors.');
+                } catch (err) {
+                    showToast('Error processing image');
+                    console.error(err);
+                }
+            }
+
+            // Clear input so same file can be uploaded again
+            e.target.value = '';
+        });
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Extract dominant colors from image
+        function extractColors(imageSrc) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Sample at smaller size for performance
+                    const sampleSize = 100;
+                    canvas.width = sampleSize;
+                    canvas.height = sampleSize;
+                    ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+
+                    const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize).data;
+                    const colorCounts = {};
+
+                    // Sample pixels
+                    for (let i = 0; i < imageData.length; i += 16) { // Skip pixels for speed
+                        const r = Math.round(imageData[i] / 32) * 32;
+                        const g = Math.round(imageData[i + 1] / 32) * 32;
+                        const b = Math.round(imageData[i + 2] / 32) * 32;
+
+                        // Skip very dark or very light colors
+                        const brightness = (r + g + b) / 3;
+                        if (brightness < 30 || brightness > 240) continue;
+
+                        const hex = rgbToHex(r, g, b);
+                        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+                    }
+
+                    // Sort by frequency and get top 5
+                    const sortedColors = Object.entries(colorCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([hex]) => hex);
+
+                    resolve(sortedColors.length > 0 ? sortedColors : ['#b5956a', '#f8f7f5', '#1a1a1a']);
+                };
+                img.onerror = () => resolve(['#b5956a', '#f8f7f5', '#1a1a1a']);
+                img.src = imageSrc;
+            });
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function renderInspirations() {
+            const container = document.getElementById('inspirationGrid');
+
+            if (inspirations.length === 0) {
+                container.innerHTML = '<div class="empty-inspiration">No inspiration photos yet. Upload some photos with colors you love!</div>';
+                return;
+            }
+
+            container.innerHTML = inspirations.map(insp => `
+                <div class="inspiration-card" data-id="${insp.id}">
+                    <img src="${insp.image}" class="inspiration-image" onclick="openImageModal('${insp.id}')" alt="Inspiration photo">
+                    <div class="inspiration-content">
+                        <div class="inspiration-colors">
+                            ${insp.colors.map(color => `
+                                <div class="extracted-color"
+                                     style="background: ${color};"
+                                     title="${color} - Click to copy"
+                                     onclick="copyToClipboard('${color}')"></div>
+                            `).join('')}
+                        </div>
+                        <textarea class="inspiration-description"
+                                  placeholder="Describe what you like about these colors... (e.g., 'Love the soft warmth of the pink with the rich gold accent')"
+                                  onchange="updateDescription('${insp.id}', this.value)">${insp.description || ''}</textarea>
+                        <div class="inspiration-footer">
+                            <span class="inspiration-date">Added ${formatDate(insp.dateAdded)}</span>
+                            <button class="delete-btn" onclick="deleteInspiration('${insp.id}')" title="Delete">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function updateDescription(id, description) {
+            const insp = inspirations.find(i => i.id === id);
+            if (insp) {
+                insp.description = description;
+                saveInspirations();
+            }
+        }
+
+        function deleteInspiration(id) {
+            if (confirm('Delete this inspiration photo?')) {
+                inspirations = inspirations.filter(i => i.id !== id);
+                saveInspirations();
+                renderInspirations();
+                showToast('Photo deleted');
+            }
+        }
+
+        async function saveInspirations() {
+            localStorage.setItem('kgc_inspirations', JSON.stringify(inspirations));
+            // Also save to API
+            try {
+                await saveSetting('inspirations', inspirations);
+            } catch (error) {
+                console.log('Inspirations: API save failed:', error.message);
+            }
+        }
+
+        function openImageModal(id) {
+            const insp = inspirations.find(i => i.id === id);
+            if (insp) {
+                document.getElementById('imageModalImg').src = insp.image;
+                document.getElementById('imageModal').classList.add('active');
+            }
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        // Close image modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+                closeColorPicker();
+            }
+        });
+
+        // Data Management Functions
+        function clearAllData() {
+            if (!confirm('⚠️ Clear ALL client data?\n\nThis will delete:\n• All clients and contacts\n• All calendar events\n• All proposals and signatures\n• All tasting drafts\n• All portal data\n\nThis cannot be undone!')) return;
+
+            // Clear all client-related data
+            localStorage.removeItem('kgc_clients');
+            localStorage.removeItem('kgc_calendar_events');
+            localStorage.removeItem('kgc_signatures');
+            localStorage.removeItem('kgc_proposal_drafts');
+            localStorage.removeItem('kgc_tasting_drafts');
+
+            // Clear all portal data
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('kgc_portal_'))
+                .forEach(k => localStorage.removeItem(k));
+
+            showToast('All client data cleared');
+            setTimeout(() => window.location.href = '/admin/', 1000);
+        }
+
+        function clearCalendarOnly() {
+            if (!confirm('Clear all custom calendar events?\n\nClient event dates will remain (tied to client data).\n\nThis cannot be undone!')) return;
+
+            localStorage.removeItem('kgc_calendar_events');
+            showToast('Calendar events cleared');
+        }
+
+        function loadSampleData() {
+            if (!confirm('Load sample data?\n\nThis will add demo clients and events to help you explore the portal.\n\nExisting data will NOT be deleted.')) return;
+
+            // Helper function to get a future date - must be defined first
+            function getFutureDate(daysFromNow) {
+                const date = new Date();
+                date.setDate(date.getDate() + daysFromNow);
+                return date.toISOString().split('T')[0];
+            }
+
+            const existingClients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+
+            // Sample clients with various statuses
+            const sampleClients = [
+                {
+                    id: Date.now(),
+                    createdAt: new Date().toISOString(),
+                    status: 'inquiry',
+                    name: 'Emma & James Thompson',
+                    email: 'emma.thompson@email.com',
+                    phone: '(206) 555-0123',
+                    eventDate: getFutureDate(90),
+                    eventType: 'Wedding',
+                    guestCount: '150',
+                    venue: 'The Foundry Seattle',
+                    source: 'Instagram',
+                    notes: 'Looking for a romantic, garden-inspired 4-tier cake with fresh flowers.'
+                },
+                {
+                    id: Date.now() + 1,
+                    createdAt: new Date().toISOString(),
+                    status: 'inquiry',
+                    name: 'Sarah Chen',
+                    email: 'sarah.chen@email.com',
+                    phone: '(425) 555-0456',
+                    eventDate: getFutureDate(120),
+                    eventType: 'Birthday',
+                    guestCount: '50',
+                    venue: 'Private Residence, Bellevue',
+                    source: 'Referral',
+                    notes: 'Modern minimalist design for 40th birthday celebration.'
+                },
+                {
+                    id: Date.now() + 2,
+                    createdAt: new Date().toISOString(),
+                    status: 'inquiry',
+                    name: 'Michael & David Rodriguez',
+                    email: 'mdrodriguez@email.com',
+                    phone: '(206) 555-0789',
+                    eventDate: getFutureDate(75),
+                    eventType: 'Wedding',
+                    guestCount: '200',
+                    venue: 'Olympic Rooftop Pavilion',
+                    source: 'Website',
+                    notes: 'Elegant geometric design with gold accents. Would love to do a tasting soon!'
+                }
+            ];
+
+            // Add sample clients
+            const allClients = [...sampleClients, ...existingClients];
+            localStorage.setItem('kgc_clients', JSON.stringify(allClients));
+
+            showToast('Sample data loaded! Redirecting to dashboard...');
+            setTimeout(() => window.location.href = '/admin/', 1500);
+        }
+
+        // Dynamic header date
+        function updateHeaderDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('headerDate').textContent = now.toLocaleDateString('en-US', options);
+        }
+        updateHeaderDate();
+
+        // Initialize
+        renderColors();
+        renderInspirations();
+    </script>
+</body>
+</html>

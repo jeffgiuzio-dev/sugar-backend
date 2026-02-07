@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homepage Gallery Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { text-align: center; margin-bottom: 10px; }
+        .instructions { text-align: center; margin-bottom: 30px; color: #666; }
+        .gallery-map {
+            position: relative;
+            width: 1000px;
+            height: 680px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+        .slot {
+            position: absolute;
+            background: #e0e0e0;
+            border: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .slot:hover { background: #ffeb3b; }
+        .slot-number { font-size: 20px; font-weight: bold; color: #333; }
+        .slot-file { font-size: 9px; color: #666; margin-top: 4px; }
+        .slot.video { background: #b3e5fc; }
+        .logo-area {
+            position: absolute;
+            background: #fff3e0;
+            border: 2px dashed #ff9800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ff9800;
+        }
+        table { margin: 40px auto; border-collapse: collapse; width: 800px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #333; color: #fff; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .hidden-note { color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Homepage Gallery Map - Accurate Layout</h1>
+    <p class="instructions">Tell Claude: "Change slot X to IMG_XXXX"</p>
+
+    <div class="gallery-map">
+        <!-- Row 1 - Top Left -->
+        <div class="slot" style="left: 0; top: 20px; width: 148px; height: 108px;">
+            <span class="slot-number">1</span>
+            <span class="slot-file">Gallery 01</span>
+        </div>
+        <div class="slot" style="left: 194px; top: 2px; width: 176px; height: 134px;">
+            <span class="slot-number">2</span>
+            <span class="slot-file">Gallery 02</span>
+        </div>
+
+        <!-- Logo area - center top -->
+        <div class="logo-area" style="left: 400px; top: 40px; width: 150px; height: 100px;">
+            LOGO
+        </div>
+
+        <!-- Row 1 - Top Right -->
+        <div class="slot video" style="left: 570px; top: 0; width: 170px; height: 125px;">
+            <span class="slot-number">3</span>
+            <span class="slot-file">VIDEO: dutch master</span>
+        </div>
+        <div class="slot" style="left: 780px; top: 15px; width: 160px; height: 115px;">
+            <span class="slot-number">4</span>
+            <span class="slot-file">Gallery 04A</span>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="slot" style="left: 0; top: 170px; width: 165px; height: 120px;">
+            <span class="slot-number">5</span>
+            <span class="slot-file">IMG_1906</span>
+        </div>
+        <div class="slot" style="left: 200px; top: 165px; width: 140px; height: 160px;">
+            <span class="slot-number">6</span>
+            <span class="slot-file">IMG_1014</span>
+        </div>
+
+        <!-- Center Video (item 19) -->
+        <div class="slot video" style="left: 380px; top: 170px; width: 220px; height: 160px; z-index: 10;">
+            <span class="slot-number">19</span>
+            <span class="slot-file">VIDEO: fabric motion (CENTER)</span>
+        </div>
+
+        <div class="slot" style="left: 640px; top: 160px; width: 150px; height: 155px;">
+            <span class="slot-number">7</span>
+            <span class="slot-file">Gallery 07A</span>
+        </div>
+        <div class="slot" style="left: 830px; top: 170px; width: 140px; height: 120px;">
+            <span class="slot-number">8</span>
+            <span class="slot-file">IMG_1387</span>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="slot" style="left: 0; top: 330px; width: 170px; height: 125px;">
+            <span class="slot-number">9</span>
+            <span class="slot-file">Gallery 09A</span>
+        </div>
+        <div class="slot video" style="left: 210px; top: 360px; width: 135px; height: 150px;">
+            <span class="slot-number">10</span>
+            <span class="slot-file">VIDEO: gold floral</span>
+        </div>
+        <div class="slot" style="left: 636px; top: 356px; width: 144px; height: 156px;">
+            <span class="slot-number">11</span>
+            <span class="slot-file">Gallery 11A</span>
+        </div>
+        <div class="slot" style="left: 820px; top: 335px; width: 150px; height: 120px;">
+            <span class="slot-number">12</span>
+            <span class="slot-file">IMG_1835</span>
+        </div>
+
+        <!-- Row 4 - Bottom -->
+        <div class="slot" style="left: 40px; top: 495px; width: 160px; height: 115px;">
+            <span class="slot-number">13</span>
+            <span class="slot-file">IMG_1109</span>
+        </div>
+        <div class="slot" style="left: 240px; top: 545px; width: 175px; height: 125px;">
+            <span class="slot-number">14</span>
+            <span class="slot-file">IMG_0700</span>
+        </div>
+        <div class="slot video" style="left: 455px; top: 510px; width: 150px; height: 110px;">
+            <span class="slot-number">15</span>
+            <span class="slot-file">VIDEO: butterfly</span>
+        </div>
+        <div class="slot" style="left: 645px; top: 540px; width: 165px; height: 120px;">
+            <span class="slot-number">16</span>
+            <span class="slot-file">IMG_1031</span>
+        </div>
+        <div class="slot video" style="left: 850px; top: 500px; width: 130px; height: 140px;">
+            <span class="slot-number">17</span>
+            <span class="slot-file">VIDEO: green floral</span>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+            <th>Slot</th>
+            <th>Current File</th>
+            <th>Type</th>
+            <th>Position</th>
+        </tr>
+        <tr><td>1</td><td>Gallery 01.JPEG</td><td>Image</td><td>Top left</td></tr>
+        <tr><td>2</td><td>Gallery 02.JPEG</td><td>Image</td><td>Top left</td></tr>
+        <tr><td>3</td><td>dutch_master_still-life.mp4</td><td>Video</td><td>Top right</td></tr>
+        <tr><td>4</td><td>Gallery 04A.JPEG</td><td>Image</td><td>Top right</td></tr>
+        <tr><td>5</td><td>IMG_1906.JPEG</td><td>Image</td><td>Row 2 left</td></tr>
+        <tr><td>6</td><td>IMG_1014.JPEG</td><td>Image</td><td>Row 2 left</td></tr>
+        <tr><td>7</td><td>Gallery 07A.JPEG</td><td>Image</td><td>Row 2 right</td></tr>
+        <tr><td>8</td><td>IMG_1387.JPEG</td><td>Image</td><td>Row 2 right</td></tr>
+        <tr><td>9</td><td>Gallery 09A.JPEG</td><td>Image</td><td>Row 3 left</td></tr>
+        <tr><td>10</td><td>gold_floral_landscape.mp4</td><td>Video</td><td>Row 3 left</td></tr>
+        <tr><td>11</td><td>Gallery 11A.JPEG</td><td>Image</td><td>Row 3 right</td></tr>
+        <tr><td>12</td><td>IMG_1835.JPEG</td><td>Image</td><td>Row 3 right</td></tr>
+        <tr><td>13</td><td>IMG_1109.JPEG</td><td>Image</td><td>Bottom left</td></tr>
+        <tr><td>14</td><td>IMG_0700.JPEG</td><td>Image</td><td>Bottom</td></tr>
+        <tr><td>15</td><td>butterfly_rotation.mp4</td><td>Video</td><td>Bottom center</td></tr>
+        <tr><td>16</td><td>IMG_1031.JPEG</td><td>Image</td><td>Bottom</td></tr>
+        <tr><td>17</td><td>green_floral_landscape.mp4</td><td>Video</td><td>Bottom right</td></tr>
+        <tr><td>19</td><td>fabric-in_motion.mp4</td><td>Video</td><td>CENTER (focal)</td></tr>
+        <tr class="hidden-note"><td>18, 20, 21</td><td colspan="3">Hidden - not displayed on page</td></tr>
+    </table>
+</body>
+</html>

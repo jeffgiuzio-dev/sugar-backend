@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Disable pinch zoom everywhere */
+        * {
+            touch-action: pan-y;
+            -ms-touch-action: pan-y;
+        }
+        html, body {
+            overflow-x: hidden;
+        }
+        /* Allow taps on gallery items */
+        .gallery-item {
+            touch-action: manipulation;
+            -ms-touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #fff;
+            color: #1a1a1a;
+            line-height: 1.6;
+            animation: pageFadeIn 1.6s ease-out forwards;
+        }
+
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Page transition overlay */
+        .page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .page-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .hero-logo {
+            opacity: 0;
+            animation: logoFadeIn 1.6s ease-out 1s forwards;
+        }
+
+        @keyframes logoFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: #1a1a1a;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 200;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .mobile-menu .close-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #1a1a1a;
+        }
+
+        /* Lightbox for mobile gallery */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.97);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            cursor: pointer;
+        }
+
+        .lightbox.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .lightbox img,
+        .lightbox video {
+            max-width: 90vw;
+            max-height: 85vh;
+            object-fit: contain;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .lightbox.open img,
+        .lightbox.open video {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .gallery-mobile-logo {
+            display: none;
+        }
+
+        .tap-hint {
+            display: none;
+        }
+
+        .logo {
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 70px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.5;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        .hero-logo {
+            height: 150px;
+            width: auto;
+        }
+
+        /* Intro Section */
+        .intro {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 100px 48px 40px;
+            text-align: center;
+        }
+
+        .intro h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 300;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+
+        .intro p {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Gallery Wall - Organic Cluster */
+        .gallery {
+            padding: 20px 0 120px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gallery-grid {
+            position: relative;
+            width: 1000px;
+            height: 700px;
+        }
+
+        /* Elegant thumbnail reveal animation - triggered when scrolled into view */
+        @keyframes thumbnailReveal {
+            0% {
+                filter: blur(20px);
+            }
+            40% {
+                filter: blur(12px);
+            }
+            70% {
+                filter: blur(5px);
+            }
+            100% {
+                filter: blur(0);
+            }
+        }
+
+        .gallery-item {
+            filter: blur(20px);
+            will-change: filter;
+            transform: translateZ(0);
+        }
+
+        .gallery-item.revealed {
+            animation: thumbnailReveal 1.5s ease-out forwards;
+        }
+
+        /* Floating Gallery Logo */
+        .gallery-floating-logo {
+            position: absolute;
+            top: 370px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.3);
+            height: 70px;
+            width: auto;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-floating-logo.in-gallery {
+            transform: translateX(-50%) scale(1);
+            opacity: 1;
+        }
+
+        .gallery-item {
+            position: absolute;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.6s ease, opacity 0.4s ease;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            will-change: transform, opacity;
+            opacity: 1;
+        }
+
+        .gallery-item:hover {
+            transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 1.2s ease, opacity 0.6s ease;
+        }
+
+        .gallery-item img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(2) translate3d(0,0,0);
+            transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+
+        .gallery-item:hover img {
+            transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        /* Gallery wall - video centered, images around it */
+        /* Top row */
+        .gallery-item:nth-child(1) { left: 0; top: 20px; width: 148px; height: 108px; transform-origin: center center; }
+        .gallery-item:nth-child(2) { left: 194px; top: 2px; width: 176px; height: 134px; transform-origin: center center; }
+        .gallery-item:nth-child(3) { left: 570px; top: 0; width: 170px; height: 125px; }
+        .gallery-item:nth-child(4) { left: 780px; top: 15px; width: 160px; height: 115px; }
+
+        /* Upper middle - flanking video */
+        .gallery-item:nth-child(5) { left: 0; top: 170px; width: 165px; height: 120px; }
+        .gallery-item:nth-child(6) { left: 200px; top: 165px; width: 140px; height: 160px; }
+        .gallery-item:nth-child(7) { left: 640px; top: 160px; width: 150px; height: 155px; }
+        .gallery-item:nth-child(8) { left: 830px; top: 170px; width: 140px; height: 120px; }
+
+        /* VIDEO - CENTER FOCAL POINT */
+        .gallery-item:nth-child(19) { left: 380px; top: 170px; width: 220px; height: 160px; z-index: 10; }
+
+        /* Lower middle - flanking video */
+        .gallery-item:nth-child(9) { left: 0; top: 330px; width: 170px; height: 125px; }
+        .gallery-item:nth-child(10) { left: 210px; top: 360px; width: 135px; height: 150px; }
+        .gallery-item:nth-child(11) { left: 636px; top: 356px; width: 144px; height: 156px; transform-origin: center center; }
+        .gallery-item:nth-child(12) { left: 820px; top: 335px; width: 150px; height: 120px; }
+
+        /* Bottom row */
+        .gallery-item:nth-child(13) { left: 40px; top: 495px; width: 160px; height: 115px; }
+        .gallery-item:nth-child(14) { left: 240px; top: 545px; width: 175px; height: 125px; }
+        .gallery-item:nth-child(15) { left: 455px; top: 510px; width: 150px; height: 110px; }
+        .gallery-item:nth-child(16) { left: 645px; top: 540px; width: 165px; height: 120px; }
+        .gallery-item:nth-child(17) { left: 850px; top: 500px; width: 130px; height: 140px; }
+
+        /* Hide extras */
+        .gallery-item:nth-child(18),
+        .gallery-item:nth-child(20),
+        .gallery-item:nth-child(21) { display: none; }
+
+        /* Hover - expand */
+        .gallery-item:hover {
+            z-index: 100;
+            transform: scale(2.8);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1) translate3d(0,0,0);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+
+        .gallery-item:hover video {
+            transform: translate3d(0,0,0);
+        }
+
+        /* Others fade when one is hovered - desktop only */
+        @media (hover: hover) and (min-width: 769px) {
+            .gallery-grid:has(.gallery-item:hover) .gallery-item:not(:hover) {
+                opacity: 0.5;
+            }
+        }
+
+        /* Video items */
+        .video-item video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(2) translate3d(0,0,0);
+            transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+
+        .video-item:hover video {
+            transform: scale(1) translate3d(0,0,0);
+            transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        /* CTA Section */
+        .cta {
+            background: #f8f7f5;
+            padding: 100px 48px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .cta p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 48px;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #fff;
+            background: #b5956a;
+            border: 1px solid #b5956a;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: transparent;
+            color: #b5956a;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 48px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-logo {
+            margin-bottom: 24px;
+        }
+
+        .footer-logo img {
+            height: 55px;
+            width: auto;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .social-links a {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .social-links a:hover {
+            color: #1a1a1a;
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            color: #999;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            nav {
+                padding: 20px 24px;
+            }
+            .logo img {
+                height: 50px;
+            }
+            .nav-links {
+                gap: 24px;
+            }
+            .nav-links a {
+                font-size: 0.65rem;
+            }
+            .hero-logo {
+                height: 100px;
+            }
+            .gallery {
+                padding: 60px 24px 120px;
+            }
+            .gallery-grid {
+                transform: scale(0.85);
+            }
+            .gallery-item:hover {
+                transform: scale(2.5);
+            }
+            .gallery-floating-logo {
+                top: 320px;
+                height: 60px;
+            }
+        }
+
+        /* Tablet/Mobile gallery expansion */
+        @media (max-width: 768px) {
+            .tap-hint {
+                display: block;
+                font-size: 0.7rem;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                color: #999;
+                margin-bottom: 10px;
+            }
+            .gallery {
+                padding: 10px 0 40px;
+                overflow: visible;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            .gallery-grid {
+                transform-origin: top center;
+                width: 1000px;
+                position: relative;
+            }
+            .gallery-item:hover {
+                transform: none !important;
+            }
+            .gallery-floating-logo {
+                display: none;
+            }
+            .gallery-mobile-logo {
+                display: block;
+                height: 60px;
+                margin: 20px auto 0;
+            }
+            .gallery-item {
+                transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+                will-change: transform;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+            .gallery-item img,
+            .gallery-item video {
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                transform: scale(2) translate3d(0,0,0);
+                transition: transform 1s ease-out;
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: high-quality;
+            }
+            .gallery-item.expanded {
+                transform: scale(6) !important;
+                z-index: 9999 !important;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            }
+            .gallery-item.expanded img,
+            .gallery-item.expanded video {
+                transform: scale(1) translate3d(0,0,0);
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: high-quality;
+            }
+            /* Left edge items - expand toward right */
+            .gallery-item:nth-child(1),
+            .gallery-item:nth-child(5),
+            .gallery-item:nth-child(9),
+            .gallery-item:nth-child(13) {
+                transform-origin: left center !important;
+            }
+            /* Right edge items - expand toward left */
+            .gallery-item:nth-child(4),
+            .gallery-item:nth-child(8),
+            .gallery-item:nth-child(12),
+            .gallery-item:nth-child(17) {
+                transform-origin: right center !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .logo img {
+                height: 40px;
+            }
+            .nav-links {
+                display: none;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .hero {
+                height: 100vh;
+            }
+            .hero-image {
+                object-position: center 20%;
+                transform: scale(1.5);
+            }
+            .hero-logo {
+                height: 90px;
+            }
+            .hero-overlay {
+                bottom: 50%;
+                transform: translateY(50%);
+            }
+            .intro {
+                padding: 60px 24px 10px;
+            }
+            .footer-logo img {
+                height: 40px;
+            }
+        }
+
+        /* Landscape mode */
+        @media (max-width: 900px) and (orientation: landscape) {
+            /* Hide the floating logo that appears in middle of gallery */
+            .gallery-floating-logo {
+                display: none !important;
+            }
+            /* Expanded state */
+            .gallery-item.expanded {
+                transform: scale(6) !important;
+                z-index: 9999 !important;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+            }
+            .gallery-item.expanded img,
+            .gallery-item.expanded video {
+                transform: scale(1) translate3d(0,0,0) !important;
+                transition: transform 1s ease-out;
+            }
+            /* Collapsed state - ensure proper reset */
+            .gallery-item:not(.expanded) {
+                transform: scale(1) !important;
+                z-index: auto;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            }
+            .gallery-item:not(.expanded) img,
+            .gallery-item:not(.expanded) video {
+                transform: scale(2) translate3d(0,0,0) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-overlay" id="pageOverlay"></div>
+    <nav>
+        <a href="index.html" class="logo"><img src="images/logo.png" alt="Kenna Giuzio Cake"></a>
+        <ul class="nav-links">
+            <li><a href="gallery.html">Portfolio</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Inquire</a></li>
+            <li><a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a></li>
+        </ul>
+        <div class="hamburger" onclick="document.getElementById('mobileMenu').classList.add('open')">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <span class="close-btn" onclick="this.parentElement.classList.remove('open')">&times;</span>
+        <a href="index.html">Home</a>
+        <a href="gallery.html">Portfolio</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Inquire</a>
+        <a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a>
+    </div>
+
+    <section class="hero">
+        <img src="images/Hero2.JPEG" alt="Sculptural cake art by Kenna Giuzio" class="hero-image">
+        <div class="hero-overlay">
+            <img src="images/logo.png" alt="Kenna Giuzio Cake - An Artisan Studio" class="hero-logo">
+        </div>
+    </section>
+
+    <section class="intro">
+        <h2>Edible Art for Life's Moments</h2>
+        <p>Each creation is a one-of-a-kind sculpture, designed to capture your story and crafted entirely by hand using time-honored techniques.</p>
+    </section>
+
+    <section class="gallery" id="gallery-section">
+        <p class="tap-hint">Tap to explore</p>
+        <img src="images/logo.png" alt="Kenna Giuzio Cake" class="gallery-floating-logo" id="floating-logo">
+        <div class="gallery-grid">
+            <div class="gallery-item"><img src="images/Gallery 01.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/Gallery 02.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item video-item"><video src="videos/05 KG_dutch_master_still-life_rotation.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="gallery-item"><img src="images/IMG_0429.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_1906.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_1014.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/Gallery 07A.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_1387.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/Gallery 09A.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item video-item"><video src="videos/02 KG_gold_floral_landscape.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="gallery-item"><img src="images/Gallery 11A.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_0462.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_1109.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_0454.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item video-item"><video src="videos/07 KG_floral_butterfly_rotation.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="gallery-item"><img src="images/IMG_1031.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item video-item"><video src="videos/04 KG_green_floral_landscape Gallery 17.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="gallery-item"><img src="images/IMG_0815.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item video-item"><video src="videos/01 KG_fabric-in_motion.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="gallery-item"><img src="images/IMG_0793.JPEG" alt="Cake art" loading="lazy"></div>
+            <div class="gallery-item"><img src="images/IMG_1135.JPEG" alt="Cake art" loading="lazy"></div>
+        </div>
+        <img src="images/logo.png" alt="Kenna Giuzio Cake" class="gallery-mobile-logo">
+    </section>
+
+    <section class="cta">
+        <h2>Begin Your Story</h2>
+        <p>Ready to create something extraordinary?</p>
+        <a href="contact.html" class="btn page-transition">Get in Touch</a>
+    </section>
+
+    <footer>
+        <a href="index.html" class="footer-logo"><img src="images/logo.png" alt="Kenna Giuzio Cake"></a>
+        <div class="social-links">
+            <a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a>
+        </div>
+        <p class="copyright">&copy; 2026 Kenna Giuzio Cake. All rights reserved.</p>
+    </footer>
+    <script>
+        // Disable pinch zoom on iOS
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+
+        // Fullscreen in landscape mode
+        function isLandscapeMode() {
+            return window.innerWidth > window.innerHeight;
+        }
+
+        function requestFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+
+        // Try fullscreen on orientation change (needs user gesture)
+        let landscapeFullscreenEnabled = false;
+
+        document.addEventListener('click', () => {
+            // Only trigger fullscreen on mobile landscape (not desktop)
+            if (window.innerWidth <= 900 && isLandscapeMode() && !document.fullscreenElement && !document.webkitFullscreenElement) {
+                requestFullscreen();
+                landscapeFullscreenEnabled = true;
+            }
+        }, { once: false });
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!isLandscapeMode() && (document.fullscreenElement || document.webkitFullscreenElement)) {
+                    exitFullscreen();
+                }
+            }, 300);
+        });
+
+        // Always start at top on page load
+        window.history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+
+        // Dynamic gallery scaling to fit screen edge-to-edge
+        function updateGalleryScale() {
+            const grid = document.querySelector('.gallery-grid');
+            if (!grid) return;
+
+            const viewportWidth = window.innerWidth;
+            const galleryWidth = 1000; // native gallery width
+            const galleryHeight = 660; // native gallery height
+
+            // Apply dynamic scaling on mobile/tablet (both portrait and landscape)
+            if (viewportWidth <= 1100) {
+                const scale = (viewportWidth - 40) / galleryWidth; // more padding to fit
+                const scaledHeight = galleryHeight * scale;
+                grid.style.transform = `scale(${scale})`;
+                grid.style.height = `${scaledHeight}px`;
+            } else {
+                grid.style.transform = '';
+                grid.style.height = '';
+            }
+        }
+
+        updateGalleryScale();
+        window.addEventListener('resize', updateGalleryScale);
+        window.addEventListener('orientationchange', updateGalleryScale);
+
+        // Auto-play video thumbnails when visible
+        const videoItems = document.querySelectorAll('.video-item');
+
+        const videoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                if (!video) return;
+
+                // Don't auto-control if item is expanded (user tapped it)
+                if (entry.target.classList.contains('expanded')) return;
+
+                if (entry.isIntersecting) {
+                    // Video is visible - play it looped
+                    video.loop = true;
+                    video.play().catch(() => {}); // Catch autoplay errors silently
+                } else {
+                    // Video is off-screen - pause to save resources
+                    video.pause();
+                }
+            });
+        }, {
+            threshold: 0.3 // Play when 30% visible
+        });
+
+        videoItems.forEach(item => {
+            const video = item.querySelector('video');
+
+            // Hide video until it's at the right position
+            video.style.opacity = '0';
+            video.style.transition = 'opacity 0.3s ease';
+
+            // Start a few seconds in to avoid black frames
+            video.addEventListener('loadedmetadata', () => {
+                video.currentTime = 3;
+            });
+
+            // Show video once it's seeked to the right spot
+            video.addEventListener('seeked', () => {
+                video.style.opacity = '1';
+            }, { once: true });
+
+            // Observe for visibility
+            videoObserver.observe(item);
+        });
+
+        // Floating logo animation and gallery reveal
+        const floatingLogo = document.getElementById('floating-logo');
+        const gallerySection = document.getElementById('gallery-section');
+        let galleryRevealed = false;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    floatingLogo.classList.add('in-gallery');
+
+                    // Trigger reveal animation once (early, before fully visible)
+                    if (!galleryRevealed) {
+                        galleryRevealed = true;
+                        document.querySelectorAll('.gallery-item').forEach(item => {
+                            item.classList.add('revealed');
+                        });
+                    }
+                } else {
+                    floatingLogo.classList.remove('in-gallery');
+                }
+            });
+        }, {
+            threshold: 0,
+            rootMargin: '100px 0px 0px 0px' // Trigger 100px before visible
+        });
+
+        observer.observe(gallerySection);
+
+        // In-place expansion for mobile gallery
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        let expandedItem = null;
+        let autoCloseTimer = null;
+
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        function collapseItem() {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = null;
+            }
+            if (expandedItem) {
+                const video = expandedItem.querySelector('video');
+                if (video) {
+                    video.pause();
+                }
+                expandedItem.classList.remove('expanded');
+                const itemToReset = expandedItem;
+                expandedItem = null;
+
+                // Wait for animation to complete before resuming auto-play
+                if (video) {
+                    setTimeout(() => {
+                        video.currentTime = 3; // Start past black frames
+                        video.loop = true;
+                        video.play().catch(() => {}); // Resume looping thumbnail
+                    }, 1200);
+                }
+            }
+        }
+
+        function isLandscape() {
+            return window.innerWidth > window.innerHeight;
+        }
+
+
+        galleryItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (!isMobile() && !isLandscape()) return;
+
+                if (item.classList.contains('expanded')) {
+                    collapseItem();
+                    return;
+                }
+
+                collapseItem();
+
+                const video = item.querySelector('video');
+                const img = item.querySelector('img');
+
+                item.classList.add('expanded');
+                expandedItem = item;
+
+                if (video) {
+                    video.loop = false;
+                    // Play from current frame (no reset) for smooth transition
+                    video.play();
+                    // Video ends - collapse
+                    video.addEventListener('ended', () => {
+                        collapseItem();
+                    }, { once: true });
+                } else if (img) {
+                    autoCloseTimer = setTimeout(collapseItem, 3000);
+                }
+            });
+        });
+
+        // Page transition - white overlay fades in before navigating
+        document.querySelectorAll('.page-transition').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = link.getAttribute('href');
+                const overlay = document.getElementById('pageOverlay');
+                // Lock scroll position in place
+                const scrollY = window.scrollY;
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollY}px`;
+                document.body.style.width = '100%';
+                // Fade overlay
+                requestAnimationFrame(() => {
+                    overlay.classList.add('active');
+                });
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 900);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Layout Map - Kenna Giuzio Cake</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .gallery-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .gallery-map {
+            position: relative;
+            width: 1000px;
+            height: 700px;
+            border: 2px solid #ccc;
+            background: #fafafa;
+        }
+
+        .slot {
+            position: absolute;
+            border: 2px solid #333;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .slot.video {
+            background: #fffde7;
+            border-color: #f59e0b;
+        }
+
+        .slot.logo {
+            background: #e0f2fe;
+            border-color: #0ea5e9;
+            border-style: dashed;
+        }
+
+        .slot-number {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .slot-label {
+            font-size: 10px;
+            color: #666;
+            position: absolute;
+            bottom: 4px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-box {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333;
+        }
+
+        .legend-box.video {
+            background: #fffde7;
+            border-color: #f59e0b;
+        }
+
+        .legend-box.photo {
+            background: #fff;
+        }
+
+        .legend-box.logo {
+            background: #e0f2fe;
+            border-color: #0ea5e9;
+            border-style: dashed;
+        }
+
+        .notes {
+            margin-top: 40px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .notes h3 {
+            margin-bottom: 10px;
+        }
+
+        .notes table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .notes th, .notes td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .notes th {
+            background: #f5f5f5;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+            .gallery-map {
+                border: 1px solid #000;
+            }
+            .slot {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Gallery Wall Layout Map</h1>
+    <p class="instructions">Print this page and write which photo/video goes in each numbered slot</p>
+
+    <div class="gallery-container">
+        <div class="gallery-map">
+            <!-- Row 1 -->
+            <div class="slot" style="left: 0px; top: 20px; width: 150px; height: 110px;">
+                <span class="slot-number">1</span>
+            </div>
+            <div class="slot" style="left: 190px; top: 0px; width: 180px; height: 130px;">
+                <span class="slot-number">2</span>
+            </div>
+            <div class="slot" style="left: 570px; top: 0px; width: 170px; height: 125px;">
+                <span class="slot-number">3</span>
+            </div>
+            <div class="slot" style="left: 780px; top: 15px; width: 160px; height: 115px;">
+                <span class="slot-number">4</span>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="slot" style="left: 0px; top: 170px; width: 165px; height: 120px;">
+                <span class="slot-number">5</span>
+            </div>
+            <div class="slot" style="left: 200px; top: 165px; width: 140px; height: 160px;">
+                <span class="slot-number">6</span>
+            </div>
+            <div class="slot" style="left: 640px; top: 160px; width: 150px; height: 155px;">
+                <span class="slot-number">7</span>
+            </div>
+            <div class="slot" style="left: 830px; top: 170px; width: 140px; height: 120px;">
+                <span class="slot-number">8</span>
+            </div>
+
+            <!-- Center focal point - VIDEO -->
+            <div class="slot video" style="left: 380px; top: 170px; width: 220px; height: 160px;">
+                <span class="slot-number">19</span>
+                <span class="slot-label">VIDEO</span>
+            </div>
+
+            <!-- Logo position -->
+            <div class="slot logo" style="left: 430px; top: 355px; width: 140px; height: 55px;">
+                <span class="slot-number">LOGO</span>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="slot" style="left: 0px; top: 330px; width: 170px; height: 125px;">
+                <span class="slot-number">9</span>
+            </div>
+            <div class="slot" style="left: 210px; top: 360px; width: 135px; height: 150px;">
+                <span class="slot-number">10</span>
+            </div>
+            <div class="slot" style="left: 635px; top: 355px; width: 145px; height: 155px;">
+                <span class="slot-number">11</span>
+            </div>
+            <div class="slot" style="left: 820px; top: 335px; width: 150px; height: 120px;">
+                <span class="slot-number">12</span>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="slot" style="left: 40px; top: 495px; width: 160px; height: 115px;">
+                <span class="slot-number">13</span>
+            </div>
+            <div class="slot" style="left: 240px; top: 545px; width: 175px; height: 125px;">
+                <span class="slot-number">14</span>
+            </div>
+            <div class="slot" style="left: 455px; top: 510px; width: 150px; height: 110px;">
+                <span class="slot-number">15</span>
+            </div>
+            <div class="slot" style="left: 645px; top: 540px; width: 165px; height: 120px;">
+                <span class="slot-number">16</span>
+            </div>
+            <div class="slot" style="left: 850px; top: 500px; width: 130px; height: 140px;">
+                <span class="slot-number">17</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box photo"></div>
+            <span>Photo</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box video"></div>
+            <span>Video</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box logo"></div>
+            <span>Logo (animated)</span>
+        </div>
+    </div>
+
+    <div class="notes">
+        <h3>Assignment Notes</h3>
+        <table>
+            <tr>
+                <th>Slot</th>
+                <th>Current File</th>
+                <th>New File (write in)</th>
+            </tr>
+            <tr><td>1</td><td>IMG_1753.JPEG</td><td></td></tr>
+            <tr><td>2</td><td>IMG_0909.JPEG</td><td></td></tr>
+            <tr><td>3</td><td>VIDEO: dutch_master_still-life_rotation</td><td></td></tr>
+            <tr><td>4</td><td>IMG_1143.JPEG</td><td></td></tr>
+            <tr><td>5</td><td>IMG_1906.JPEG</td><td></td></tr>
+            <tr><td>6</td><td>IMG_1014.JPEG</td><td></td></tr>
+            <tr><td>7</td><td>IMG_0824.JPEG</td><td></td></tr>
+            <tr><td>8</td><td>IMG_1387.JPEG</td><td></td></tr>
+            <tr><td>9</td><td>IMG_1080.JPEG</td><td></td></tr>
+            <tr><td>10</td><td>VIDEO: gold_floral_landscape</td><td></td></tr>
+            <tr><td>11</td><td>IMG_1632.JPEG</td><td></td></tr>
+            <tr><td>12</td><td>IMG_1835.JPEG</td><td></td></tr>
+            <tr><td>13</td><td>IMG_1109.JPEG</td><td></td></tr>
+            <tr><td>14</td><td>IMG_0700.JPEG</td><td></td></tr>
+            <tr><td>15</td><td>VIDEO: floral_butterfly_rotation</td><td></td></tr>
+            <tr><td>16</td><td>IMG_1031.JPEG</td><td></td></tr>
+            <tr><td>17</td><td>IMG_0973.JPEG</td><td></td></tr>
+            <tr><td>19 (center)</td><td>VIDEO: fabric-in_motion</td><td></td></tr>
+        </table>
+    </div>
+</body>
+</html>

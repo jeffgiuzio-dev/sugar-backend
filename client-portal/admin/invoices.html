@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #eee;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+
+        .nav-item.active {
+            background: #fafafa;
+            color: #1a1a1a;
+            border-left-color: #b5956a;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 30px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            background: url('../images/header-flowers.jpg') center center / cover no-repeat;
+        }
+
+        .header > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .header-subtitle {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 24px;
+            border: 1px solid #eee;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        .stat-value.due {
+            color: #e67e22;
+        }
+
+        .stat-value.paid {
+            color: #27ae60;
+        }
+
+        /* Filters */
+        .filters-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #b5956a;
+        }
+
+        .filter-btn.active {
+            background: #b5956a;
+            color: #fff;
+            border-color: #b5956a;
+        }
+
+        /* Invoice Table */
+        .invoice-table {
+            background: #fff;
+            border: 1px solid #eee;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 140px 1fr 120px 120px 100px 120px;
+            gap: 16px;
+            padding: 16px 24px;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 120px 120px 100px 120px;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .table-row:hover {
+            background: #fafafa;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .invoice-number {
+            font-weight: 400;
+            color: #b5956a;
+        }
+
+        .invoice-client {
+            font-weight: 400;
+        }
+
+        .invoice-client-email {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .invoice-type {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: #f5f5f5;
+            display: inline-block;
+        }
+
+        .invoice-type.tasting {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .invoice-type.deposit {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .invoice-type.balance {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .invoice-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+        }
+
+        .invoice-status {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .invoice-status.draft {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .invoice-status.sent {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .invoice-status.viewed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .invoice-status.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .invoice-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            background: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: #b5956a;
+            color: #b5956a;
+        }
+
+        .action-btn.primary {
+            background: #b5956a;
+            color: #fff;
+            border-color: #b5956a;
+        }
+
+        .action-btn.primary:hover {
+            background: #a38559;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+            .main {
+                margin-left: 0;
+            }
+            .table-header,
+            .table-row {
+                grid-template-columns: 1fr 100px 100px;
+            }
+            .table-header > *:nth-child(3),
+            .table-header > *:nth-child(4),
+            .table-row > *:nth-child(3),
+            .table-row > *:nth-child(4) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/contacts.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+            <a href="/admin/communications.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Communications
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+            <a href="/admin/media.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Media
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div>
+                <h1>Invoices</h1>
+                <p class="header-subtitle" id="invoiceCount">0 invoices</p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Total Invoiced</div>
+                    <div class="stat-value" id="totalInvoiced">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Outstanding</div>
+                    <div class="stat-value due" id="totalOutstanding">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Paid</div>
+                    <div class="stat-value paid" id="totalPaid">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-value" id="thisMonth">$0</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-row">
+                <button class="filter-btn active" data-filter="all" onclick="filterInvoices('all')">All</button>
+                <button class="filter-btn" data-filter="draft" onclick="filterInvoices('draft')">Drafts</button>
+                <button class="filter-btn" data-filter="sent" onclick="filterInvoices('sent')">Sent</button>
+                <button class="filter-btn" data-filter="paid" onclick="filterInvoices('paid')">Paid</button>
+                <button class="filter-btn" data-filter="tasting" onclick="filterInvoices('tasting')">Tasting</button>
+                <button class="filter-btn" data-filter="deposit" onclick="filterInvoices('deposit')">Deposit</button>
+            </div>
+
+            <!-- Invoice Table -->
+            <div class="invoice-table">
+                <div class="table-header">
+                    <div>Invoice #</div>
+                    <div>Client</div>
+                    <div>Type</div>
+                    <div>Amount</div>
+                    <div>Status</div>
+                    <div>Actions</div>
+                </div>
+                <div id="invoiceList">
+                    <!-- Invoices loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentFilter = 'all';
+
+        function loadInvoices() {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const portalData = {};
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+
+            // Load payment status for each client
+            invoices.forEach(inv => {
+                if (!portalData[inv.clientId]) {
+                    portalData[inv.clientId] = JSON.parse(localStorage.getItem('kgc_portal_' + inv.clientId) || '{}');
+                }
+                // Update invoice status based on payment
+                if (inv.type === 'tasting' && portalData[inv.clientId].tastingPaid) {
+                    inv.status = 'paid';
+                } else if (inv.type === 'deposit' && portalData[inv.clientId].depositPaid) {
+                    inv.status = 'paid';
+                }
+            });
+
+            // Load draft invoices from tasting drafts
+            const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+            const sentClientIds = invoices.filter(i => i.type === 'tasting').map(i => String(i.clientId));
+
+            Object.entries(tastingDrafts).forEach(([clientId, draft]) => {
+                // Skip if already sent
+                if (sentClientIds.includes(String(clientId))) return;
+
+                const client = clients.find(c => String(c.id) === String(clientId));
+                if (!client) return;
+
+                invoices.push({
+                    id: 'DRAFT-' + clientId,
+                    type: 'tasting',
+                    clientId: clientId,
+                    clientName: client.name || 'Unknown',
+                    clientEmail: client.email || '',
+                    amount: parseFloat(draft.tastingFee) || 250,
+                    status: 'draft',
+                    savedAt: draft.savedAt,
+                    eventType: client.eventType || 'Wedding',
+                    eventDate: client.eventDate,
+                    tastingDate: draft.tastingDate,
+                    tastingTime: draft.tastingTime,
+                    guestCount: draft.guestCount,
+                    location: draft.tastingLocation
+                });
+            });
+
+            // Calculate stats (only for sent/paid, not drafts)
+            let totalInvoiced = 0;
+            let totalPaid = 0;
+            let thisMonth = 0;
+            const now = new Date();
+            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            invoices.filter(inv => inv.status !== 'draft').forEach(inv => {
+                totalInvoiced += inv.amount;
+                if (inv.status === 'paid') totalPaid += inv.amount;
+                if (inv.sentAt && new Date(inv.sentAt) >= thisMonthStart) thisMonth += inv.amount;
+            });
+
+            const draftCount = invoices.filter(i => i.status === 'draft').length;
+            const sentCount = invoices.filter(i => i.status !== 'draft').length;
+
+            document.getElementById('totalInvoiced').textContent = formatCurrency(totalInvoiced);
+            document.getElementById('totalOutstanding').textContent = formatCurrency(totalInvoiced - totalPaid);
+            document.getElementById('totalPaid').textContent = formatCurrency(totalPaid);
+            document.getElementById('thisMonth').textContent = formatCurrency(thisMonth);
+            document.getElementById('invoiceCount').textContent = sentCount + ' sent' + (draftCount > 0 ? ', ' + draftCount + ' draft' + (draftCount !== 1 ? 's' : '') : '');
+
+            // Filter invoices
+            let filtered = invoices;
+            if (currentFilter === 'draft') {
+                filtered = invoices.filter(i => i.status === 'draft');
+            } else if (currentFilter === 'sent') {
+                filtered = invoices.filter(i => i.status === 'sent');
+            } else if (currentFilter === 'paid') {
+                filtered = invoices.filter(i => i.status === 'paid');
+            } else if (currentFilter === 'tasting') {
+                filtered = invoices.filter(i => i.type === 'tasting');
+            } else if (currentFilter === 'deposit') {
+                filtered = invoices.filter(i => i.type === 'deposit');
+            }
+
+            // Sort by date (newest first) - drafts by savedAt, others by sentAt
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.sentAt || a.savedAt || 0);
+                const dateB = new Date(b.sentAt || b.savedAt || 0);
+                return dateB - dateA;
+            });
+
+            // Render invoices
+            const container = document.getElementById('invoiceList');
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <p>No invoices found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(inv => {
+                // Format display name - use "Name EventType" format if available
+                let displayName = inv.clientName || 'Unknown';
+                if (inv.eventType && inv.eventType !== 'Event' && !displayName.toLowerCase().includes(inv.eventType.toLowerCase())) {
+                    displayName = displayName + ' ' + inv.eventType;
+                }
+                // If still showing placeholder, try to get from client record
+                if (displayName === 'Client Name' || displayName === 'Client') {
+                    const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                    const client = clients.find(c => String(c.id) === String(inv.clientId));
+                    if (client) {
+                        displayName = client.name + (client.eventType ? ' ' + client.eventType : '');
+                    }
+                }
+                return `
+                <div class="table-row">
+                    <div class="invoice-number">${inv.id}</div>
+                    <div>
+                        <div class="invoice-client">${displayName}</div>
+                        <div class="invoice-client-email">${inv.clientEmail || ''}</div>
+                    </div>
+                    <div><span class="invoice-type ${inv.type}">${inv.type.charAt(0).toUpperCase() + inv.type.slice(1)}</span></div>
+                    <div class="invoice-amount">$${inv.amount.toFixed(2)}</div>
+                    <div><span class="invoice-status ${inv.status}">${inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span></div>
+                    <div class="invoice-actions">
+                        ${inv.status === 'draft'
+                            ? `<button class="action-btn" onclick="editDraft('${inv.clientId}', '${inv.type}')">Edit</button>
+                               <button class="action-btn primary" onclick="editDraft('${inv.clientId}', '${inv.type}')">Send</button>`
+                            : `<button class="action-btn" onclick="viewInvoice('${inv.id}', '${inv.type}')">View</button>
+                               ${inv.status !== 'paid' ? `<button class="action-btn primary" onclick="markPaid('${inv.id}')">Mark Paid</button>` : ''}`
+                        }
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function filterInvoices(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            loadInvoices();
+        }
+
+        function viewInvoice(invoiceId, type) {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const inv = invoices.find(i => i.id === invoiceId);
+            if (!inv) return;
+
+            let url = '';
+            if (type === 'tasting') {
+                const params = new URLSearchParams({
+                    clientId: inv.clientId,
+                    invoiceId: inv.id,
+                    name: inv.clientName,
+                    email: inv.clientEmail,
+                    eventType: inv.eventType,
+                    eventDate: formatDate(inv.eventDate),
+                    tastingDate: formatDate(inv.tastingDate),
+                    tastingTime: formatTime(inv.tastingTime),
+                    guestCount: inv.guestCount,
+                    fee: inv.amount,
+                    location: inv.location
+                });
+                url = '../invoices/tasting-invoice.html?' + params.toString();
+            } else if (type === 'deposit') {
+                const params = new URLSearchParams({
+                    clientId: inv.clientId,
+                    invoiceId: inv.id,
+                    name: inv.clientName,
+                    email: inv.clientEmail,
+                    eventType: inv.eventType || 'Wedding',
+                    eventDate: inv.eventDate || '',
+                    venue: inv.venue || '',
+                    total: inv.proposalTotal || inv.amount * 2,
+                    tastingCredit: inv.tastingCredit || 250
+                });
+                url = '../invoices/deposit-invoice.html?' + params.toString();
+            }
+
+            if (url) window.open(url, '_blank');
+        }
+
+        function markPaid(invoiceId) {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const inv = invoices.find(i => i.id === invoiceId);
+            if (!inv) return;
+
+            // Update invoice status
+            inv.status = 'paid';
+            inv.paidAt = new Date().toISOString();
+            localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+            // Update portal data for accounting
+            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + inv.clientId) || '{}');
+            if (inv.type === 'tasting') {
+                portalData.tastingPaid = true;
+                portalData.tastingPaidDate = new Date().toISOString();
+            } else if (inv.type === 'deposit') {
+                portalData.depositPaid = true;
+                portalData.depositPaidDate = new Date().toISOString();
+
+                // Update client status to booked
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIndex = clients.findIndex(c => String(c.id) === String(inv.clientId));
+                if (clientIndex >= 0) {
+                    clients[clientIndex].status = 'booked';
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                }
+            }
+            localStorage.setItem('kgc_portal_' + inv.clientId, JSON.stringify(portalData));
+
+            loadInvoices();
+        }
+
+        function editDraft(clientId, type) {
+            if (type === 'tasting') {
+                // Go to tasting scheduler with this client
+                window.location.href = '../invoices/tasting-scheduler.html?clientId=' + clientId;
+            } else if (type === 'deposit') {
+                // Go to proposal builder or deposit invoice
+                window.location.href = '../proposals/proposal-builder.html?clientId=' + clientId;
+            }
+        }
+
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            const date = new Date(dateStr + 'T00:00:00');
+            if (isNaN(date.getTime())) {
+                // Try parsing as-is (might already be formatted)
+                return dateStr;
+            }
+            return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            if (timeStr.includes('AM') || timeStr.includes('PM')) return timeStr;
+            const [hours, minutes] = timeStr.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hour12 = h % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        // Initialize
+        loadInvoices();
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Redirects from old Squarespace URLs to new pages
+/new-page-1            /about    301
+/new-page-1/           /about    301
+/new-page              /about    301
+/new-page/             /about    301
+/how-it-works          /about    301
+/how-it-works/         /about    301
+/what-people-are-saying   /about    301
+/what-people-are-saying/  /about    301
+/our-story             /about    301
+/our-story/            /about    301
+/get-in-touch          /contact  301
+/get-in-touch/         /contact  301
+/portfolio             /gallery  301
+/portfolio/            /gallery  301
