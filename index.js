@@ -16,6 +16,9 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+// Helper to convert empty strings to null
+const nullIfEmpty = (val) => (val === '' || val === undefined) ? null : val;
+
 // Google OAuth2 setup
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -944,14 +947,14 @@ app.get('/api/clients/:id', async (req, res) => {
 app.post('/api/clients', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
+            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
       `INSERT INTO clients (name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+       tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
        RETURNING *`,
-      [name, email, phone, status || 'inquiry', event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_end_time || null, tasting_guests, event_time, archived || false, instagram, linkedin, website, company]
+      [name, nullIfEmpty(email), nullIfEmpty(phone), status || 'inquiry', nullIfEmpty(event_date), nullIfEmpty(event_type), nullIfEmpty(guest_count), nullIfEmpty(venue), nullIfEmpty(source), nullIfEmpty(notes), nullIfEmpty(address),
+       nullIfEmpty(tasting_date), nullIfEmpty(tasting_time), nullIfEmpty(tasting_end_time), nullIfEmpty(tasting_guests), nullIfEmpty(event_time), nullIfEmpty(event_end_time), archived || false, nullIfEmpty(instagram), nullIfEmpty(linkedin), nullIfEmpty(website), nullIfEmpty(company)]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -963,15 +966,15 @@ app.post('/api/clients', async (req, res) => {
 app.put('/api/clients/:id', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, archived, instagram, linkedin, website, company } = req.body;
+            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company } = req.body;
     const result = await pool.query(
       `UPDATE clients SET name=$1, email=$2, phone=$3, status=$4, event_date=$5, event_type=$6,
        guest_count=$7, venue=$8, source=$9, notes=$10, address=$11,
-       tasting_date=$12, tasting_time=$13, tasting_end_time=$14, tasting_guests=$15, event_time=$16, archived=$17,
-       instagram=$18, linkedin=$19, website=$20, company=$21, updated_at=NOW()
-       WHERE id=$22 RETURNING *`,
-      [name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-       tasting_date, tasting_time, tasting_end_time || null, tasting_guests, event_time, archived, instagram, linkedin, website, company, req.params.id]
+       tasting_date=$12, tasting_time=$13, tasting_end_time=$14, tasting_guests=$15, event_time=$16, event_end_time=$17, archived=$18,
+       instagram=$19, linkedin=$20, website=$21, company=$22, updated_at=NOW()
+       WHERE id=$23 RETURNING *`,
+      [name, nullIfEmpty(email), nullIfEmpty(phone), status, nullIfEmpty(event_date), nullIfEmpty(event_type), nullIfEmpty(guest_count), nullIfEmpty(venue), nullIfEmpty(source), nullIfEmpty(notes), nullIfEmpty(address),
+       nullIfEmpty(tasting_date), nullIfEmpty(tasting_time), nullIfEmpty(tasting_end_time), nullIfEmpty(tasting_guests), nullIfEmpty(event_time), nullIfEmpty(event_end_time), archived, nullIfEmpty(instagram), nullIfEmpty(linkedin), nullIfEmpty(website), nullIfEmpty(company), req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
@@ -1214,6 +1217,31 @@ app.post('/api/events', async (req, res) => {
   } catch (err) {
     console.error('Error creating event:', err);
     res.status(500).json({ error: 'Failed to create event' });
+  }
+});
+
+app.put('/api/events/:id', async (req, res) => {
+  try {
+    const { title, event_date, event_time, event_end_time, event_type, notes } = req.body;
+    const result = await pool.query(
+      `UPDATE calendar_events
+       SET title = COALESCE($1, title),
+           event_date = COALESCE($2, event_date),
+           event_time = $3,
+           event_end_time = $4,
+           event_type = COALESCE($5, event_type),
+           notes = $6
+       WHERE id = $7
+       RETURNING *`,
+      [title, event_date, event_time, event_end_time, event_type, notes, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating event:', err);
+    res.status(500).json({ error: 'Failed to update event' });
   }
 });
 
@@ -1538,7 +1566,61 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Run migrations on startup
+async function runMigrations() {
+  console.log('==========================================');
+  console.log('STARTING DATABASE MIGRATIONS');
+  console.log('==========================================');
+
+  try {
+    // Test database connection
+    await pool.query('SELECT NOW()');
+    console.log('✓ Database connected');
+
+    // Add all missing columns to clients table
+    console.log('Adding columns to clients table...');
+    await pool.query(`
+      ALTER TABLE clients ADD COLUMN IF NOT EXISTS event_end_time TIME;
+      ALTER TABLE clients ADD COLUMN IF NOT EXISTS tasting_end_time TIME;
+    `);
+    console.log('✓ Clients table updated');
+
+    // Add missing column to calendar_events
+    console.log('Adding columns to calendar_events table...');
+    await pool.query(`
+      ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS event_end_time TIME;
+    `);
+    console.log('✓ Calendar events table updated');
+
+    // Verify schema
+    console.log('Verifying schema...');
+    const result = await pool.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'clients'
+      AND column_name IN ('tasting_time', 'tasting_end_time', 'event_time', 'event_end_time', 'tasting_guests')
+      ORDER BY column_name;
+    `);
+
+    console.log('Clients table columns:');
+    result.rows.forEach(row => {
+      console.log(`  - ${row.column_name}: ${row.data_type}`);
+    });
+
+    console.log('==========================================');
+    console.log('MIGRATIONS COMPLETE');
+    console.log('==========================================');
+  } catch (error) {
+    console.error('==========================================');
+    console.error('MIGRATION ERROR:', error);
+    console.error('==========================================');
+    throw error; // Re-throw to prevent server from starting if migration fails
+  }
+}
+
 // Start server
-app.listen(PORT, () => {
-  console.log(`KGC Portal API running on port ${PORT}`);
+runMigrations().then(() => {
+  app.listen(PORT, () => {
+    console.log(`KGC Portal API running on port ${PORT}`);
+  });
 });
