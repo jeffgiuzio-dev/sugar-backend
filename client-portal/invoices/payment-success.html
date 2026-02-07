@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Kenna Giuzio Cake</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #faf8f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 500px;
+            text-align: center;
+        }
+        .logo {
+            height: 80px;
+            margin-bottom: 40px;
+        }
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            background: #4a7c59;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+        .checkmark svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+        .amount {
+            font-size: 2.5rem;
+            font-weight: 500;
+            color: #4a7c59;
+            margin-bottom: 16px;
+        }
+        p {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+        .details {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .details p {
+            margin-bottom: 8px;
+        }
+        .details strong {
+            color: #1a1a1a;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #b5956a;
+            color: white;
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #9a7d5a;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .content {
+            display: none;
+        }
+        .content.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/images/logo.png" alt="Kenna Giuzio Cake" class="logo">
+
+        <div class="loading show" id="loading">
+            <p>Confirming your payment...</p>
+        </div>
+
+        <div class="content" id="content">
+            <div class="checkmark">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+
+            <h1>Payment Successful</h1>
+
+            <div class="amount" id="amount"></div>
+
+            <p>Thank you for your payment. A confirmation has been sent to your email.</p>
+
+            <div class="details" id="details" style="display: none;">
+                <p><strong>Payment Type:</strong> <span id="paymentType"></span></p>
+                <p><strong>Email:</strong> <span id="email"></span></p>
+            </div>
+
+            <p style="margin-top: 30px;">If you have any questions, please contact<br>
+            <a href="mailto:kenna@kennagiuziocake.com" style="color: #b5956a;">kenna@kennagiuziocake.com</a></p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        async function loadPaymentDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+
+            if (!sessionId) {
+                document.getElementById('loading').innerHTML = '<p>Payment confirmed. Thank you!</p>';
+                document.getElementById('content').classList.add('show');
+                document.getElementById('loading').classList.remove('show');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/payments/session/${sessionId}`);
+                const data = await response.json();
+
+                if (data.success && data.paid) {
+                    document.getElementById('amount').textContent = '$' + data.amount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+                    if (data.metadata && data.metadata.invoice_type) {
+                        const typeMap = {
+                            'tasting': 'Tasting Fee',
+                            'deposit': 'Deposit (50%)',
+                            'final': 'Final Payment'
+                        };
+                        document.getElementById('paymentType').textContent = typeMap[data.metadata.invoice_type] || data.metadata.invoice_type;
+                        document.getElementById('details').style.display = 'block';
+                    }
+
+                    if (data.customerEmail) {
+                        document.getElementById('email').textContent = data.customerEmail;
+                    }
+                }
+
+                document.getElementById('content').classList.add('show');
+                document.getElementById('loading').classList.remove('show');
+
+            } catch (err) {
+                console.error('Error loading payment details:', err);
+                document.getElementById('content').classList.add('show');
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+
+        loadPaymentDetails();
+    </script>
+</body>
+</html>

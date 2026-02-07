@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4E23LYKZE7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-4E23LYKZE7');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Inquire - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Disable pinch zoom everywhere */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: pan-x pan-y;
+            -ms-touch-action: pan-x pan-y;
+        }
+
+        html, body {
+            overflow-x: hidden;
+        }
+
+        /* Ensure content fills viewport in landscape to hide address bar */
+        @media (orientation: landscape) {
+            html {
+                height: 100%;
+            }
+            body {
+                min-height: 100.5%;
+                padding-bottom: 1px;
+            }
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #fff;
+            color: #1a1a1a;
+            line-height: 1.6;
+            opacity: 0;
+            animation: pageFadeIn 1.0s ease-out 0.15s forwards;
+        }
+
+
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 70px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.5;
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: #1a1a1a;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 200;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .mobile-menu .close-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #1a1a1a;
+        }
+
+        /* Contact Layout */
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+
+        .contact-image {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .contact-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 120px 80px;
+        }
+
+        .contact-content h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .contact-content > p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 48px;
+            max-width: 450px;
+        }
+
+        /* Form Styles */
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 450px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 300;
+            padding: 14px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            color: #1a1a1a;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-bottom-color: #1a1a1a;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 18px 48px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #fff;
+            background: #b5956a;
+            border: 1px solid #b5956a;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 16px;
+            align-self: flex-start;
+        }
+
+        .btn:hover {
+            background: transparent;
+            color: #b5956a;
+        }
+
+        .form-note {
+            margin-top: 8px;
+        }
+
+        .form-note p {
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        /* Thank you message */
+        .thank-you {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .thank-you.show {
+            display: block;
+        }
+
+        .thank-you h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 16px;
+        }
+
+        .thank-you p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Additional Info */
+        .contact-info {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        .contact-info h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 16px;
+        }
+
+        .contact-info p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .contact-info a {
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 48px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-logo {
+            margin-bottom: 24px;
+        }
+
+        .footer-logo img {
+            height: 55px;
+            width: auto;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .social-links a {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .social-links a:hover {
+            color: #1a1a1a;
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            color: #999;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            nav {
+                padding: 20px 24px;
+            }
+            .logo {
+                font-size: 1.2rem;
+            }
+            .nav-links {
+                display: none;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .contact-container {
+                grid-template-columns: 1fr;
+            }
+            .contact-image {
+                height: 40vh;
+            }
+            .contact-content {
+                padding: 60px 24px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Mobile Landscape */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .contact-image {
+                display: none;
+            }
+            .contact-content {
+                padding: 100px 40px 60px;
+                padding-left: max(40px, env(safe-area-inset-left) + 24px);
+                padding-right: max(40px, env(safe-area-inset-right) + 24px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo"><img src="images/logo.png" alt="Kenna Giuzio Cake"></a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="gallery.html">Portfolio</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Inquire</a></li>
+            <li><a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a></li>
+        </ul>
+        <div class="hamburger" onclick="document.getElementById('mobileMenu').classList.add('open')">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <span class="close-btn" onclick="this.parentElement.classList.remove('open')">&times;</span>
+        <a href="index.html">Home</a>
+        <a href="gallery.html">Portfolio</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Inquire</a>
+        <a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a>
+    </div>
+
+    <section class="contact-container">
+        <div class="contact-image">
+            <img src="images/IMG_1632.JPEG" alt="Kenna Giuzio cake art">
+        </div>
+        <div class="contact-content">
+            <h1>Inquire</h1>
+            <p id="intro-text">Thank you for considering me for your celebration. Please share some details about your event.</p>
+
+            <form class="contact-form" id="inquiry-form" action="https://formspree.io/f/xreedgdk" method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Event Date</label>
+                        <input type="date" id="date" name="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="guests">Guest Count</label>
+                        <input type="text" id="guests" name="guests" placeholder="Approximate">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Event Location</label>
+                    <input type="text" id="location" name="location" placeholder="City, State or Venue">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Tell Me About Your Vision</label>
+                    <textarea id="message" name="message" placeholder="Colors, themes, inspirations, or any details you'd like to share..."></textarea>
+                </div>
+
+                <div class="form-note">
+                    <p>I accept a limited number of commissions each season. Projects typically begin at $2,500.</p>
+                </div>
+
+                <button type="submit" class="btn">Send Inquiry</button>
+            </form>
+
+            <div class="thank-you" id="thank-you">
+                <h2>Thank You</h2>
+                <p>Your inquiry has been received. I'll be in touch soon!</p>
+            </div>
+
+            <div class="contact-info">
+                <h3>Direct Contact</h3>
+                <p>Email: <a href="mailto:hello@kennagiuziocake.com">hello@kennagiuziocake.com</a></p>
+                <p>Instagram: <a href="https://instagram.com/kennagiuziocake" target="_blank">@kennagiuziocake</a></p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="index.html" class="footer-logo"><img src="images/logo.png" alt="Kenna Giuzio Cake"></a>
+        <div class="social-links">
+            <a href="https://instagram.com/kennagiuziocake" target="_blank">Instagram</a>
+        </div>
+        <p class="copyright">&copy; 2026 Kenna Giuzio Cake. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Disable pinch zoom on iOS
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+
+        // Protect images - disable right-click and long-press
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Disable drag on images
+        document.querySelectorAll('img, video').forEach(el => {
+            el.setAttribute('draggable', 'false');
+            el.addEventListener('dragstart', e => e.preventDefault());
+        });
+
+        // Fullscreen in landscape mode
+        function isLandscapeMode() {
+            return window.innerWidth > window.innerHeight;
+        }
+
+        function requestFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+
+        document.addEventListener('click', () => {
+            // Only trigger fullscreen on mobile landscape (not desktop)
+            if (window.innerWidth <= 900 && isLandscapeMode() && !document.fullscreenElement && !document.webkitFullscreenElement) {
+                requestFullscreen();
+            }
+        }, { once: false });
+
+        // Smooth orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!isLandscapeMode() && (document.fullscreenElement || document.webkitFullscreenElement)) {
+                    exitFullscreen();
+                }
+            }, 300);
+        });
+
+        // Prevent page jump when focusing inputs - desktop only
+        const inputs = document.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', (e) => {
+                // Only on desktop (wider than 900px)
+                if (window.innerWidth > 900) {
+                    const scrollY = window.scrollY;
+                    setTimeout(() => {
+                        window.scrollTo(0, scrollY);
+                    }, 0);
+                }
+            });
+        });
+
+        const form = document.getElementById('inquiry-form');
+        const thankYou = document.getElementById('thank-you');
+        const introText = document.getElementById('intro-text');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                form.style.display = 'none';
+                introText.style.display = 'none';
+                thankYou.classList.add('show');
+            } catch (error) {
+                alert('Something went wrong. Please try again or email directly.');
+            }
+        });
+    </script>
+</body>
+</html>

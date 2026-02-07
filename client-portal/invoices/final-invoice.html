@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Invoice - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .invoice-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            position: relative;
+            height: 200px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 25px;
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .hero-banner img {
+            position: relative;
+            width: 150px;
+            z-index: 1;
+        }
+
+        /* Header */
+        .invoice-header {
+            text-align: center;
+            padding: 30px 40px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-contact {
+            margin-top: 24px;
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Invoice Title */
+        .invoice-title-section {
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        .invoice-subtitle {
+            font-size: 0.85rem;
+            color: #b5956a;
+            margin-top: 4px;
+        }
+
+        .invoice-meta {
+            text-align: right;
+        }
+
+        .invoice-meta-label {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+        }
+
+        .invoice-meta-value {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .due-date {
+            color: #b5956a;
+            font-weight: 400;
+        }
+
+        /* Bill To */
+        .bill-to-section {
+            padding: 30px 40px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .bill-to-label {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .bill-to-name {
+            font-weight: 400;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .bill-to-email {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .event-details {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            padding: 30px 40px;
+            background: #fffaf5;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .summary-row.paid {
+            color: #27ae60;
+        }
+
+        .summary-row.paid .amount {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .summary-row.highlight {
+            background: #fff;
+            margin: 16px -20px 0;
+            padding: 16px 20px;
+            border: 1px solid #b5956a;
+        }
+
+        .summary-row.highlight .label {
+            font-weight: 400;
+            color: #b5956a;
+        }
+
+        .summary-row.highlight .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: #b5956a;
+        }
+
+        /* Totals */
+        .totals-section {
+            padding: 0 40px 40px;
+        }
+
+        .totals-table {
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        .totals-row.subtotal {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .totals-row.fee {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .totals-row.total {
+            border-top: 2px solid #b5956a;
+            margin-top: 10px;
+            padding-top: 16px;
+            font-weight: 400;
+            color: #b5956a;
+        }
+
+        .totals-row.total .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+        }
+
+        /* Payment Options */
+        .payment-section {
+            padding: 40px;
+            background: #fafafa;
+            border-top: 1px solid #eee;
+        }
+
+        .payment-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .payment-option {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 28px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-option:hover {
+            border-color: #b5956a;
+        }
+
+        .payment-option.selected {
+            border-color: #b5956a;
+            background: #fffaf5;
+        }
+
+        .payment-option-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .payment-option-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .payment-option-desc {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .payment-option-fee {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #b5956a;
+        }
+
+        /* Zelle Info */
+        .zelle-info {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            background: #fff;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .zelle-info.visible {
+            display: block;
+        }
+
+        .zelle-info p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .zelle-info .zelle-email {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            margin: 16px 0;
+        }
+
+        .zelle-info .zelle-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+        }
+
+        /* Pay Button */
+        .pay-button {
+            display: block;
+            width: 100%;
+            padding: 18px 24px;
+            margin-top: 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .pay-button:hover {
+            background: #a38559;
+        }
+
+        .pay-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Terms */
+        .terms-section {
+            padding: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        .terms-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .terms-text {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .terms-text p {
+            margin-bottom: 12px;
+        }
+
+        .terms-schedule {
+            background: #fafafa;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .terms-schedule-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .terms-schedule-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .terms-schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .terms-schedule-item .status {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .terms-schedule-item .status.paid {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .terms-schedule-item .status.due {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .terms-note {
+            background: #fffaf5;
+            padding: 16px 20px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #b5956a;
+            border: 1px solid #f0e6d8;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            text-align: center;
+            padding: 30px 40px;
+            background: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .invoice-footer img {
+            width: 240px;
+            opacity: 0.7;
+            display: block;
+            margin: 0 auto 12px;
+        }
+
+        .invoice-footer p {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .hero-banner {
+                height: 140px;
+            }
+
+            .hero-banner img {
+                width: 220px;
+            }
+
+            .invoice-title-section {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .invoice-meta {
+                text-align: left;
+            }
+
+            .bill-to-section {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .payment-options {
+                grid-template-columns: 1fr;
+            }
+
+            .invoice-header,
+            .line-items,
+            .totals-section,
+            .terms-section {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="invoice-contact">
+                (206) 472-5401 | kenna@kennagiuziocake.com<br>
+                Queen Anne, Seattle
+            </div>
+        </div>
+
+        <!-- Invoice Title -->
+        <div class="invoice-title-section">
+            <div>
+                <h1 class="invoice-title">Final Invoice</h1>
+                <p class="invoice-subtitle">Remaining Balance Due</p>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-meta-label">Invoice #</div>
+                <div class="invoice-meta-value" id="invoiceNumber">FI-2026-001</div>
+                <div class="invoice-meta-label">Date Issued</div>
+                <div class="invoice-meta-value" id="invoiceDate">February 5, 2026</div>
+                <div class="invoice-meta-label">Due Date</div>
+                <div class="invoice-meta-value due-date" id="dueDate">2 weeks before event</div>
+            </div>
+        </div>
+
+        <!-- Bill To -->
+        <div class="bill-to-section">
+            <div>
+                <div class="bill-to-label">Bill To</div>
+                <div class="bill-to-name" id="clientName">Client Name</div>
+                <div class="bill-to-email" id="clientEmail">client@email.com</div>
+                <div class="bill-to-address" id="clientAddress" style="font-size: 0.85rem; color: #666; margin-top: 4px;"></div>
+            </div>
+            <div>
+                <div class="bill-to-label">Event Details</div>
+                <div class="event-details">
+                    <span id="eventType">Wedding</span><br>
+                    <span id="eventDate">Date TBD</span><br>
+                    <span id="venue">Venue TBD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Box -->
+        <div class="summary-box">
+            <div class="summary-title">Payment Summary <span id="proposalNumber" style="font-weight: 400;"></span></div>
+            <div class="summary-row">
+                <span class="label">Total Contract Amount</span>
+                <span class="amount" id="contractTotal">$0.00</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Less: Tasting Credit</span>
+                <span class="amount" id="tastingCredit">-$250.00</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Adjusted Total</span>
+                <span class="amount" id="adjustedTotal">$0.00</span>
+            </div>
+            <div class="summary-row paid">
+                <span class="label">Deposit Paid (50%)</span>
+                <span class="amount" id="depositPaid">-$0.00</span>
+            </div>
+            <div class="summary-row highlight">
+                <span class="label">Final Balance Due</span>
+                <span class="amount" id="finalAmount">$0.00</span>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-section">
+            <div class="totals-table">
+                <div class="totals-row subtotal">
+                    <span>Final Balance (50%)</span>
+                    <span id="subtotalAmount">$0.00</span>
+                </div>
+                <div class="totals-row fee" id="processingFeeRow">
+                    <span>Processing Fee (3.4%)</span>
+                    <span id="processingFee">$0.00</span>
+                </div>
+                <div class="totals-row total">
+                    <span>Total Due</span>
+                    <span class="amount" id="totalDue">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Options -->
+        <div class="payment-section">
+            <h2 class="payment-title">Select Payment Method</h2>
+            <div class="payment-options">
+                <div class="payment-option selected" data-method="card" onclick="selectPayment('card')">
+                    <div class="payment-option-icon">💳</div>
+                    <div class="payment-option-title">Credit Card</div>
+                    <div class="payment-option-desc">Visa, Mastercard, Amex</div>
+                    <div class="payment-option-fee">+3.4% processing fee</div>
+                </div>
+                <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
+                    <div class="payment-option-icon">🏦</div>
+                    <div class="payment-option-title">Zelle</div>
+                    <div class="payment-option-desc">Direct bank transfer</div>
+                    <div class="payment-option-fee">No fee</div>
+                </div>
+            </div>
+
+            <div class="zelle-info" id="zelleInfo">
+                <p>Send payment via Zelle to:</p>
+                <div class="zelle-email">kgiuzio@gmail.com</div>
+                <p>Amount:</p>
+                <div class="zelle-amount" id="zelleAmount">$0.00</div>
+                <p style="margin-top: 16px; font-size: 0.75rem;">
+                    Please include your name and "Final Payment" in the memo.
+                </p>
+            </div>
+
+            <button class="pay-button" id="payButton" onclick="processPayment()">
+                Pay Final Balance with Card
+            </button>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms-section">
+            <div class="terms-title">Payment Schedule</div>
+            <div class="terms-text">
+                <div class="terms-schedule">
+                    <div class="terms-schedule-item">
+                        <span><strong>Deposit (50%)</strong></span>
+                        <span class="status paid">PAID</span>
+                    </div>
+                    <div class="terms-schedule-item">
+                        <span><strong>Final Balance (50%)</strong> - Due now</span>
+                        <span class="status due">DUE NOW</span>
+                    </div>
+                </div>
+
+                <div class="terms-note">
+                    <strong>Your event is coming up!</strong> Please complete payment to finalize
+                    all arrangements for your celebration.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+            <p>Thank you for choosing Kenna Giuzio Cake for your celebration.</p>
+        </div>
+    </div>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        let selectedPayment = 'card';
+        let finalAmount = 0;
+        let finalWithFee = 0;
+        let clientId = null;
+        let invoiceId = null;
+
+        // Load clients from API
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients();
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                console.log('Final invoice: Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Final invoice: Using localStorage fallback:', error.message);
+            }
+        }
+
+        loadClientsFromAPI();
+
+        function selectPayment(method) {
+            selectedPayment = method;
+
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+            const zelleInfo = document.getElementById('zelleInfo');
+            const payButton = document.getElementById('payButton');
+            const feeRow = document.getElementById('processingFeeRow');
+            const totalDue = document.getElementById('totalDue');
+
+            if (method === 'zelle') {
+                zelleInfo.classList.add('visible');
+                payButton.textContent = "I've Sent Payment via Zelle";
+                payButton.style.background = '#6b4fbb';
+                feeRow.style.display = 'none';
+                totalDue.textContent = formatCurrency(finalAmount);
+            } else {
+                zelleInfo.classList.remove('visible');
+                payButton.textContent = 'Pay ' + formatCurrency(finalWithFee) + ' with Card';
+                payButton.style.background = '#b5956a';
+                feeRow.style.display = 'flex';
+                totalDue.textContent = formatCurrency(finalWithFee);
+            }
+        }
+
+        async function processPayment() {
+            if (selectedPayment === 'card') {
+                const clientName = document.getElementById('clientName').textContent;
+                const clientEmail = document.getElementById('clientEmail').textContent;
+
+                const payButton = document.getElementById('payButton');
+                payButton.textContent = 'Processing...';
+                payButton.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/api/payments/create-checkout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            invoice_id: invoiceId,
+                            invoice_type: 'final',
+                            client_id: clientId,
+                            client_name: clientName,
+                            client_email: clientEmail,
+                            amount: finalWithFee.toFixed(2),
+                            description: 'Final Balance - Kenna Giuzio Cake'
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error(data.error || 'Failed to create checkout session');
+                    }
+                } catch (err) {
+                    console.error('Payment error:', err);
+                    alert('Unable to process payment. Please try again or contact kenna@kennagiuziocake.com');
+                    payButton.textContent = 'Pay ' + formatCurrency(finalWithFee) + ' with Card';
+                    payButton.disabled = false;
+                }
+            } else {
+                if (confirm('Please confirm you have sent ' + formatCurrency(finalAmount) + ' via Zelle to kgiuzio@gmail.com.\n\nClick OK to confirm your payment has been sent.')) {
+                    completePayment('zelle');
+                }
+            }
+        }
+
+        function completePayment(method) {
+            // Find client by ID or name
+            let effectiveClientId = clientId;
+
+            if (!clientId || clientId === 'new' || clientId === 'null') {
+                const clientName = document.getElementById('clientName').textContent;
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const foundClient = clients.find(c => c.name === clientName);
+                if (foundClient) {
+                    effectiveClientId = String(foundClient.id);
+                }
+            }
+            clientId = effectiveClientId;
+
+            // Update invoice status
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const invIndex = invoices.findIndex(i => i.id === invoiceId || (i.type === 'final' && String(i.clientId) === String(clientId)));
+
+            if (invIndex >= 0) {
+                invoices[invIndex].status = 'paid';
+                invoices[invIndex].paidAt = new Date().toISOString();
+                invoices[invIndex].paymentMethod = method;
+            } else {
+                invoices.push({
+                    id: invoiceId || 'FI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4),
+                    type: 'final',
+                    clientId: clientId,
+                    clientName: document.getElementById('clientName').textContent,
+                    clientEmail: document.getElementById('clientEmail').textContent,
+                    amount: finalAmount,
+                    status: 'paid',
+                    sentAt: new Date().toISOString(),
+                    paidAt: new Date().toISOString(),
+                    paymentMethod: method
+                });
+            }
+            localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+            // Update portal data
+            if (clientId) {
+                const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
+                portalData.finalPaid = true;
+                portalData.finalPaidDate = new Date().toISOString();
+                portalData.finalAmount = finalAmount;
+                portalData.finalPaymentMethod = method;
+                localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
+
+                // Update client status to paid in full
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+                if (clientIndex >= 0) {
+                    clients[clientIndex].paidInFull = true;
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                }
+            }
+
+            showPaymentSuccess(method);
+        }
+
+        function showPaymentSuccess(method) {
+            document.querySelector('.payment-section').innerHTML = `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 16px; color: #27ae60;">
+                        Payment ${method === 'zelle' ? 'Submitted' : 'Complete'}!
+                    </h2>
+                    <p style="color: #666; margin-bottom: 24px;">
+                        ${method === 'zelle'
+                            ? 'Thank you! Kenna will confirm receipt of your Zelle payment shortly.'
+                            : 'Thank you! Your payment has been received. You will receive a confirmation email shortly.'}
+                    </p>
+                    <div style="background: #e8f5e9; padding: 20px; margin: 20px 0; text-align: center;">
+                        <p style="color: #2e7d32; margin: 0; font-size: 1.1rem;">
+                            <strong>You're all set!</strong><br>
+                            Kenna is excited to create your cake.
+                        </p>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #999;">
+                        Amount: ${formatCurrency(method === 'card' ? finalWithFee : finalAmount)}<br>
+                        Method: ${method === 'card' ? 'Credit Card' : 'Zelle'}
+                    </p>
+                </div>
+            `;
+
+            const termsSection = document.querySelector('.terms-section');
+            if (termsSection) termsSection.style.display = 'none';
+
+            const totalsSection = document.querySelector('.totals-section');
+            if (totalsSection) totalsSection.style.display = 'none';
+        }
+
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === 'undefined' || dateStr === 'null') return 'TBD';
+            try {
+                const date = new Date(dateStr + 'T00:00:00');
+                if (isNaN(date.getTime())) return 'TBD';
+                return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            } catch(e) {
+                return 'TBD';
+            }
+        }
+
+        function calculateDueDate(eventDateStr) {
+            if (!eventDateStr || eventDateStr === 'undefined' || eventDateStr === 'null') return '2 weeks before event';
+            try {
+                const eventDate = new Date(eventDateStr + 'T00:00:00');
+                if (isNaN(eventDate.getTime())) return '2 weeks before event';
+                const dueDate = new Date(eventDate);
+                dueDate.setDate(dueDate.getDate() - 14);
+                return dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            } catch(e) {
+                return '2 weeks before event';
+            }
+        }
+
+        // Initialize from URL params or API
+        async function initializePage() {
+            const params = new URLSearchParams(window.location.search);
+
+            // Check for invoice ID/number in URL
+            const invoiceParam = params.get('invoice') || params.get('invoiceId');
+            clientId = params.get('clientId');
+
+            // Try to load from API first
+            if (invoiceParam) {
+                try {
+                    const response = await fetch(`${API_URL}/api/invoices/${invoiceParam}`);
+                    if (response.ok) {
+                        const invoice = await response.json();
+                        console.log('Loaded invoice from API:', invoice);
+                        populateFromInvoice(invoice);
+                        return;
+                    }
+                } catch (err) {
+                    console.log('API fetch failed, trying localStorage:', err);
+                }
+            }
+
+            // Fall back to URL params
+            populateFromParams(params);
+        }
+
+        function populateFromInvoice(invoice) {
+            clientId = invoice.client_id;
+            invoiceId = invoice.invoice_number || invoice.id;
+
+            const data = invoice.data || {};
+
+            document.getElementById('clientName').textContent = data.clientName || invoice.client_name || 'Client';
+            document.getElementById('clientEmail').textContent = data.clientEmail || invoice.client_email || '';
+            if (data.clientAddress) {
+                document.getElementById('clientAddress').textContent = data.clientAddress;
+            }
+
+            document.getElementById('eventType').textContent = data.eventType || 'Wedding';
+            document.getElementById('eventDate').textContent = formatDate(data.eventDate);
+            document.getElementById('venue').textContent = data.venue || 'TBD';
+
+            document.getElementById('invoiceNumber').textContent = invoiceId;
+            document.getElementById('dueDate').textContent = calculateDueDate(data.eventDate);
+
+            // Financial data
+            const contractTotal = parseFloat(data.contractTotal) || parseFloat(invoice.amount) * 2 || 2500;
+            const tastingCredit = parseFloat(data.tastingCredit) || 250;
+            const adjustedTotal = contractTotal - tastingCredit;
+            const depositPaid = parseFloat(data.depositPaid) || adjustedTotal / 2;
+            finalAmount = adjustedTotal - depositPaid;
+            const processingFee = finalAmount * 0.034;
+            finalWithFee = finalAmount + processingFee;
+
+            updateFinancialDisplay(contractTotal, tastingCredit, adjustedTotal, depositPaid, processingFee);
+
+            // Check if already paid
+            if (invoice.status === 'paid') {
+                showPaymentSuccess(invoice.payment_method || 'card');
+            }
+        }
+
+        function populateFromParams(params) {
+            clientId = params.get('clientId');
+            invoiceId = params.get('invoiceId');
+
+            let clientNameVal = params.get('name');
+            let clientEmailVal = params.get('email');
+            let eventTypeVal = params.get('eventType');
+            let eventDateVal = params.get('eventDate');
+            let venueVal = params.get('venue');
+            let clientAddressVal = '';
+
+            // Load from localStorage if available
+            if (clientId && clientId !== 'new') {
+                try {
+                    const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                    const client = clients.find(c => String(c.id) === String(clientId));
+                    if (client) {
+                        if (!clientNameVal) clientNameVal = client.name;
+                        if (!clientEmailVal) clientEmailVal = client.email;
+                        if (!eventTypeVal) eventTypeVal = client.eventType;
+                        if (!eventDateVal) eventDateVal = client.eventDate;
+                        if (!venueVal) venueVal = client.venue;
+                        clientAddressVal = client.address || '';
+                    }
+                } catch(e) { console.log('Could not load client:', e); }
+            }
+
+            // Apply to UI
+            if (clientNameVal) document.getElementById('clientName').textContent = clientNameVal;
+            if (clientEmailVal) document.getElementById('clientEmail').textContent = clientEmailVal;
+            if (clientAddressVal) document.getElementById('clientAddress').textContent = clientAddressVal;
+            if (eventTypeVal) document.getElementById('eventType').textContent = eventTypeVal;
+            if (eventDateVal) document.getElementById('eventDate').textContent = formatDate(eventDateVal);
+            if (venueVal) document.getElementById('venue').textContent = venueVal;
+
+            document.getElementById('dueDate').textContent = calculateDueDate(eventDateVal);
+
+            // Proposal number from draft
+            if (clientId && clientId !== 'new') {
+                try {
+                    const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                    const draft = drafts[clientId];
+                    if (draft && draft.proposalNumber) {
+                        document.getElementById('proposalNumber').textContent = '#P-' + draft.proposalNumber;
+                    }
+                } catch(e) { }
+            }
+
+            // Financial data from URL or defaults
+            const contractTotal = parseFloat(params.get('total')) || 2500;
+            const tastingCredit = parseFloat(params.get('tastingCredit')) || 250;
+            const adjustedTotal = contractTotal - tastingCredit;
+            const depositPaid = parseFloat(params.get('depositPaid')) || adjustedTotal / 2;
+            finalAmount = adjustedTotal - depositPaid;
+            const processingFee = finalAmount * 0.034;
+            finalWithFee = finalAmount + processingFee;
+
+            updateFinancialDisplay(contractTotal, tastingCredit, adjustedTotal, depositPaid, processingFee);
+
+            // Generate invoice number
+            if (!invoiceId) {
+                invoiceId = 'FI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+            }
+            document.getElementById('invoiceNumber').textContent = invoiceId;
+        }
+
+        function updateFinancialDisplay(contractTotal, tastingCredit, adjustedTotal, depositPaid, processingFee) {
+            document.getElementById('contractTotal').textContent = formatCurrency(contractTotal);
+            document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
+            document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
+            document.getElementById('depositPaid').textContent = '-' + formatCurrency(depositPaid);
+            document.getElementById('finalAmount').textContent = formatCurrency(finalAmount);
+
+            document.getElementById('subtotalAmount').textContent = formatCurrency(finalAmount);
+            document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+            document.getElementById('totalDue').textContent = formatCurrency(finalWithFee);
+            document.getElementById('zelleAmount').textContent = formatCurrency(finalAmount);
+
+            document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(finalWithFee) + ' with Card';
+
+            // Set today's date
+            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        // Initialize
+        initializePage();
+    </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Layout Map - Kenna Giuzio Cake</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .gallery-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .gallery-map {
+            display: grid;
+            grid-template-columns: repeat(12, 50px);
+            grid-auto-rows: 40px;
+            gap: 8px;
+            border: 2px solid #ccc;
+            padding: 16px;
+            background: #fafafa;
+        }
+
+        .slot {
+            border: 2px solid #333;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .slot-size {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 9px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        /* Full-width mobile slots highlighted */
+        .slot.full-width {
+            background: #e0f2fe;
+            border-color: #0ea5e9;
+        }
+
+        /* Tall mobile slots highlighted */
+        .slot.tall {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        /* Define each slot's grid span (Desktop layout) */
+        .slot:nth-child(1) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(2) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(3) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(4) { grid-column: span 3; grid-row: span 3; }
+        .slot:nth-child(5) { grid-column: span 4; grid-row: span 4; }
+        .slot:nth-child(6) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(7) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(8) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(9) { grid-column: span 5; grid-row: span 4; }
+        .slot:nth-child(10) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(11) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(12) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(13) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(14) { grid-column: span 3; grid-row: span 3; }
+        .slot:nth-child(15) { grid-column: span 5; grid-row: span 4; }
+        .slot:nth-child(16) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(17) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(18) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(19) { grid-column: span 4; grid-row: span 4; }
+        .slot:nth-child(20) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(21) { grid-column: span 4; grid-row: span 4; }
+        .slot:nth-child(22) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(23) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(24) { grid-column: span 4; grid-row: span 3; }
+        .slot:nth-child(25) { grid-column: span 3; grid-row: span 4; }
+        .slot:nth-child(26) { grid-column: span 5; grid-row: span 3; }
+        .slot:nth-child(27) { grid-column: span 4; grid-row: span 4; }
+        .slot:nth-child(28) { grid-column: span 3; grid-row: span 3; }
+        .slot:nth-child(29) { grid-column: span 5; grid-row: span 4; }
+        .slot:nth-child(30) { grid-column: span 4; grid-row: span 3; }
+
+        .legend {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-items {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+        }
+
+        .legend-box.full-width {
+            background: #e0f2fe;
+            border-color: #0ea5e9;
+        }
+
+        .legend-box.tall {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .notes {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .notes h3 {
+            margin-bottom: 10px;
+        }
+
+        .notes table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .notes th, .notes td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        .notes th {
+            background: #f5f5f5;
+        }
+
+        .notes td:first-child {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .notes td:nth-child(2) {
+            width: 80px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .notes td:nth-child(3) {
+            width: 100px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+            .gallery-map {
+                gap: 4px;
+            }
+            .slot {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Portfolio Page Layout Map</h1>
+    <p class="instructions">Use this page to plan which photo goes in each numbered slot.</p>
+    <p class="legend">Desktop Grid: 12 columns. Numbers show column x row span.</p>
+    <div class="legend-items">
+        <div class="legend-item"><div class="legend-box full-width"></div> Full-width on mobile</div>
+        <div class="legend-item"><div class="legend-box tall"></div> Tall on mobile</div>
+        <div class="legend-item"><div class="legend-box"></div> Standard</div>
+    </div>
+
+    <div class="gallery-container">
+        <div class="gallery-map">
+            <div class="slot full-width">1<span class="slot-size">4x3</span></div>
+            <div class="slot">2<span class="slot-size">3x4</span></div>
+            <div class="slot tall">3<span class="slot-size">5x3</span></div>
+            <div class="slot">4<span class="slot-size">3x3</span></div>
+            <div class="slot">5<span class="slot-size">4x4</span></div>
+            <div class="slot full-width">6<span class="slot-size">5x3</span></div>
+            <div class="slot tall">7<span class="slot-size">3x4</span></div>
+            <div class="slot">8<span class="slot-size">4x3</span></div>
+            <div class="slot">9<span class="slot-size">5x4</span></div>
+            <div class="slot tall">10<span class="slot-size">4x3</span></div>
+            <div class="slot full-width">11<span class="slot-size">3x4</span></div>
+            <div class="slot">12<span class="slot-size">5x3</span></div>
+            <div class="slot">13<span class="slot-size">5x3</span></div>
+            <div class="slot tall">14<span class="slot-size">3x3</span></div>
+            <div class="slot">15<span class="slot-size">5x4</span></div>
+            <div class="slot full-width">16<span class="slot-size">4x3</span></div>
+            <div class="slot">17<span class="slot-size">3x4</span></div>
+            <div class="slot tall">18<span class="slot-size">5x3</span></div>
+            <div class="slot">19<span class="slot-size">4x4</span></div>
+            <div class="slot">20<span class="slot-size">4x3</span></div>
+            <div class="slot full-width">21<span class="slot-size">4x4</span></div>
+            <div class="slot">22<span class="slot-size">5x3</span></div>
+            <div class="slot tall">23<span class="slot-size">3x4</span></div>
+            <div class="slot">24<span class="slot-size">4x3</span></div>
+            <div class="slot">25<span class="slot-size">3x4</span></div>
+            <div class="slot full-width">26<span class="slot-size">5x3</span></div>
+            <div class="slot tall">27<span class="slot-size">4x4</span></div>
+            <div class="slot">28<span class="slot-size">3x3</span></div>
+            <div class="slot">29<span class="slot-size">5x4</span></div>
+            <div class="slot full-width">30<span class="slot-size">4x3</span></div>
+        </div>
+    </div>
+
+    <div class="notes">
+        <h3>Current Assignments</h3>
+        <table>
+            <tr>
+                <th>Slot</th>
+                <th>Desktop</th>
+                <th>Mobile</th>
+                <th>Current File</th>
+                <th>New File (write in)</th>
+            </tr>
+            <tr><td>1</td><td>4x3</td><td>Full width</td><td>IMG_1080.JPEG</td><td></td></tr>
+            <tr><td>2</td><td>3x4</td><td>Standard</td><td>IMG_0410.JPEG</td><td></td></tr>
+            <tr><td>3</td><td>5x3</td><td>Tall</td><td>IMG_0531.JPEG</td><td></td></tr>
+            <tr><td>4</td><td>3x3</td><td>Standard</td><td>IMG_0670.JPEG</td><td></td></tr>
+            <tr><td>5</td><td>4x4</td><td>Standard</td><td>IMG_0824.JPEG</td><td></td></tr>
+            <tr><td>6</td><td>5x3</td><td>Full width</td><td>IMG_0716.JPEG</td><td></td></tr>
+            <tr><td>7</td><td>3x4</td><td>Tall</td><td>IMG_0765.JPEG</td><td></td></tr>
+            <tr><td>8</td><td>4x3</td><td>Standard</td><td>IMG_0909.JPEG</td><td></td></tr>
+            <tr><td>9</td><td>5x4</td><td>Standard</td><td>IMG_1028.JPEG</td><td></td></tr>
+            <tr><td>10</td><td>4x3</td><td>Tall</td><td>IMG_1109.JPEG</td><td></td></tr>
+            <tr><td>11</td><td>3x4</td><td>Full width</td><td>IMG_1014.JPEG</td><td></td></tr>
+            <tr><td>12</td><td>5x3</td><td>Standard</td><td>IMG_0700.JPEG</td><td></td></tr>
+            <tr><td>13</td><td>5x3</td><td>Standard</td><td>IMG_1143.JPEG</td><td></td></tr>
+            <tr><td>14</td><td>3x3</td><td>Tall</td><td>IMG_0839.JPEG</td><td></td></tr>
+            <tr><td>15</td><td>5x4</td><td>Standard</td><td>IMG_1059.JPEG</td><td></td></tr>
+            <tr><td>16</td><td>4x3</td><td>Full width</td><td>IMG_1031.JPEG</td><td></td></tr>
+            <tr><td>17</td><td>3x4</td><td>Standard</td><td>IMG_0973.JPEG</td><td></td></tr>
+            <tr><td>18</td><td>5x3</td><td>Tall</td><td>IMG_0815.JPEG</td><td></td></tr>
+            <tr><td>19</td><td>4x4</td><td>Standard</td><td>IMG_1028.JPEG</td><td></td></tr>
+            <tr><td>20</td><td>4x3</td><td>Standard</td><td>IMG_0793.JPEG</td><td></td></tr>
+            <tr><td>21</td><td>4x4</td><td>Full width</td><td>IMG_1131.JPEG</td><td></td></tr>
+            <tr><td>22</td><td>5x3</td><td>Standard</td><td>IMG_1141.JPEG</td><td></td></tr>
+            <tr><td>23</td><td>3x4</td><td>Tall</td><td>IMG_0651.JPEG</td><td></td></tr>
+            <tr><td>24</td><td>4x3</td><td>Standard</td><td>IMG_0524.JPEG</td><td></td></tr>
+            <tr><td>25</td><td>3x4</td><td>Standard</td><td>IMG_0681.JPEG</td><td></td></tr>
+            <tr><td>26</td><td>5x3</td><td>Full width</td><td>IMG_0949.JPEG</td><td></td></tr>
+            <tr><td>27</td><td>4x4</td><td>Tall</td><td>IMG_0801.JPEG</td><td></td></tr>
+            <tr><td>28</td><td>3x3</td><td>Standard</td><td>IMG_1033.JPEG</td><td></td></tr>
+            <tr><td>29</td><td>5x4</td><td>Standard</td><td>IMG_0619.JPEG</td><td></td></tr>
+            <tr><td>30</td><td>4x3</td><td>Full width</td><td>IMG_0911.JPEG</td><td></td></tr>
+        </table>
+    </div>
+</body>
+</html>

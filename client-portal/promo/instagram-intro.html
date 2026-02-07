@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Instagram Story - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        /* Full-screen container - optimized for vertical phone recording */
+        .intro-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Video background */
+        .video-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .video-wrapper.visible {
+            opacity: 1;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Overlay gradient for readability */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+
+        /* Center content */
+        .intro-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* Logo - white throughout */
+        .intro-logo {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.5s ease-out;
+            margin-bottom: 50px;
+        }
+
+        .intro-logo.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .intro-logo img {
+            width: 260px;
+            max-width: 70vw;
+            filter: brightness(10) invert(1);
+        }
+
+        /* Enter button - white/elegant */
+        .enter-button {
+            display: inline-block;
+            padding: 18px 52px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: rgba(255,255,255,0.9);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+        }
+
+        .enter-button.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="intro-container">
+        <!-- Video background (vintage for Instagram) -->
+        <div class="video-wrapper" id="videoWrapper">
+            <video id="introVideo" muted playsinline>
+                <source src="../videos/intro-vintage.mp4" type="video/mp4">
+            </video>
+            <div class="video-overlay"></div>
+        </div>
+
+        <!-- Center content - logo only for Instagram (sticker = CTA) -->
+        <div class="intro-content">
+            <div class="intro-logo" id="introLogo">
+                <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('introVideo');
+        const videoWrapper = document.getElementById('videoWrapper');
+        const logo = document.getElementById('introLogo');
+
+        // Timing - quick for Instagram (no patience!)
+        const LOGO_REVEAL_TIME = 1.5;    // Logo fades in at 1.5 seconds
+        const VIDEO_REVEAL_TIME = 2.5;   // Video fades in at 2.5 seconds
+        const VIDEO_PLAY_TIME = 10;      // Video plays until 10 seconds
+        const BLACK_PAUSE_TIME = 3000;   // 3 second hold on black (shorter for Insta)
+
+        let revealTriggered = false;
+        let isPaused = false;
+
+        function triggerReveal() {
+            if (revealTriggered) return;
+            revealTriggered = true;
+
+            // Logo fades in first (on black)
+            setTimeout(() => {
+                logo.classList.add('visible');
+            }, LOGO_REVEAL_TIME * 1000);
+
+            // Video fades in behind logo
+            setTimeout(() => {
+                videoWrapper.classList.add('visible');
+            }, VIDEO_REVEAL_TIME * 1000);
+        }
+
+        // Video setup - preload but don't show yet
+        video.addEventListener('canplay', () => {
+            video.play().catch(() => {});
+            triggerReveal();
+        });
+
+        video.addEventListener('error', () => {
+            videoWrapper.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)';
+            triggerReveal();
+        });
+
+        // Fallback - start reveal even if video slow to load
+        setTimeout(() => {
+            if (!revealTriggered) {
+                triggerReveal();
+            }
+        }, 1000);
+
+        video.load();
+
+        // Video loop with black pause
+        video.addEventListener('timeupdate', () => {
+            if (video.currentTime >= VIDEO_PLAY_TIME && !isPaused) {
+                isPaused = true;
+
+                // Fade to black
+                videoWrapper.style.transition = 'opacity 1.5s ease-in-out';
+                videoWrapper.style.opacity = '0';
+
+                // After fade, pause and hold
+                setTimeout(() => {
+                    video.pause();
+
+                    // Hold on black, then restart
+                    setTimeout(() => {
+                        video.currentTime = 0;
+                        video.play();
+
+                        // Fade video back in
+                        setTimeout(() => {
+                            videoWrapper.style.opacity = '1';
+                            isPaused = false;
+                        }, 300);
+                    }, BLACK_PAUSE_TIME);
+                }, 1500);
+            }
+        });
+    </script>
+</body>
+</html>

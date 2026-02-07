@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-secondary: #fff;
+            --bg-tertiary: #fafafa;
+            --bg-hover: #f5f3f0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border-color: #eee;
+            --border-light: #f0f0f0;
+            --accent-gold: #b5956a;
+            --accent-gold-hover: #a08050;
+            --modal-bg: #fff;
+            --input-bg: #fff;
+            --shadow: rgba(0,0,0,0.1);
+            --overlay: rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #252525;
+            --bg-tertiary: #2d2d2d;
+            --bg-hover: #333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #aaa;
+            --text-muted: #777;
+            --border-color: #3a3a3a;
+            --border-light: #333;
+            --accent-gold: #c9a66a;
+            --accent-gold-hover: #d4b87a;
+            --modal-bg: #252525;
+            --input-bg: #2d2d2d;
+            --shadow: rgba(0,0,0,0.3);
+            --overlay: rgba(0,0,0,0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        body.dark-mode .logo img {
+            filter: invert(0.85);
+        }
+
+        .logo span {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.55rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 8px;
+            color: var(--text-muted);
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-gold);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 30px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            background: url('../images/header-flowers.jpg') center center / cover no-repeat;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .header-date {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--accent-gold);
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-gold-hover);
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        /* Toggle Tabs */
+        .toggle-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-tab {
+            padding: 8px 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            background: var(--border-light);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-tab:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .toggle-tab.active {
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+        }
+
+        .toggle-tab.active.studio {
+            background: var(--accent-gold);
+        }
+
+        /* Clients Table */
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .clients-table th {
+            text-align: left;
+            padding: 16px 28px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .clients-table td {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .clients-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .clients-table tr:hover {
+            background: var(--bg-tertiary);
+            cursor: pointer;
+        }
+
+        .client-name {
+            font-weight: 400;
+        }
+
+        .event-date {
+            color: var(--text-secondary);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status.inquiry { background: var(--border-light); color: var(--text-secondary); }
+        .status.tasting { background: #fff3e0; color: #e65100; }
+        .status.proposal { background: #e3f2fd; color: #1976d2; }
+        .status.booked, .status.signed { background: #fce4ec; color: #c2185b; }
+        .status.event { background: var(--bg-tertiary); color: var(--accent-gold); }
+        .status.complete { background: var(--bg-tertiary); color: var(--accent-gold); }
+
+        body.dark-mode .status.tasting { background: #3d2a00; color: #ffab40; }
+        body.dark-mode .status.proposal { background: #0d2744; color: #64b5f6; }
+        body.dark-mode .status.booked, body.dark-mode .status.signed { background: #3d1a2a; color: #f48fb1; }
+
+        .payment-status { font-size: 0.8rem; }
+        .payment-status.pending { color: #e65100; }
+        .payment-status.partial { color: #1565c0; }
+        .payment-status.paid { color: var(--accent-gold); }
+
+        body.dark-mode .payment-status.pending { color: #ffab40; }
+        body.dark-mode .payment-status.partial { color: #64b5f6; }
+
+        .btn-small {
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: var(--accent-gold);
+            color: #fff;
+        }
+
+        .btn-small.draft {
+            background: var(--bg-hover);
+            border-color: var(--accent-gold);
+            color: var(--text-secondary);
+        }
+
+        .btn-small.draft:hover {
+            background: var(--accent-gold);
+            color: #fff;
+        }
+
+        .btn-small.signed {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .btn-small.signed:hover {
+            background: var(--accent-gold);
+            color: #fff;
+        }
+
+        .signed-row {
+            background: var(--bg-tertiary);
+        }
+
+        .status-signed {
+            color: var(--accent-gold);
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--modal-bg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--text-muted);
+        }
+
+        .modal-close:hover { color: var(--text-primary); }
+
+        .modal-body { padding: 14px 24px; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .form-row.full { grid-template-columns: 1fr; }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        .form-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            background: var(--input-bg);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-textarea { min-height: 30px; resize: vertical; }
+
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .form-divider { height: 1px; background: var(--border-color); margin: 28px 0; }
+
+        .form-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .modal-footer {
+            padding: 12px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="contacts.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/communications.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Communications
+            </a>
+            <a href="/admin/templates.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Templates
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+            <a href="/admin/media.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Media
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+
+            <!-- Dark Mode Toggle -->
+            <div style="padding: 14px 30px; margin-top: auto;">
+                <button onclick="toggleDarkMode()" id="darkModeBtn" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.2s;">
+                    <span id="darkModeIcon">🌙</span>
+                    <span id="darkModeText">Night Mode</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div>
+                <h1>Contacts</h1>
+                <p class="header-date" id="headerDate"></p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Clients Section -->
+            <div class="section">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="toggle-tabs">
+                            <button class="toggle-tab active" onclick="setClientView('all')">All Contacts</button>
+                            <button class="toggle-tab studio" onclick="setClientView('studio')">In Studio</button>
+                        </div>
+                        <div id="searchBox" style="display: block;">
+                            <input type="text" id="searchInput" class="form-input" placeholder="Search contacts..." style="width: 250px; padding: 10px 14px; font-size: 0.85rem;" oninput="renderClients()">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="openInquiryModal()" style="background: var(--accent-gold); border-radius: 6px; padding: 8px 16px; font-size: 0.8rem;">
+                            Add Inquiry
+                        </button>
+                        <button class="btn" onclick="openModal()" style="background: var(--text-primary); color: var(--bg-secondary); border-radius: 6px; padding: 8px 16px; font-size: 0.8rem;">
+                            Add Contact
+                        </button>
+                    </div>
+                </div>
+                <table class="clients-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 95px;"></th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Instagram</th>
+                            <th>LinkedIn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Contact Modal -->
+    <div class="modal-overlay" id="addContactModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Contact</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="addContactForm">
+                <div class="modal-body">
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-input" id="contactName" placeholder="Name" required oninput="if(this.value.toLowerCase()==='jeff')fillTestContact()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-input" id="contactPhone" placeholder="(206) 555-0123">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="contactEmail" placeholder="email@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-input" id="contactAddress" placeholder="City, State">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company</label>
+                            <input type="text" class="form-input" id="contactCompany" placeholder="Company name">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Website</label>
+                            <input type="text" class="form-input" id="contactWebsite" placeholder="website.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Instagram</label>
+                            <input type="text" class="form-input" id="contactInstagram" placeholder="@handle">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">LinkedIn</label>
+                            <input type="text" class="form-input" id="contactLinkedin" placeholder="linkedin.com/in/...">
+                        </div>
+                        <div class="form-group"></div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-textarea" id="contactNotes" placeholder="Notes..." style="min-height: 60px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Contact Modal -->
+    <div class="modal-overlay" id="editContactModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Contact</h2>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" id="editContactName" placeholder="Name">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-input" id="editContactPhone" placeholder="(206) 555-0123">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="editContactEmail" placeholder="email@example.com">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-input" id="editContactAddress" placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company</label>
+                        <input type="text" class="form-input" id="editContactCompany" placeholder="Company name">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="text" class="form-input" id="editContactWebsite" placeholder="website.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instagram</label>
+                        <input type="text" class="form-input" id="editContactInstagram" placeholder="@handle">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">LinkedIn</label>
+                        <input type="text" class="form-input" id="editContactLinkedin" placeholder="linkedin.com/in/...">
+                    </div>
+                    <div class="form-group"></div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-textarea" id="editContactNotes" placeholder="Notes..." style="min-height: 40px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <button type="button" onclick="deleteContactFromModal()" style="padding: 8px 16px; font-size: 0.75rem; border-radius: 20px; background: var(--bg-secondary); color: #c2185b; border: 1px solid #c2185b; cursor: pointer; font-family: 'Montserrat', sans-serif; letter-spacing: 0.5px;">Delete</button>
+                <button type="button" onclick="saveEditContact()" style="padding: 8px 16px; font-size: 0.75rem; border-radius: 20px; background: var(--accent-gold); color: #fff; border: none; cursor: pointer; font-family: 'Montserrat', sans-serif; letter-spacing: 0.5px; margin-left: auto;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Inquiry Modal -->
+    <div class="modal-overlay" id="addInquiryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Inquiry</h2>
+                <button class="modal-close" onclick="closeInquiryModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="addInquiryForm">
+                <div class="modal-body">
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <button type="button" class="btn" onclick="openContactPicker()" style="background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); width: 100%; border-radius: 6px;">
+                                Select from Contacts
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-input" id="inquiryName" placeholder="Client name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-input" id="inquiryEmail" placeholder="email@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Event Date</label>
+                            <input type="date" class="form-input" id="inquiryEventDate">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Guest Count</label>
+                            <input type="text" class="form-input" id="inquiryGuestCount" placeholder="Approximate">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Event Type</label>
+                            <select class="form-select" id="inquiryEventType">
+                                <option value="Wedding">Wedding</option>
+                                <option value="Birthday">Birthday</option>
+                                <option value="Anniversary">Anniversary</option>
+                                <option value="Corporate">Corporate Event</option>
+                                <option value="Baby Shower">Baby Shower</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Venue / Location</label>
+                            <input type="text" class="form-input" id="inquiryVenue" placeholder="City, State or Venue name">
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label class="form-label">Their Vision / Message</label>
+                            <textarea class="form-textarea" id="inquiryMessage" placeholder="Colors, themes, inspirations, or any details from their inquiry..." style="min-height: 100px;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone (optional)</label>
+                            <input type="tel" class="form-input" id="inquiryPhone" placeholder="(206) 555-0123">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Source (optional)</label>
+                            <select class="form-select" id="inquirySource">
+                                <option value="Website">Website Form</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Vendor">Vendor Referral</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeInquiryModal()">Cancel</button>
+                    <button type="submit" class="btn" style="background: var(--accent-gold);">Add Inquiry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contact Picker Popup -->
+    <div id="contactPickerOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: var(--modal-bg); width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px var(--shadow); border-radius: 8px;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--text-primary);">Select Contact</h3>
+                <button onclick="closeContactPicker()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+            <div style="padding: 12px 20px; border-bottom: 1px solid var(--border-color);">
+                <input type="text" id="contactPickerSearch" placeholder="Search contacts..." oninput="filterContactPicker(this.value)" class="form-input" style="width: 100%; padding: 10px 12px; font-size: 0.85rem; border-radius: 6px;">
+            </div>
+            <div id="contactPickerList" style="flex: 1; overflow-y: auto; max-height: 400px;">
+                <!-- Contacts loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Dark Mode - check saved preference on load
+        (function() {
+            const darkMode = localStorage.getItem('kgc_dark_mode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            document.addEventListener('DOMContentLoaded', updateDarkModeButton);
+        })();
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('kgc_dark_mode', isDark);
+            updateDarkModeButton();
+        }
+
+        function updateDarkModeButton() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (icon && text) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+                text.textContent = isDark ? 'Day Mode' : 'Night Mode';
+            }
+        }
+
+        // Get event colors from secondary accent colors
+        function getEventColors(palette) {
+            const accents = (palette?.secondary || []).filter(c => c.isAccent);
+            return {
+                event: accents[0]?.hex || '#a8b5a0',
+                tasting: accents[1]?.hex || '#dfc89f',
+                inquiry: accents[4]?.hex || '#b8a9c9',
+                proposal: accents[3]?.hex || '#a5c4d4',
+                signed: accents[2]?.hex || '#d4a5a5',
+                custom: accents[5]?.hex || '#c9b99a'
+            };
+        }
+
+        // Lighten a hex color for backgrounds
+        function lightenColor(hex, percent = 0.7) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * percent));
+            const g = Math.min(255, Math.floor(((num >> 8) & 0x00FF) + (255 - ((num >> 8) & 0x00FF)) * percent));
+            const b = Math.min(255, Math.floor((num & 0x0000FF) + (255 - (num & 0x0000FF)) * percent));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Darken a hex color for text
+        function darkenColor(hex, percent = 0.3) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.floor((num >> 16) * (1 - percent));
+            const g = Math.floor(((num >> 8) & 0x00FF) * (1 - percent));
+            const b = Math.floor((num & 0x0000FF) * (1 - percent));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Apply active palette colors dynamically
+        function applyActivePalette() {
+            const activePalette = JSON.parse(localStorage.getItem('kgc_active_palette'));
+            if (!activePalette) return;
+
+            const primary = activePalette.primary || [];
+            const colors = getEventColors(activePalette);
+
+            let css = '';
+            if (primary[0]) {
+                css += `.btn { background: ${primary[0].hex}; }\n`;
+                css += `.nav-item.active { border-left-color: ${primary[0].hex}; }\n`;
+            }
+
+            Object.entries(colors).forEach(([type, hex]) => {
+                const bgColor = lightenColor(hex, 0.6);
+                const textColor = darkenColor(hex, 0.3);
+                if (type === 'event') css += `.status.event, .status.complete { background: ${bgColor}; color: ${textColor}; }\n`;
+                else if (type === 'tasting') css += `.status.tasting { background: ${bgColor}; color: ${textColor}; }\n`;
+                else if (type === 'inquiry') css += `.status.inquiry { background: ${bgColor}; color: ${textColor}; }\n`;
+                else if (type === 'proposal') css += `.status.proposal { background: ${bgColor}; color: ${textColor}; }\n`;
+                else if (type === 'signed') css += `.status.booked, .status.signed { background: ${bgColor}; color: ${textColor}; }\n`;
+            });
+
+            let styleEl = document.getElementById('dynamic-palette-styles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'dynamic-palette-styles';
+                document.head.appendChild(styleEl);
+            }
+            styleEl.textContent = css;
+        }
+        applyActivePalette();
+
+        // Current view state
+        let currentView = 'all';
+
+        // Sync localStorage access for immediate UI
+        function getClientsLocal() {
+            return JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+        }
+
+        // Alias for backwards compatibility with existing code
+        function getClients() {
+            return getClientsLocal();
+        }
+
+        // Load clients from API and sync to localStorage
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients(); // Uses api.js getClients() which returns from API
+                // getClients from api.js already syncs to cache, but we also save to localStorage
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                renderClients();
+                console.log('Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Save client to localStorage immediately, then sync to API
+        async function saveClientLocal(client) {
+            // Immediate localStorage update
+            const clients = getClientsLocal();
+            const index = clients.findIndex(c => c.id === client.id || String(c.id) === String(client.id));
+            if (index >= 0) {
+                clients[index] = client;
+            } else {
+                clients.unshift(client);
+            }
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+            // Sync to API in background
+            try {
+                await saveClient(client);
+                console.log('Client synced to API:', client.name);
+            } catch (error) {
+                console.log('API sync failed, data saved locally:', error.message);
+            }
+        }
+
+        // Delete from localStorage and API
+        async function deleteClientWithAPI(clientId) {
+            // Immediate localStorage delete
+            let clients = getClientsLocal();
+            clients = clients.filter(c => c.id !== clientId && String(c.id) !== String(clientId));
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+            // Sync to API in background
+            try {
+                await apiDeleteClient(clientId);
+                console.log('Client deleted from API:', clientId);
+            } catch (error) {
+                console.log('API delete failed:', error.message);
+            }
+        }
+
+        function setClientView(view) {
+            currentView = view;
+
+            // Update tab styles
+            document.querySelectorAll('.toggle-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', (view === 'all' && i === 0) || (view === 'studio' && i === 1));
+            });
+
+            // Show/hide search box
+            document.getElementById('searchBox').style.display = view === 'all' ? 'block' : 'none';
+            if (view === 'studio') {
+                document.getElementById('searchInput').value = '';
+            }
+
+            renderClients();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'contact': '<span class="status" style="background:var(--bg-tertiary);color:var(--text-secondary);">Contact</span>',
+                'inquiry': '<span class="status inquiry">New Inquiry</span>',
+                'tasting': '<span class="status tasting">Tasting Scheduled</span>',
+                'proposal': '<span class="status proposal">Proposal Sent</span>',
+                'booked': '<span class="status booked">Booked</span>',
+                'complete': '<span class="status complete">Complete</span>'
+            };
+            return labels[status] || labels['contact'];
+        }
+
+        function hasProposalDraft(clientId) {
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            return drafts[clientId] ? drafts[clientId] : null;
+        }
+
+        function hasTastingDraft(clientId) {
+            const drafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+            return drafts[clientId] ? drafts[clientId] : null;
+        }
+
+        function isProposalSigned(clientId) {
+            const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+            return signatures[clientId] ? true : false;
+        }
+
+        function getSignatureInfo(clientId) {
+            const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+            return signatures[clientId] || {};
+        }
+
+        function openClientPortal(clientId) {
+            window.location.href = '/clients/view.html?id=' + clientId + '&mode=admin';
+        }
+
+        function openContact(clientId, status) {
+            // If it's a real inquiry/in-studio client, go to portal
+            if (status !== 'contact') {
+                openClientPortal(clientId);
+                return;
+            }
+
+            // For simple contacts, show edit popup
+            const clients = getClients();
+            const client = clients.find(c => c.id === clientId || String(c.id) === String(clientId));
+            if (!client) return;
+
+            // Store current editing ID
+            window.editingContactId = clientId;
+
+            // Fill the edit form
+            document.getElementById('editContactName').value = client.name || '';
+            document.getElementById('editContactPhone').value = client.phone || '';
+            document.getElementById('editContactEmail').value = client.email || '';
+            document.getElementById('editContactAddress').value = client.address || '';
+            document.getElementById('editContactCompany').value = client.company || '';
+            document.getElementById('editContactWebsite').value = client.website || '';
+            document.getElementById('editContactInstagram').value = client.instagram || '';
+            document.getElementById('editContactLinkedin').value = client.linkedin || '';
+            document.getElementById('editContactNotes').value = client.notes || '';
+
+            // Show modal
+            const modal = document.getElementById('editContactModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editContactModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+            window.editingContactId = null;
+        }
+
+        function openEditModal(clientId) {
+            const clients = getClients();
+            const client = clients.find(c => c.id === clientId || String(c.id) === String(clientId));
+            if (!client) return;
+
+            // Store current editing ID
+            window.editingContactId = clientId;
+
+            // Fill the edit form
+            document.getElementById('editContactName').value = client.name || '';
+            document.getElementById('editContactPhone').value = client.phone || '';
+            document.getElementById('editContactEmail').value = client.email || '';
+            document.getElementById('editContactAddress').value = client.address || '';
+            document.getElementById('editContactCompany').value = client.company || '';
+            document.getElementById('editContactWebsite').value = client.website || '';
+            document.getElementById('editContactInstagram').value = client.instagram || '';
+            document.getElementById('editContactLinkedin').value = client.linkedin || '';
+            document.getElementById('editContactNotes').value = client.notes || '';
+
+            // Show modal
+            const modal = document.getElementById('editContactModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function deleteContactFromModal() {
+            const clientId = window.editingContactId;
+            if (!clientId) return;
+
+            const clients = getClients();
+            const client = clients.find(c => c.id === clientId || String(c.id) === String(clientId));
+            const name = client ? client.name : 'this contact';
+
+            if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+
+            closeEditModal();
+            deleteClient(clientId);
+        }
+
+        async function saveEditContact() {
+            const clientId = window.editingContactId;
+            if (!clientId) return;
+
+            const clients = getClientsLocal();
+            const index = clients.findIndex(c => c.id === clientId || String(c.id) === String(clientId));
+            if (index === -1) return;
+
+            // Format phone number if 10 digits
+            let phone = document.getElementById('editContactPhone').value;
+            const digits = phone.replace(/\D/g, '');
+            if (digits.length === 10) {
+                phone = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+            }
+
+            // Update the client object
+            clients[index].name = document.getElementById('editContactName').value;
+            clients[index].phone = phone;
+            clients[index].email = document.getElementById('editContactEmail').value;
+            clients[index].address = document.getElementById('editContactAddress').value;
+            clients[index].company = document.getElementById('editContactCompany').value;
+            clients[index].website = document.getElementById('editContactWebsite').value;
+            clients[index].instagram = document.getElementById('editContactInstagram').value;
+            clients[index].linkedin = document.getElementById('editContactLinkedin').value;
+            clients[index].notes = document.getElementById('editContactNotes').value;
+
+            // Immediate localStorage update
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+            renderClients();
+            closeEditModal();
+
+            // Sync to API in background
+            try {
+                await saveClient(clients[index]);
+                console.log('Contact updated in API:', clients[index].name);
+            } catch (error) {
+                console.log('API sync failed:', error.message);
+            }
+        }
+
+        function createTastingInvoice(clientId) {
+            window.open(`/invoices/tasting-scheduler?clientId=${clientId}`, '_blank');
+        }
+
+        async function createProposal(clientId) {
+            // Generate a unique 4-digit proposal number
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+
+            // Check if this client already has a proposal with a number
+            if (drafts[clientId] && drafts[clientId].proposalNumber) {
+                // Already has a proposal number, just open the builder
+                window.open(`/proposals/proposal-builder?clientId=${clientId}`, '_blank');
+                return;
+            }
+
+            // Find the highest existing proposal number
+            let maxNum = 0;
+            Object.values(drafts).forEach(draft => {
+                if (draft.proposalNumber) {
+                    const num = parseInt(draft.proposalNumber, 10);
+                    if (num > maxNum) maxNum = num;
+                }
+            });
+
+            // Generate next proposal number (4 digits, starting from 0750)
+            const newProposalNumber = String(maxNum === 0 ? 750 : maxNum + 1).padStart(4, '0');
+
+            // Save the proposal number to the draft
+            if (!drafts[clientId]) {
+                drafts[clientId] = {};
+            }
+            drafts[clientId].proposalNumber = newProposalNumber;
+            drafts[clientId].createdAt = drafts[clientId].createdAt || new Date().toISOString();
+            localStorage.setItem('kgc_proposal_drafts', JSON.stringify(drafts));
+
+            // Sync to API
+            try {
+                await saveProposalDraft(clientId, drafts[clientId]);
+            } catch (error) {
+                console.log('Proposal draft API sync failed:', error.message);
+            }
+
+            console.log('Assigned proposal number P-' + newProposalNumber + ' to client ' + clientId);
+
+            window.open(`/proposals/proposal-builder?clientId=${clientId}`, '_blank');
+        }
+
+        function viewSignedProposal(clientId) {
+            window.open(`/proposals/proposal-builder?clientId=${clientId}`, '_blank');
+        }
+
+        async function deleteClient(clientId) {
+            if (!confirm('Delete this client? This cannot be undone.')) return;
+
+            // Immediate localStorage delete
+            let clients = getClientsLocal();
+            clients = clients.filter(c => c.id !== clientId && String(c.id) !== String(clientId));
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+            // Clean up related data in localStorage
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            delete drafts[clientId];
+            delete drafts[String(clientId)];
+            localStorage.setItem('kgc_proposal_drafts', JSON.stringify(drafts));
+
+            const tastings = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+            delete tastings[clientId];
+            delete tastings[String(clientId)];
+            localStorage.setItem('kgc_tasting_drafts', JSON.stringify(tastings));
+
+            const sigs = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+            delete sigs[clientId];
+            delete sigs[String(clientId)];
+            localStorage.setItem('kgc_signatures', JSON.stringify(sigs));
+
+            localStorage.removeItem('kgc_portal_' + clientId);
+
+            let calEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+            calEvents = calEvents.filter(e => e.clientId !== clientId && String(e.clientId) !== String(clientId));
+            localStorage.setItem('kgc_calendar_events', JSON.stringify(calEvents));
+
+            renderClients();
+
+            // Sync to API in background
+            try {
+                await apiDeleteClient(clientId);
+                console.log('Client deleted from API:', clientId);
+            } catch (error) {
+                console.log('API delete failed:', error.message);
+            }
+        }
+
+        // Track collapsed states
+        let collapsedClients = JSON.parse(localStorage.getItem('kgc_collapsed_clients') || '{}');
+
+        function toggleTeamCollapse(clientId) {
+            collapsedClients[clientId] = !collapsedClients[clientId];
+            localStorage.setItem('kgc_collapsed_clients', JSON.stringify(collapsedClients));
+            renderClients();
+        }
+
+        function renderContactRow(client, showRole = false, isTeamMember = false, parentId = null) {
+            const roleLabel = showRole && client.role ? `<span style="color: var(--text-muted); font-size: 0.75rem; margin-left: 8px;">(${client.role})</span>` : '';
+            const indent = isTeamMember ? 'padding-left: 48px;' : '';
+            const teamStyle = isTeamMember ? 'background: var(--bg-tertiary);' : '';
+            const teamClass = isTeamMember && parentId ? `team-row-${parentId}` : '';
+            const isStudioView = currentView === 'studio';
+
+            // First column: empty for both views (In Studio name click goes to portal, All Contacts name click edits)
+            const firstColContent = '';
+
+            // Name click: In Studio goes to portal, All Contacts opens edit
+            const nameClick = isStudioView
+                ? `openClientPortal(${client.id})`
+                : `openEditModal(${client.id})`;
+
+            return `
+                <tr data-id="${client.id}" class="${teamClass}" style="${teamStyle}">
+                    <td style="padding: 20px 8px 20px 28px;">${firstColContent}</td>
+                    <td class="client-name" style="${indent}">
+                        ${isTeamMember ? '<span style="color: var(--border-color); margin-right: 8px;">└</span>' : ''}
+                        <a href="#" onclick="${nameClick}; return false;" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='inherit'">${client.name}</a>${roleLabel}
+                    </td>
+                    <td class="client-email">${client.email ? `<a href="mailto:${client.email}" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${client.email}</a>` : '-'}</td>
+                    <td class="client-phone">${client.phone ? `<a href="tel:${(client.phone || '').replace(/[^0-9]/g, '')}" style="color: inherit; text-decoration: none;">${client.phone}</a>` : '-'}</td>
+                    <td>${client.address || '-'}</td>
+                    <td>${client.instagram ? `<a href="https://instagram.com/${client.instagram.replace('@', '')}" target="_blank" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${client.instagram}</a>` : '-'}</td>
+                    <td>${client.linkedin ? `<a href="${client.linkedin.startsWith('http') ? client.linkedin : 'https://' + client.linkedin}" target="_blank" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">LinkedIn</a>` : '-'}</td>
+                </tr>
+            `;
+        }
+
+        function renderPrimaryRow(client, teamCount) {
+            const isCollapsed = collapsedClients[client.id];
+            const teamBadge = teamCount > 0 ? `<span style="background:var(--border-light); color:var(--text-muted); font-size:0.7rem; padding:2px 6px; margin-left:8px; border-radius:10px;">${teamCount}</span>` : '';
+            const isStudioView = currentView === 'studio';
+            const isInStudioClient = client.status && client.status !== 'contact';
+
+            // +/- button for expanding/contracting team
+            const expandSymbol = isCollapsed !== false ? '+' : '−';
+            const expandTitle = isCollapsed !== false ? 'Expand team' : 'Collapse team';
+            const expandButton = `<span onclick="event.stopPropagation(); toggleTeamCollapse(${client.id})" title="${expandTitle}" style="cursor:pointer; color:var(--text-muted); font-size:1rem; font-weight:300; width:20px; display:inline-block; text-align:center; transition:color 0.2s;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='var(--text-muted)'">${expandSymbol}</span>`;
+
+            // First column: In Studio view shows +/- for team expansion
+            const firstColContent = isStudioView && isInStudioClient ? expandButton : '';
+
+            // Name click: In Studio goes to portal, All Contacts opens edit
+            const nameClick = isStudioView && isInStudioClient
+                ? `openClientPortal(${client.id})`
+                : `openEditModal(${client.id})`;
+
+            return `
+                <tr data-id="${client.id}" data-has-team="${teamCount > 0}">
+                    <td style="padding: 20px 8px 20px 28px;">${firstColContent}</td>
+                    <td class="client-name">
+                        <a href="#" onclick="${nameClick}; return false;" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='inherit'">${client.name}</a>${teamBadge}
+                    </td>
+                    <td class="client-email">${client.email ? `<a href="mailto:${client.email}" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${client.email}</a>` : '-'}</td>
+                    <td class="client-phone">${client.phone ? `<a href="tel:${client.phone.replace(/[^0-9]/g, '')}" style="color: inherit; text-decoration: none;">${client.phone}</a>` : '-'}</td>
+                    <td>${client.address || '-'}</td>
+                    <td>${client.instagram ? `<a href="https://instagram.com/${client.instagram.replace('@', '')}" target="_blank" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${client.instagram}</a>` : '-'}</td>
+                    <td>${client.linkedin ? `<a href="${client.linkedin.startsWith('http') ? client.linkedin : 'https://' + client.linkedin}" target="_blank" style="color: var(--accent-gold); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">LinkedIn</a>` : '-'}</td>
+                </tr>
+            `;
+        }
+
+        function renderClients() {
+            const allClients = getClients();
+            const tbody = document.querySelector('.clients-table tbody');
+
+            // Filter based on current view
+            let clients;
+            if (currentView === 'studio') {
+                // In Studio = active pipeline (not complete, not just a contact, not a team member linked to someone else)
+                clients = allClients.filter(c => c.status !== 'complete' && c.status !== 'contact' && !c.linkedToClient);
+            } else {
+                // All Contacts = everyone
+                clients = allClients;
+
+                // Apply search filter
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+                if (searchTerm) {
+                    clients = clients.filter(c =>
+                        (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+                        (c.email && c.email.toLowerCase().includes(searchTerm)) ||
+                        (c.phone && c.phone.includes(searchTerm)) ||
+                        (c.address && c.address.toLowerCase().includes(searchTerm)) ||
+                        (c.company && c.company.toLowerCase().includes(searchTerm)) ||
+                        (c.role && c.role.toLowerCase().includes(searchTerm))
+                    );
+                }
+
+                // Always sort A-Z
+                clients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            if (clients.length === 0) {
+                const emptyMsg = currentView === 'studio'
+                    ? 'No active clients in studio.'
+                    : 'No contacts yet.';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            ${emptyMsg}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Build rows
+            let rows = [];
+
+            if (currentView === 'studio') {
+                // In Studio view: show primary clients with their team members indented below
+                clients.forEach(client => {
+                    // Get team from portal data (preserves drag/drop order)
+                    const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + client.id) || '{}');
+                    const team = portalData.team || [];
+
+                    // Add the primary client row with team count
+                    rows.push(renderPrimaryRow(client, team.length));
+
+                    // Add team members if not collapsed
+                    if (!collapsedClients[client.id] && team.length > 0) {
+                        team.forEach(member => {
+                            rows.push(renderContactRow(member, true, true, client.id));
+                        });
+                    }
+                });
+            } else {
+                // All Contacts view: show everyone, with role label for team members
+                clients.forEach(client => {
+                    rows.push(renderContactRow(client, !!client.linkedToClient, false));
+                });
+            }
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        // Modal functions
+        function openModal() {
+            const modal = document.getElementById('addContactModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('addContactModal');
+            modal.classList.remove('active');
+            document.getElementById('addContactForm').reset();
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Inquiry Modal functions
+        function openInquiryModal() {
+            const modal = document.getElementById('addInquiryModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInquiryModal() {
+            const modal = document.getElementById('addInquiryModal');
+            modal.classList.remove('active');
+            document.getElementById('addInquiryForm').reset();
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Contact Picker functions
+        let allContactsForPicker = [];
+
+        function openContactPicker() {
+            const overlay = document.getElementById('contactPickerOverlay');
+            const searchInput = document.getElementById('contactPickerSearch');
+
+            allContactsForPicker = getClients().sort((a, b) => a.name.localeCompare(b.name));
+            searchInput.value = '';
+            renderContactPickerList(allContactsForPicker);
+
+            overlay.style.display = 'flex';
+        }
+
+        function closeContactPicker() {
+            document.getElementById('contactPickerOverlay').style.display = 'none';
+        }
+
+        function renderContactPickerList(contacts) {
+            const list = document.getElementById('contactPickerList');
+            const isDark = document.body.classList.contains('dark-mode');
+            const hoverBg = isDark ? '#333' : '#f9f9f9';
+            const normalBg = isDark ? '#252525' : '#fff';
+
+            if (contacts.length === 0) {
+                list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted);">No contacts found</div>';
+                return;
+            }
+
+            list.innerHTML = contacts.map(client => `
+                <div onclick="selectContactFromPicker(${client.id})" style="padding: 14px 20px; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.15s; color: var(--text-primary);"
+                     onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='${normalBg}'">
+                    <div style="font-weight: 400; margin-bottom: 2px;">${client.name}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${client.email || 'No email'}${client.phone ? ' • ' + client.phone : ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function filterContactPicker(query) {
+            if (!query) {
+                renderContactPickerList(allContactsForPicker);
+                return;
+            }
+            const q = query.toLowerCase();
+            const filtered = allContactsForPicker.filter(c =>
+                c.name.toLowerCase().includes(q) ||
+                (c.email && c.email.toLowerCase().includes(q))
+            );
+            renderContactPickerList(filtered);
+        }
+
+        function selectContactFromPicker(clientId) {
+            const client = allContactsForPicker.find(c => c.id == clientId);
+            if (client) {
+                document.getElementById('inquiryName').value = client.name || '';
+                document.getElementById('inquiryEmail').value = client.email || '';
+                document.getElementById('inquiryPhone').value = client.phone || '';
+            }
+            closeContactPicker();
+        }
+
+        // Close picker on overlay click
+        document.getElementById('contactPickerOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeContactPicker();
+        });
+
+        // Close modal on overlay click
+        document.getElementById('addContactModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.getElementById('editContactModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+        document.getElementById('addInquiryModal').addEventListener('click', function(e) {
+            if (e.target === this) closeInquiryModal();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeEditModal();
+                closeInquiryModal();
+            }
+        });
+
+        // Auto-format phone as soon as 10 digits are typed
+        function formatPhoneOnInput(input) {
+            const digits = input.value.replace(/\D/g, '');
+            if (digits.length === 10) {
+                input.value = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+            }
+        }
+        document.getElementById('editContactPhone').addEventListener('input', function() { formatPhoneOnInput(this); });
+        const addPhone = document.getElementById('contactPhone');
+        if (addPhone) addPhone.addEventListener('input', function() { formatPhoneOnInput(this); });
+
+        // Form submission
+        document.getElementById('addContactForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const client = {
+                id: Date.now(),
+                createdAt: new Date().toISOString(),
+                status: 'contact',
+                name: document.getElementById('contactName').value,
+                phone: document.getElementById('contactPhone').value,
+                email: document.getElementById('contactEmail').value,
+                address: document.getElementById('contactAddress').value,
+                company: document.getElementById('contactCompany').value,
+                website: document.getElementById('contactWebsite').value,
+                instagram: document.getElementById('contactInstagram').value,
+                linkedin: document.getElementById('contactLinkedin').value,
+                notes: document.getElementById('contactNotes').value
+            };
+
+            // Immediate localStorage update
+            const clients = getClientsLocal();
+            clients.unshift(client);
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+            // Switch to All Contacts to show the new contact
+            setClientView('all');
+            closeModal();
+
+            // Sync to API in background
+            try {
+                const saved = await createClient(client);
+                // Update localStorage with the server-assigned ID
+                const updatedClients = getClientsLocal();
+                const idx = updatedClients.findIndex(c => c.id === client.id);
+                if (idx >= 0 && saved.id) {
+                    updatedClients[idx].id = saved.id;
+                    localStorage.setItem('kgc_clients', JSON.stringify(updatedClients));
+                }
+                console.log('Contact created in API:', saved.name);
+            } catch (error) {
+                console.log('API sync failed:', error.message);
+            }
+        });
+
+        // Inquiry form submission
+        document.getElementById('addInquiryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const inquiry = {
+                id: Date.now(),
+                createdAt: new Date().toISOString(),
+                status: 'inquiry',
+                name: document.getElementById('inquiryName').value,
+                email: document.getElementById('inquiryEmail').value,
+                phone: document.getElementById('inquiryPhone').value,
+                eventDate: document.getElementById('inquiryEventDate').value,
+                eventType: document.getElementById('inquiryEventType').value,
+                guestCount: document.getElementById('inquiryGuestCount').value,
+                venue: document.getElementById('inquiryVenue').value,
+                source: document.getElementById('inquirySource').value,
+                notes: document.getElementById('inquiryMessage').value
+            };
+
+            // Immediate localStorage update
+            const clients = getClientsLocal();
+            clients.unshift(inquiry);
+            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+            // Stay on In Studio view since inquiries show there
+            setClientView('studio');
+            closeInquiryModal();
+
+            // Sync to API in background, then redirect with correct ID
+            let redirectId = inquiry.id;
+            try {
+                const saved = await createClient(inquiry);
+                if (saved.id) {
+                    redirectId = saved.id;
+                    // Update localStorage with the server-assigned ID
+                    const updatedClients = getClientsLocal();
+                    const idx = updatedClients.findIndex(c => c.id === inquiry.id);
+                    if (idx >= 0) {
+                        updatedClients[idx].id = saved.id;
+                        localStorage.setItem('kgc_clients', JSON.stringify(updatedClients));
+                    }
+                }
+                console.log('Inquiry created in API:', saved.name);
+            } catch (error) {
+                console.log('API sync failed:', error.message);
+            }
+
+            // Open the new client's portal page
+            window.location.href = '/clients/view.html?id=' + redirectId + '&mode=admin';
+        });
+
+        // Phone formatting
+        document.getElementById('contactPhone').addEventListener('blur', function() {
+            const digits = this.value.replace(/\D/g, '');
+            if (digits.length === 10) {
+                this.value = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+            }
+        });
+        document.getElementById('inquiryPhone').addEventListener('blur', function() {
+            const digits = this.value.replace(/\D/g, '');
+            if (digits.length === 10) {
+                this.value = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+            }
+        });
+
+        // Test data auto-fill - type "jeff" in name field
+        const nameInput = document.getElementById('contactName');
+        if (nameInput) {
+            nameInput.addEventListener('input', function() {
+                if (this.value.toLowerCase() === 'jeff') {
+                    fillTestContact();
+                }
+            });
+        }
+        document.getElementById('inquiryName').addEventListener('input', function() {
+            if (this.value.toLowerCase() === 'jeff') {
+                fillTestInquiry();
+            }
+        });
+
+        function fillTestInquiry() {
+            const firstNames = ['Emma', 'Olivia', 'Ava', 'Sophia', 'Isabella', 'Charlotte', 'Amelia', 'Harper'];
+            const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
+            const venues = ['The Foundry Seattle', 'Golden Gardens', 'The Edgewater Hotel', 'Olympic Rooftop', 'Willows Lodge', 'Salish Lodge', 'Woodinville Wine Country'];
+            const eventTypes = ['Wedding', 'Birthday', 'Anniversary', 'Corporate'];
+            const messages = [
+                'Looking for an elegant three-tier cake with fresh flowers. Colors: blush pink, ivory, and gold accents. We love a romantic, garden-inspired aesthetic.',
+                'Want something modern and minimalist - geometric design with clean lines. Navy blue and white color scheme. Semi-naked with berries.',
+                'Classic elegance for our wedding - all white with sugar flowers. Four tiers, smooth buttercream finish.',
+                'Fun and colorful birthday cake for a garden party! Think wildflowers and butterflies. Lemon flavor preferred.'
+            ];
+            const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+            const randNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+            const firstName = rand(firstNames);
+            const lastName = rand(lastNames);
+
+            // Generate a date 3-6 months from now
+            const futureDate = new Date();
+            futureDate.setMonth(futureDate.getMonth() + randNum(3, 6));
+            futureDate.setDate(randNum(1, 28));
+            const dateStr = futureDate.toISOString().split('T')[0];
+
+            document.getElementById('inquiryName').value = `${firstName} ${lastName}`;
+            document.getElementById('inquiryEmail').value = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
+            document.getElementById('inquiryPhone').value = `(${randNum(206, 425)}) ${randNum(100, 999)}-${randNum(1000, 9999)}`;
+            document.getElementById('inquiryEventDate').value = dateStr;
+            document.getElementById('inquiryGuestCount').value = `${randNum(50, 200)}`;
+            document.getElementById('inquiryEventType').value = rand(eventTypes);
+            document.getElementById('inquiryVenue').value = rand(venues);
+            document.getElementById('inquiryMessage').value = rand(messages);
+        }
+
+        function fillTestContact() {
+            const firstNames = ['Emma', 'Olivia', 'Ava', 'Sophia', 'Isabella', 'Charlotte', 'Amelia', 'Harper', 'Evelyn', 'Abigail'];
+            const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Martinez', 'Wilson'];
+            const cities = ['Seattle, WA', 'Bellevue, WA', 'Kirkland, WA', 'Tacoma, WA', 'Redmond, WA', 'Portland, OR', 'San Francisco, CA'];
+            const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+            const randNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+            const firstName = rand(firstNames);
+            const lastName = rand(lastNames);
+
+            document.getElementById('contactName').value = `${firstName} ${lastName}`;
+            document.getElementById('contactPhone').value = `(${randNum(206, 425)}) ${randNum(100, 999)}-${randNum(1000, 9999)}`;
+            document.getElementById('contactEmail').value = `${firstName.toLowerCase()}${randNum(1, 99)}@gmail.com`;
+            document.getElementById('contactAddress').value = rand(cities);
+            document.getElementById('contactNotes').value = '';
+        }
+
+        // Dynamic header date
+        function updateHeaderDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('headerDate').textContent = now.toLocaleDateString('en-US', options);
+        }
+        updateHeaderDate();
+
+        // Initial render from localStorage (immediate)
+        renderClients();
+
+        // Load from API and sync (background)
+        loadClientsFromAPI();
+    </script>
+</body>
+</html>

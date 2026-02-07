@@ -1,0 +1,19 @@
+# Credentials - NEVER commit
+credentials/
+
+# Environment files
+.env
+*.env
+
+# Node modules
+node_modules/
+
+# Large media files (host these separately)
+website/videos-archive/
+*.mp4
+*.mov
+*.avi
+
+# OS files
+.DS_Store
+Thumbs.db

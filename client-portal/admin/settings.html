@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-secondary: #fff;
+            --bg-tertiary: #fafafa;
+            --bg-hover: #f5f3f0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border-color: #eee;
+            --border-light: #f0f0f0;
+            --accent-gold: #b5956a;
+            --accent-gold-hover: #a08050;
+            --modal-bg: #fff;
+            --input-bg: #fff;
+            --shadow: rgba(0,0,0,0.1);
+            --overlay: rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #252525;
+            --bg-tertiary: #2d2d2d;
+            --bg-hover: #333;
+            --text-primary: #e0e0e0;
+            --text-secondary: #aaa;
+            --text-muted: #777;
+            --border-color: #3a3a3a;
+            --border-light: #333;
+            --accent-gold: #c9a66a;
+            --accent-gold-hover: #d4b87a;
+            --modal-bg: #252525;
+            --input-bg: #2d2d2d;
+            --shadow: rgba(0,0,0,0.3);
+            --overlay: rgba(0,0,0,0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 30px 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        body.dark-mode .logo img {
+            filter: invert(0.85);
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-left-color: var(--accent-gold);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 30px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            background: url('../images/header-flowers.jpg') center center / cover no-repeat;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .header-date {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            padding: 40px;
+            max-width: 900px;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Settings Cards */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .settings-card {
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .settings-card:hover {
+            border-color: var(--accent-gold);
+            background: var(--bg-hover);
+        }
+
+        .settings-card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .settings-card-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-gold);
+        }
+
+        .settings-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .settings-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Data Management */
+        .data-section {
+            border-top: 2px solid var(--border-color);
+            padding-top: 30px;
+            margin-top: 10px;
+        }
+
+        .data-section .section-title {
+            color: #c2185b;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-danger {
+            background: var(--bg-secondary);
+            color: #c2185b;
+            border: 1px solid #c2185b;
+        }
+
+        .btn-danger:hover {
+            background: #fef0f4;
+        }
+
+        body.dark-mode .btn-danger:hover {
+            background: #3d1a24;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold-hover);
+        }
+
+        /* Calendar Imports */
+        .imports-list {
+            margin-top: 20px;
+        }
+
+        .import-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+        }
+
+        .import-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .import-item-icon {
+            width: 32px;
+            height: 32px;
+            background: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .import-item-icon svg {
+            width: 16px;
+            height: 16px;
+            color: #4caf50;
+        }
+
+        .import-item-name {
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .import-item-events {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .import-item-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.2s;
+        }
+
+        .import-item-delete:hover {
+            color: #c2185b;
+        }
+
+        .empty-imports {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 20px;
+            text-align: center;
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/admin/in-studio.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                In Studio
+            </a>
+            <a href="/admin/calendar.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar
+            </a>
+            <a href="/admin/contacts.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Contacts
+            </a>
+            <a href="/admin/communications.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Communications
+            </a>
+            <a href="/admin/templates.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Templates
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/finances.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Finances
+            </a>
+            <a href="/admin/media.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Media
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a href="/admin/settings.html" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </a>
+            <a href="/admin/archive.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="21 8 21 21 3 21 3 8"/>
+                    <rect x="1" y="3" width="22" height="5"/>
+                    <line x1="10" y1="12" x2="14" y2="12"/>
+                </svg>
+                Archive
+            </a>
+
+            <!-- Dark Mode Toggle -->
+            <div style="padding: 14px 30px; margin-top: auto;">
+                <button onclick="toggleDarkMode()" id="darkModeBtn" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: var(--text-secondary); transition: all 0.2s;">
+                    <span id="darkModeIcon">🌙</span>
+                    <span id="darkModeText">Night Mode</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div>
+                <h1>Settings</h1>
+                <p class="header-date" id="headerDate"></p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Settings Cards -->
+            <div class="section">
+                <h2 class="section-title">Portal Settings</h2>
+                <p class="section-subtitle">Customize your client portal experience</p>
+
+                <div class="settings-grid">
+                    <a href="/admin/brand-colors.html" class="settings-card">
+                        <div class="settings-card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="13.5" cy="6.5" r="2.5"/>
+                                <circle cx="19" cy="13" r="2.5"/>
+                                <circle cx="16" cy="20" r="2.5"/>
+                                <circle cx="7" cy="20" r="2.5"/>
+                                <circle cx="4" cy="13" r="2.5"/>
+                                <circle cx="9" cy="8" r="2.5"/>
+                            </svg>
+                        </div>
+                        <h3>Brand Colors</h3>
+                        <p>Customize your color palette, upload inspiration photos, and manage your brand identity.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Calendar Imports -->
+            <div class="section">
+                <h2 class="section-title">Calendar Imports</h2>
+                <p class="section-subtitle">Manage imported calendars synced with your schedule</p>
+
+                <div class="imports-list" id="importsList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="section data-section">
+                <h2 class="section-title">Data Management</h2>
+                <p class="section-subtitle">Manage your portal data. Use with caution - these actions cannot be undone.</p>
+
+                <div class="btn-group">
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Clear All Data
+                    </button>
+                    <button class="btn btn-primary" onclick="loadTestData()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="12" y1="18" x2="12" y2="12"/>
+                            <line x1="9" y1="15" x2="15" y2="15"/>
+                        </svg>
+                        Load Test Data (3 Clients)
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadSampleData()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Load Sample Data (28 Contacts)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Dark Mode - check saved preference on load
+        (function() {
+            const darkMode = localStorage.getItem('kgc_dark_mode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            document.addEventListener('DOMContentLoaded', updateDarkModeButton);
+        })();
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('kgc_dark_mode', isDark);
+            updateDarkModeButton();
+        }
+
+        function updateDarkModeButton() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (icon && text) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+                text.textContent = isDark ? 'Day Mode' : 'Night Mode';
+            }
+        }
+
+        // Set header date
+        const today = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('headerDate').textContent = today.toLocaleDateString('en-US', options);
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Load calendar imports from API
+        async function loadImportsFromAPI() {
+            try {
+                const imports = await getImportedCalendars();
+                localStorage.setItem('kgc_imported_calendars', JSON.stringify(imports));
+                renderImports();
+                console.log('Settings: Loaded', imports.length, 'imported calendars from API');
+            } catch (error) {
+                console.log('Settings: Using localStorage for imports:', error.message);
+            }
+        }
+
+        // Render calendar imports
+        function renderImports() {
+            const container = document.getElementById('importsList');
+            const imports = JSON.parse(localStorage.getItem('kgc_imported_calendars') || '[]');
+
+            if (imports.length === 0) {
+                container.innerHTML = '<div class="empty-imports">No calendar imports. Import calendars from the Calendar page.</div>';
+                return;
+            }
+
+            container.innerHTML = imports.map((cal, index) => `
+                <div class="import-item">
+                    <div class="import-item-info">
+                        <div class="import-item-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="import-item-name">${cal.name || 'Imported Calendar'}</div>
+                            <div class="import-item-events">${cal.events?.length || 0} events</div>
+                        </div>
+                    </div>
+                    <button class="import-item-delete" onclick="deleteImportByIndex(${index})" title="Remove import">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteImportByIndex(index) {
+            if (!confirm('Remove this calendar import?')) return;
+
+            const imports = JSON.parse(localStorage.getItem('kgc_imported_calendars') || '[]');
+            const calToDelete = imports[index];
+            imports.splice(index, 1);
+            localStorage.setItem('kgc_imported_calendars', JSON.stringify(imports));
+
+            // Sync to API
+            if (calToDelete && calToDelete.id) {
+                try {
+                    await deleteImportedCalendar(calToDelete.id);
+                } catch (error) {
+                    console.log('Settings: Import delete API sync failed:', error.message);
+                }
+            }
+
+            renderImports();
+            showToast('Calendar import removed');
+        }
+
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        // Data Management Functions
+        async function clearAllData() {
+            if (!confirm('⚠️ Clear ALL client data?\n\nThis will delete:\n• All clients and contacts\n• All custom calendar events\n• All proposals and signatures\n• All tasting drafts\n• All portal data\n• All expenses and revenue\n• All invoices\n\nCalendar imports will be preserved.\n\nThis cannot be undone!')) return;
+
+            showToast('Clearing data...');
+
+            // Clear localStorage
+            localStorage.removeItem('kgc_clients');
+            localStorage.removeItem('kgc_calendar_events');
+            localStorage.removeItem('kgc_signatures');
+            localStorage.removeItem('kgc_proposal_drafts');
+            localStorage.removeItem('kgc_tasting_drafts');
+            localStorage.removeItem('kgc_expenses');
+            localStorage.removeItem('kgc_revenue');
+            localStorage.removeItem('kgc_invoices');
+            localStorage.removeItem('kgc_communications');
+
+            // Clear all portal data from localStorage
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('kgc_portal_'))
+                .forEach(k => localStorage.removeItem(k));
+
+            // Clear API data
+            try {
+                // Get all clients and delete them
+                const clientsRes = await fetch(`${API_URL}/api/clients`);
+                const clients = await clientsRes.json();
+                for (const client of clients) {
+                    await fetch(`${API_URL}/api/clients/${client.id}`, { method: 'DELETE' });
+                }
+
+                // Get all invoices and delete them
+                const invoicesRes = await fetch(`${API_URL}/api/invoices`);
+                const invoices = await invoicesRes.json();
+                for (const inv of invoices) {
+                    await fetch(`${API_URL}/api/invoices/${inv.id}`, { method: 'DELETE' });
+                }
+
+                // Clear proposal drafts setting
+                await fetch(`${API_URL}/api/settings/proposal_drafts`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: {} })
+                });
+
+                // Clear calendar events setting
+                await fetch(`${API_URL}/api/settings/calendar_events`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: [] })
+                });
+
+                console.log('API data cleared');
+            } catch (err) {
+                console.log('API clear error (continuing):', err.message);
+            }
+
+            showToast('All data cleared!');
+        }
+
+        async function loadTestData() {
+            if (!confirm('Load test data?\n\nThis will add 3 test clients at different workflow stages:\n• Sarah Mitchell (new inquiry)\n• Jennifer & David Park (ready for proposal)\n• Amanda Chen (booked, needs final invoice)\n\nExisting data will NOT be deleted.')) return;
+
+            showToast('Loading test data...');
+
+            try {
+                // Client A - New Inquiry (matches website form fields exactly)
+                const clientA = await fetch(`${API_URL}/api/clients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Sarah Mitchell',
+                        email: 'sarah.test@example.com',
+                        event_date: '2026-06-15',
+                        guest_count: 120,
+                        venue: 'The Foundry by Herban Feast, Seattle',
+                        status: 'inquiry',
+                        source: 'website',
+                        notes: 'Looking for a romantic garden-inspired cake with fresh flowers. Love the vintage aesthetic on your Instagram! We want something elegant but not too formal.'
+                    })
+                }).then(r => r.json());
+
+                // Client B - Ready for Proposal (matches website form fields)
+                const clientB = await fetch(`${API_URL}/api/clients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Jennifer & David Park',
+                        email: 'jpark.test@example.com',
+                        event_date: '2026-07-25',
+                        guest_count: 85,
+                        venue: 'Olympic Rooftop Pavilion, Seattle',
+                        status: 'proposal',
+                        source: 'website',
+                        notes: 'Modern minimalist design with geometric shapes. Colors: white, gold, touches of greenery. Budget around $4,000. Very excited to work with you!'
+                    })
+                }).then(r => r.json());
+
+                // Client C - Booked, needs final invoice (matches website form fields)
+                const clientC = await fetch(`${API_URL}/api/clients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Amanda Chen',
+                        email: 'achen.test@example.com',
+                        event_date: '2026-02-28',
+                        guest_count: 50,
+                        venue: 'Private Residence, Mercer Island',
+                        status: 'booked',
+                        source: 'website',
+                        notes: '40th birthday celebration! Want something dramatic and artistic - maybe a dark floral theme? Saw the black cake with gold on your site and loved it.'
+                    })
+                }).then(r => r.json());
+
+                // Create paid tasting invoice for Client B
+                await fetch(`${API_URL}/api/invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientB.id,
+                        invoice_number: `TI-2026-${String(clientB.id).padStart(4, '0')}`,
+                        type: 'tasting',
+                        amount: 250,
+                        status: 'paid',
+                        data: { clientName: 'Jennifer & David Park', tastingDate: '2026-01-20' }
+                    })
+                });
+
+                // Create paid tasting + deposit invoices for Client C
+                await fetch(`${API_URL}/api/invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientC.id,
+                        invoice_number: `TI-2026-${String(clientC.id).padStart(4, '0')}`,
+                        type: 'tasting',
+                        amount: 250,
+                        status: 'paid',
+                        data: { clientName: 'Amanda Chen', tastingDate: '2026-01-10' }
+                    })
+                });
+
+                await fetch(`${API_URL}/api/invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientC.id,
+                        invoice_number: `DI-2026-${String(clientC.id).padStart(4, '0')}`,
+                        type: 'deposit',
+                        amount: 1625,
+                        status: 'paid',
+                        data: { clientName: 'Amanda Chen', contractTotal: 3500, depositAmount: 1625 }
+                    })
+                });
+
+                // Set portal data for Client B (tasting paid)
+                await fetch(`${API_URL}/api/portal/${clientB.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tasting_paid: true })
+                });
+
+                // Set portal data for Client C (tasting + deposit paid)
+                await fetch(`${API_URL}/api/portal/${clientC.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tasting_paid: true, deposit_paid: true })
+                });
+
+                // Save proposal drafts
+                await fetch(`${API_URL}/api/settings/proposal_drafts`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        value: {
+                            [clientB.id]: {
+                                proposalNumber: '0754',
+                                clientName: 'Jennifer & David Park',
+                                eventDate: '2026-07-25'
+                            },
+                            [clientC.id]: {
+                                proposalNumber: '0755',
+                                clientName: 'Amanda Chen',
+                                eventDate: '2026-02-28',
+                                signed: true,
+                                totalAmount: 3500
+                            }
+                        }
+                    })
+                });
+
+                showToast('Test data loaded! Redirecting...');
+                setTimeout(() => window.location.href = '/admin/in-studio.html', 1500);
+            } catch (err) {
+                console.error('Load test data error:', err);
+                showToast('Error loading test data: ' + err.message);
+            }
+        }
+
+        async function loadSampleData() {
+            if (!confirm('Load sample contacts?\n\nThis will add 25 sample contacts (vendors, friends, etc.) to your Contacts list.\n\nExisting data will NOT be deleted.')) return;
+
+            showToast('Loading sample contacts...');
+
+            const firstNames = ['Olivia', 'Sophia', 'Isabella', 'Charlotte', 'Amelia', 'Harper', 'Evelyn', 'Abigail', 'Emily', 'Elizabeth', 'Sofia', 'Avery', 'Ella', 'Scarlett', 'Grace', 'Victoria', 'Riley', 'Aria', 'Lily', 'Aurora', 'Chloe', 'Penelope', 'Layla', 'Mila', 'Nora'];
+            const lastNames = ['Anderson', 'Martinez', 'Taylor', 'Wilson', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'White', 'Harris', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Hill', 'Green', 'Adams', 'Nelson'];
+            const cities = ['Seattle, WA', 'Bellevue, WA', 'Kirkland, WA', 'Redmond, WA', 'Tacoma, WA'];
+            const companies = ['', '', '', 'Luxe Events', 'Bloom Florals', 'Sage & Ivy', 'The Venue Co', 'Perfect Day Planning'];
+
+            try {
+                for (let i = 0; i < 25; i++) {
+                    const firstName = firstNames[i];
+                    const lastName = lastNames[i];
+                    const hasCompany = Math.random() > 0.6;
+                    const hasInstagram = Math.random() > 0.5;
+
+                    await fetch(`${API_URL}/api/clients`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: `${firstName} ${lastName}`,
+                            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`,
+                            phone: `(206) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+                            address: cities[Math.floor(Math.random() * cities.length)],
+                            company: hasCompany ? companies[Math.floor(Math.random() * companies.length)] : null,
+                            instagram: hasInstagram ? `@${firstName.toLowerCase()}${lastName.toLowerCase()}` : null,
+                            status: 'contact',
+                            source: 'imported'
+                        })
+                    });
+                }
+
+                showToast('25 sample contacts loaded!');
+            } catch (err) {
+                console.error('Load sample data error:', err);
+                showToast('Error: ' + err.message);
+            }
+        }
+
+        // Initialize
+        renderImports();
+        // Load from API in background
+        loadImportsFromAPI();
+    </script>
+</body>
+</html>

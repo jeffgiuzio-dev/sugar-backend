@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Invoice - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .invoice-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            position: relative;
+            height: 200px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 25px;
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .hero-banner img {
+            position: relative;
+            width: 150px;
+            z-index: 1;
+        }
+
+        /* Header */
+        .invoice-header {
+            text-align: center;
+            padding: 30px 40px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-contact {
+            margin-top: 24px;
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Invoice Title */
+        .invoice-title-section {
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        .invoice-subtitle {
+            font-size: 0.85rem;
+            color: #b5956a;
+            margin-top: 4px;
+        }
+
+        .invoice-meta {
+            text-align: right;
+        }
+
+        .invoice-meta-label {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+        }
+
+        .invoice-meta-value {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        /* Bill To */
+        .bill-to-section {
+            padding: 30px 40px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .bill-to-label {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .bill-to-name {
+            font-weight: 400;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .bill-to-email {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .event-details {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            padding: 30px 40px;
+            background: #fffaf5;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .summary-row.highlight {
+            background: #fff;
+            margin: 16px -20px 0;
+            padding: 16px 20px;
+            border: 1px solid #b5956a;
+        }
+
+        .summary-row.highlight .label {
+            font-weight: 400;
+            color: #b5956a;
+        }
+
+        .summary-row.highlight .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: #b5956a;
+        }
+
+        /* Line Items */
+        .line-items {
+            padding: 40px;
+        }
+
+        .line-items-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .line-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .line-item:last-child {
+            border-bottom: none;
+        }
+
+        .line-item-name {
+            color: #1a1a1a;
+        }
+
+        .line-item-desc {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .line-item-price {
+            text-align: right;
+            color: #666;
+        }
+
+        /* Totals */
+        .totals-section {
+            padding: 0 40px 40px;
+        }
+
+        .totals-table {
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        .totals-row.subtotal {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .totals-row.fee {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .totals-row.deposit {
+            border-top: 2px solid #b5956a;
+            margin-top: 10px;
+            padding-top: 16px;
+            font-weight: 400;
+            color: #b5956a;
+        }
+
+        .totals-row.deposit .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+        }
+
+        .totals-row.balance {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        /* Payment Options */
+        .payment-section {
+            padding: 40px;
+            background: #fafafa;
+            border-top: 1px solid #eee;
+        }
+
+        .payment-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .payment-option {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 28px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-option:hover {
+            border-color: #b5956a;
+        }
+
+        .payment-option.selected {
+            border-color: #b5956a;
+            background: #fffaf5;
+        }
+
+        .payment-option-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .payment-option-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .payment-option-desc {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .payment-option-fee {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #b5956a;
+        }
+
+        /* Zelle Info */
+        .zelle-info {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            background: #fff;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .zelle-info.visible {
+            display: block;
+        }
+
+        .zelle-info p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .zelle-info .zelle-email {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            margin: 16px 0;
+        }
+
+        .zelle-info .zelle-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+        }
+
+        /* Pay Button */
+        .pay-button {
+            display: block;
+            width: 100%;
+            padding: 18px 24px;
+            margin-top: 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .pay-button:hover {
+            background: #a38559;
+        }
+
+        .pay-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Terms */
+        .terms-section {
+            padding: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        .terms-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .terms-text {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .terms-text p {
+            margin-bottom: 12px;
+        }
+
+        .terms-schedule {
+            background: #fafafa;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .terms-schedule-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .terms-schedule-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .terms-schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .terms-schedule-item .status {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .terms-schedule-item .status.due {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .terms-schedule-item .status.upcoming {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .terms-note {
+            background: #e8f5e9;
+            padding: 16px 20px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #2e7d32;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            text-align: center;
+            padding: 30px 40px;
+            background: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .invoice-footer img {
+            width: 240px;
+            opacity: 0.7;
+            display: block;
+            margin: 0 auto 12px;
+        }
+
+        .invoice-footer p {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .hero-banner {
+                height: 140px;
+            }
+
+            .hero-banner img {
+                width: 220px;
+            }
+
+            .invoice-title-section {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .invoice-meta {
+                text-align: left;
+            }
+
+            .bill-to-section {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .payment-options {
+                grid-template-columns: 1fr;
+            }
+
+            .invoice-header,
+            .line-items,
+            .totals-section,
+            .terms-section {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+        </div>
+
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="invoice-contact">
+                (206) 472-5401 | kenna@kennagiuziocake.com<br>
+                Queen Anne, Seattle
+            </div>
+        </div>
+
+        <!-- Invoice Title -->
+        <div class="invoice-title-section">
+            <div>
+                <h1 class="invoice-title">Deposit Invoice</h1>
+                <p class="invoice-subtitle">50% to Reserve Your Date</p>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-meta-label">Invoice #</div>
+                <div class="invoice-meta-value" id="invoiceNumber">DI-2026-001</div>
+                <div class="invoice-meta-label">Date Issued</div>
+                <div class="invoice-meta-value" id="invoiceDate">January 31, 2026</div>
+            </div>
+        </div>
+
+        <!-- Bill To -->
+        <div class="bill-to-section">
+            <div>
+                <div class="bill-to-label">Bill To</div>
+                <div class="bill-to-name" id="clientName">Client Name</div>
+                <div class="bill-to-email" id="clientEmail">client@email.com</div>
+                <div class="bill-to-address" id="clientAddress" style="font-size: 0.85rem; color: #666; margin-top: 4px;"></div>
+            </div>
+            <div>
+                <div class="bill-to-label">Event Details</div>
+                <div class="event-details">
+                    <span id="eventType">Wedding</span><br>
+                    <span id="eventDate">Date TBD</span><br>
+                    <span id="venue">Venue TBD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Box - Combined Payment Summary and Proposal Details -->
+        <div class="summary-box">
+            <div class="summary-title">From Your Proposal <span id="proposalNumber" style="font-weight: 400;"></span></div>
+            <div id="lineItemsList" style="margin-bottom: 16px;">
+                <!-- Line items will be populated dynamically -->
+            </div>
+            <div class="summary-row" style="border-top: 1px solid #eee; padding-top: 12px;">
+                <span class="label">Proposal Total</span>
+                <span class="amount" id="proposalTotal">$0.00</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Less: Tasting Credit</span>
+                <span class="amount" id="tastingCredit">-$250.00</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Adjusted Total</span>
+                <span class="amount" id="adjustedTotal">$0.00</span>
+            </div>
+            <div class="summary-row highlight">
+                <span class="label">50% Deposit Due Now</span>
+                <span class="amount" id="depositAmount">$0.00</span>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-section">
+            <div class="totals-table">
+                <div class="totals-row subtotal">
+                    <span>Deposit (50%)</span>
+                    <span id="subtotalAmount">$0.00</span>
+                </div>
+                <div class="totals-row fee" id="processingFeeRow">
+                    <span>Processing Fee (3.4%)</span>
+                    <span id="processingFee">$0.00</span>
+                </div>
+                <div class="totals-row deposit">
+                    <span>Total Due</span>
+                    <span class="amount" id="totalDue">$0.00</span>
+                </div>
+                <div class="totals-row balance">
+                    <span>Remaining Balance (due before event)</span>
+                    <span id="remainingBalance">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Options -->
+        <div class="payment-section">
+            <h2 class="payment-title">Select Payment Method</h2>
+            <div class="payment-options">
+                <div class="payment-option selected" data-method="card" onclick="selectPayment('card')">
+                    <div class="payment-option-icon">💳</div>
+                    <div class="payment-option-title">Credit Card</div>
+                    <div class="payment-option-desc">Visa, Mastercard, Amex</div>
+                    <div class="payment-option-fee">+3.4% processing fee</div>
+                </div>
+                <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
+                    <div class="payment-option-icon">🏦</div>
+                    <div class="payment-option-title">Zelle</div>
+                    <div class="payment-option-desc">Direct bank transfer</div>
+                    <div class="payment-option-fee">No fee</div>
+                </div>
+            </div>
+
+            <div class="zelle-info" id="zelleInfo">
+                <p>Send payment via Zelle to:</p>
+                <div class="zelle-email">kgiuzio@gmail.com</div>
+                <p>Amount:</p>
+                <div class="zelle-amount" id="zelleAmount">$0.00</div>
+                <p style="margin-top: 16px; font-size: 0.75rem;">
+                    Please include your name and "Deposit" in the memo.<br>
+                    Your date will be officially reserved once payment is received.
+                </p>
+            </div>
+
+            <button class="pay-button" id="payButton" onclick="processPayment()">
+                Pay Deposit with Card
+            </button>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms-section">
+            <div class="terms-title">Payment Terms</div>
+            <div class="terms-text">
+                <p>
+                    Thank you for choosing Kenna Giuzio Cake for your celebration! This deposit invoice
+                    secures your event date and begins the creation process for your custom cake.
+                </p>
+
+                <div class="terms-schedule">
+                    <div class="terms-schedule-title">Payment Schedule</div>
+                    <div class="terms-schedule-item">
+                        <span><strong>Deposit (50%)</strong> - Due now to reserve date</span>
+                        <span class="status due">DUE NOW</span>
+                    </div>
+                    <div class="terms-schedule-item">
+                        <span><strong>Balance (50%)</strong> - Due 2 weeks before event</span>
+                        <span class="status upcoming">UPCOMING</span>
+                    </div>
+                </div>
+
+                <p>
+                    The deposit is non-refundable but may be applied to a rescheduled event date
+                    (subject to availability) if notice is given at least 30 days in advance.
+                </p>
+
+                <div class="terms-note">
+                    <strong>Your date is not reserved until deposit is received.</strong>
+                    Once payment is confirmed, you will receive an email confirmation with your
+                    reserved date and next steps.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <img src="../images/logo.png" alt="Kenna Giuzio Cake">
+            <p>Thank you for choosing Kenna Giuzio Cake for your celebration.</p>
+        </div>
+    </div>
+
+    <!-- API Client -->
+    <script src="/js/api.js"></script>
+    <script>
+        // Load clients from API and sync to localStorage
+        async function loadClientsFromAPI() {
+            try {
+                const clients = await getClients();
+                localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                console.log('Deposit invoice: Loaded', clients.length, 'clients from API');
+            } catch (error) {
+                console.log('Deposit invoice: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // Start API loading in background
+        loadClientsFromAPI();
+
+        let selectedPayment = 'card';
+        let depositAmount = 0;
+        let depositWithFee = 0;
+        let clientId = null;
+        let invoiceId = null;
+
+        function selectPayment(method) {
+            selectedPayment = method;
+
+            // Update UI
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+            // Show/hide Zelle info and update totals
+            const zelleInfo = document.getElementById('zelleInfo');
+            const payButton = document.getElementById('payButton');
+            const feeRow = document.getElementById('processingFeeRow');
+            const totalDue = document.getElementById('totalDue');
+
+            if (method === 'zelle') {
+                zelleInfo.classList.add('visible');
+                payButton.textContent = "I've Sent Payment via Zelle";
+                payButton.style.background = '#6b4fbb';
+                feeRow.style.display = 'none';
+                totalDue.textContent = formatCurrency(depositAmount);
+            } else {
+                zelleInfo.classList.remove('visible');
+                payButton.textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+                payButton.style.background = '#b5956a';
+                feeRow.style.display = 'flex';
+                totalDue.textContent = formatCurrency(depositWithFee);
+            }
+        }
+
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        async function processPayment() {
+            if (selectedPayment === 'card') {
+                const clientName = document.getElementById('clientName').textContent;
+                const clientEmail = document.getElementById('clientEmail').textContent;
+
+                const payButton = document.getElementById('payButton');
+                payButton.textContent = 'Processing...';
+                payButton.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/api/payments/create-checkout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            invoice_id: invoiceId,
+                            invoice_type: 'deposit',
+                            client_id: clientId,
+                            client_name: clientName,
+                            client_email: clientEmail,
+                            amount: depositWithFee.toFixed(2),
+                            description: 'Deposit (50%) - Kenna Giuzio Cake'
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.url) {
+                        // Redirect to Stripe Checkout
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error(data.error || 'Failed to create checkout session');
+                    }
+                } catch (err) {
+                    console.error('Payment error:', err);
+                    alert('Unable to process payment. Please try again or contact kenna@kennagiuziocake.com');
+                    payButton.textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+                    payButton.disabled = false;
+                }
+            } else {
+                // Zelle confirmation
+                if (confirm('Please confirm you have sent ' + formatCurrency(depositAmount) + ' via Zelle to kgiuzio@gmail.com.\n\nClick OK to confirm your payment has been sent.')) {
+                    completePayment('zelle');
+                }
+            }
+        }
+
+        function completePayment(method) {
+            // Try to find client by ID, or by name if ID is 'new' or missing
+            let effectiveClientId = clientId;
+
+            if (!clientId || clientId === 'new' || clientId === 'null' || clientId === 'undefined') {
+                // Try to find client by name
+                const clientName = document.getElementById('clientName').textContent;
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const foundClient = clients.find(c => c.name === clientName);
+                if (foundClient) {
+                    effectiveClientId = String(foundClient.id);
+                    console.log('Found client by name:', clientName, '-> ID:', effectiveClientId);
+                } else {
+                    // For demo/testing, proceed anyway but warn
+                    console.warn('No client ID found, proceeding with demo payment');
+                    effectiveClientId = null;
+                }
+            }
+
+            // Use effectiveClientId for the rest of the function
+            clientId = effectiveClientId;
+
+            // Update invoice status to paid
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const invIndex = invoices.findIndex(i => i.id === invoiceId || (i.type === 'deposit' && String(i.clientId) === String(clientId)));
+
+            if (invIndex >= 0) {
+                invoices[invIndex].status = 'paid';
+                invoices[invIndex].paidAt = new Date().toISOString();
+                invoices[invIndex].paymentMethod = method;
+            } else {
+                // Create invoice record if it doesn't exist
+                invoices.push({
+                    id: invoiceId || 'DI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4),
+                    type: 'deposit',
+                    clientId: clientId,
+                    clientName: document.getElementById('clientName').textContent,
+                    clientEmail: document.getElementById('clientEmail').textContent,
+                    amount: depositAmount,
+                    status: 'paid',
+                    sentAt: new Date().toISOString(),
+                    paidAt: new Date().toISOString(),
+                    paymentMethod: method
+                });
+            }
+            localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+            // Update portal data - mark deposit as paid (if we have a client ID)
+            if (clientId) {
+                const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
+                portalData.depositPaid = true;
+                portalData.depositPaidDate = new Date().toISOString();
+                portalData.depositAmount = depositAmount;
+                portalData.depositPaymentMethod = method;
+                localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
+
+                // Update client status to BOOKED
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+                if (clientIndex >= 0) {
+                    clients[clientIndex].status = 'booked';
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                }
+            }
+
+            // Show success
+            showPaymentSuccess(method);
+        }
+
+        function showPaymentSuccess(method) {
+            // Replace payment section with success message
+            document.querySelector('.payment-section').innerHTML = `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 16px; color: #27ae60;">
+                        Payment ${method === 'zelle' ? 'Submitted' : 'Complete'}!
+                    </h2>
+                    <p style="color: #666; margin-bottom: 24px;">
+                        ${method === 'zelle'
+                            ? 'Thank you! Your date will be officially reserved once Kenna confirms receipt of your Zelle payment.'
+                            : 'Your date is now officially reserved! You will receive a confirmation email shortly.'}
+                    </p>
+                    <div style="background: #e8f5e9; padding: 20px; margin: 20px 0; text-align: center;">
+                        <p style="color: #2e7d32; margin: 0;">Final balance due 2 weeks before your event</p>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #999;">
+                        Amount: ${formatCurrency(method === 'card' ? depositWithFee : depositAmount)}<br>
+                        Method: ${method === 'card' ? 'Credit Card' : 'Zelle'}
+                    </p>
+                </div>
+            `;
+
+            // Hide the terms section after payment - no longer needed
+            const termsSection = document.querySelector('.terms-section');
+            if (termsSection) termsSection.style.display = 'none';
+
+            // Also hide the totals section since it's redundant now
+            const totalsSection = document.querySelector('.totals-section');
+            if (totalsSection) totalsSection.style.display = 'none';
+        }
+
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === 'undefined' || dateStr === 'null') return 'TBD';
+            try {
+                const date = new Date(dateStr + 'T00:00:00');
+                if (isNaN(date.getTime())) return 'TBD';
+                return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            } catch(e) {
+                return 'TBD';
+            }
+        }
+
+        // Load data from URL params
+        const params = new URLSearchParams(window.location.search);
+
+        // Get client ID
+        clientId = params.get('clientId');
+        invoiceId = params.get('invoiceId');
+
+        // Try to get client data from URL params first
+        let clientNameVal = params.get('name');
+        let clientEmailVal = params.get('email');
+        let eventTypeVal = params.get('eventType');
+        let eventDateVal = params.get('eventDate');
+        let venueVal = params.get('venue');
+
+        // Client address
+        let clientAddressVal = '';
+
+        // If URL params are empty/default, try to load from localStorage
+        if (clientId && clientId !== 'new') {
+            try {
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const client = clients.find(c => String(c.id) === String(clientId));
+                if (client) {
+                    if (!clientNameVal || clientNameVal === 'Client') clientNameVal = client.name || clientNameVal;
+                    if (!clientEmailVal) clientEmailVal = client.email || clientEmailVal;
+                    if (!eventTypeVal) eventTypeVal = client.eventType || eventTypeVal;
+                    if (!eventDateVal) eventDateVal = client.eventDate || eventDateVal;
+                    if (!venueVal) venueVal = client.venue || venueVal;
+                    clientAddressVal = client.address || '';
+                    console.log('Loaded client from localStorage:', client.name);
+                }
+            } catch(e) { console.log('Could not load client:', e); }
+        }
+
+        // Apply client info
+        if (clientNameVal && clientNameVal !== 'Client') {
+            document.getElementById('clientName').textContent = clientNameVal;
+        }
+        if (clientEmailVal) {
+            document.getElementById('clientEmail').textContent = clientEmailVal;
+        }
+        if (clientAddressVal) {
+            document.getElementById('clientAddress').textContent = clientAddressVal;
+        }
+
+        // Event info
+        if (eventTypeVal) {
+            document.getElementById('eventType').textContent = eventTypeVal;
+        }
+        if (eventDateVal && eventDateVal !== 'undefined' && eventDateVal !== 'null') {
+            const formattedDate = formatDate(eventDateVal);
+            if (formattedDate && formattedDate !== 'Invalid Date' && formattedDate !== 'TBD') {
+                document.getElementById('eventDate').textContent = formattedDate;
+            }
+        }
+        if (venueVal) {
+            document.getElementById('venue').textContent = venueVal;
+        }
+
+        // Proposal number - read from draft if available
+        if (clientId && clientId !== 'new') {
+            try {
+                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                const draft = drafts[clientId];
+                if (draft && draft.proposalNumber) {
+                    document.getElementById('proposalNumber').textContent = '#P-' + draft.proposalNumber;
+                }
+            } catch(e) {
+                console.log('Could not load proposal number:', e);
+            }
+        }
+
+        // Financial data
+        const proposalTotal = parseFloat(params.get('total')) || 2500;
+        const tastingCredit = parseFloat(params.get('tastingCredit')) || 250;
+        const adjustedTotal = proposalTotal - tastingCredit;
+        depositAmount = adjustedTotal / 2;
+        const processingFee = depositAmount * 0.034;
+        depositWithFee = depositAmount + processingFee;
+        const remainingBalance = adjustedTotal - depositAmount;
+
+        // Update summary
+        document.getElementById('proposalTotal').textContent = formatCurrency(proposalTotal);
+        document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
+        document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
+        document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+
+        // Update totals
+        document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
+        document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+        document.getElementById('totalDue').textContent = formatCurrency(depositWithFee);
+        document.getElementById('remainingBalance').textContent = formatCurrency(remainingBalance);
+
+        // Update Zelle amount
+        document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
+
+        // Update pay button
+        document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+
+        // Line items from proposal
+        const lineItemsList = document.getElementById('lineItemsList');
+        const lineItems = params.get('items');
+
+        if (lineItems) {
+            try {
+                const items = JSON.parse(decodeURIComponent(lineItems));
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'line-item';
+                    div.innerHTML = `
+                        <div>
+                            <div class="line-item-name">${item.name}</div>
+                            ${item.desc ? `<div class="line-item-desc">${item.desc}</div>` : ''}
+                        </div>
+                        <div class="line-item-price">${formatCurrency(item.price)}</div>
+                    `;
+                    lineItemsList.appendChild(div);
+                });
+            } catch (e) {
+                // Default line items if parsing fails
+                lineItemsList.innerHTML = `
+                    <div class="line-item">
+                        <div>
+                            <div class="line-item-name">Custom Cake</div>
+                            <div class="line-item-desc">As specified in your proposal</div>
+                        </div>
+                        <div class="line-item-price">${formatCurrency(proposalTotal)}</div>
+                    </div>
+                `;
+            }
+        } else {
+            // Default line item
+            lineItemsList.innerHTML = `
+                <div class="line-item">
+                    <div>
+                        <div class="line-item-name">Custom Cake Package</div>
+                        <div class="line-item-desc">As specified in your signed proposal</div>
+                    </div>
+                    <div class="line-item-price">${formatCurrency(proposalTotal)}</div>
+                </div>
+            `;
+        }
+
+        // Generate invoice number
+        if (!invoiceId) {
+            invoiceId = 'DI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+        }
+        document.getElementById('invoiceNumber').textContent = invoiceId;
+
+        // Set today's date
+        document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric'
+        });
+
+        // Save invoice record if client ID exists and invoice not already saved
+        if (clientId) {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const existingInv = invoices.find(i => i.type === 'deposit' && String(i.clientId) === String(clientId));
+
+            if (!existingInv) {
+                // Create new deposit invoice record
+                invoices.push({
+                    id: invoiceId,
+                    type: 'deposit',
+                    clientId: clientId,
+                    clientName: document.getElementById('clientName').textContent,
+                    clientEmail: document.getElementById('clientEmail').textContent,
+                    eventType: params.get('eventType') || 'Wedding',
+                    eventDate: params.get('eventDate'),
+                    venue: params.get('venue'),
+                    proposalTotal: proposalTotal,
+                    tastingCredit: tastingCredit,
+                    amount: depositAmount,
+                    status: 'sent',
+                    sentAt: new Date().toISOString()
+                });
+                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+            } else {
+                // Use existing invoice ID
+                invoiceId = existingInv.id;
+                document.getElementById('invoiceNumber').textContent = invoiceId;
+
+                // Check if already paid
+                if (existingInv.status === 'paid') {
+                    showPaymentSuccess(existingInv.paymentMethod || 'card');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

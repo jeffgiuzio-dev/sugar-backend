@@ -1,0 +1,4 @@
+# Redirect root to admin
+/ /admin/in-studio.html 302
+/admin /admin/in-studio.html 302
+/admin/ /admin/in-studio.html 302
