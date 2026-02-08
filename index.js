@@ -896,6 +896,171 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
   }
 });
 
+// Zelle payment confirmed by client
+app.post('/api/payments/zelle-confirmed', async (req, res) => {
+  try {
+    const { invoice_id, invoice_type, client_id, client_name, client_email, amount } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ error: 'Missing required field: amount' });
+    }
+
+    const amountCents = Math.round(parseFloat(amount) * 100);
+    const amountFormatted = '$' + parseFloat(amount).toFixed(2);
+    const firstName = (client_name || 'there').split(' ')[0];
+    const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+    // Update invoice status to paid
+    if (invoice_id) {
+      await pool.query(`
+        UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+        WHERE invoice_number = $1
+      `, [invoice_id]);
+    }
+
+    // Update client status based on payment type
+    if (client_id && invoice_type) {
+      if (invoice_type === 'tasting') {
+        await pool.query(`
+          INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
+          VALUES ($1, TRUE, NOW())
+          ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
+        `, [client_id]);
+      } else if (invoice_type === 'deposit') {
+        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [client_id]);
+        await pool.query(`
+          INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
+          VALUES ($1, TRUE, NOW())
+          ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
+        `, [client_id]);
+      }
+    }
+
+    // Record revenue
+    if (client_id) {
+      await pool.query(`
+        INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
+        VALUES ($1, $2, $3, $4, NOW(), $5)
+      `, [client_id, invoice_id || null, amountCents / 100, invoice_type || 'other', 'Zelle payment confirmed by client']);
+    }
+
+    // Send notification email to Kenna
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+        const emailBody = `Zelle payment confirmed!\n\nClient: ${client_name || 'Unknown'}\nAmount: ${amountFormatted}\nType: ${invoice_type || 'Payment'}\n\nThe client confirmed they sent this via Zelle. Please verify in your bank account.\n\n${client_id ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${client_id}` : ''}`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: Zelle Payment Confirmed: ${amountFormatted} from ${client_name || 'Client'}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          emailBody
+        ];
+
+        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
+          .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedEmail } });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send Zelle notification to Kenna:', emailErr.message);
+    }
+
+    // Send confirmation email to client
+    if (client_email) {
+      try {
+        const tokenResult2 = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+        if (tokenResult2.rows.length > 0) {
+          oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
+          const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your Zelle payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+
+          const htmlBody = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 8px;">${paymentDate}</p>
+    <p style="font-size:13px; color:#999; margin:0;">Paid via Zelle</p>
+  </td></tr>
+  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <tr><td style="padding:24px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. Your tasting is confirmed!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm so looking forward to meeting you and creating something beautiful together.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+          const boundary = 'boundary_' + Date.now().toString(36);
+          const emailLines = [
+            `To: ${client_email}`,
+            `From: ${kennaEmail}`,
+            `Subject: Payment Confirmed - Kenna Giuzio Cake`,
+            'MIME-Version: 1.0',
+            `Content-Type: multipart/alternative; boundary="${boundary}"`,
+            '',
+            `--${boundary}`,
+            'Content-Type: text/plain; charset=utf-8',
+            'Content-Transfer-Encoding: 7bit',
+            '',
+            plainText,
+            '',
+            `--${boundary}`,
+            'Content-Type: text/html; charset=utf-8',
+            'Content-Transfer-Encoding: 7bit',
+            '',
+            htmlBody,
+            '',
+            `--${boundary}--`
+          ];
+
+          const encodedClientEmail = Buffer.from(emailLines.join('\r\n'))
+            .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+          await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedClientEmail } });
+
+          // Log the communication
+          if (client_id) {
+            await pool.query(`
+              INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
+              VALUES ($1, 'email', 'outbound', 'Payment Confirmed - Kenna Giuzio Cake', $2, 'gmail', NOW())
+            `, [client_id, plainText]);
+          }
+        }
+      } catch (clientEmailErr) {
+        console.error('Failed to send Zelle confirmation to client:', clientEmailErr.message);
+      }
+    }
+
+    res.json({ success: true, message: 'Zelle payment recorded' });
+
+  } catch (err) {
+    console.error('Zelle confirmation error:', err);
+    res.status(500).json({ error: 'Failed to record Zelle payment', details: err.message });
+  }
+});
+
 // Stripe Webhook (handles payment completion)
 app.post('/api/payments/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
