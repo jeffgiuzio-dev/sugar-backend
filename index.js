@@ -756,6 +756,32 @@ app.post('/api/payments/create-payment-intent', async (req, res) => {
   }
 });
 
+// Test-confirm a PaymentIntent with Stripe test card (sandbox only)
+app.post('/api/payments/test-confirm', async (req, res) => {
+  try {
+    if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+
+    // Only allow in test mode
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Test confirm only available in sandbox mode' });
+    }
+
+    const { paymentIntentId } = req.body;
+    if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId' });
+
+    // Confirm the PaymentIntent with a test payment method
+    const confirmed = await stripe.paymentIntents.confirm(paymentIntentId, {
+      payment_method: 'pm_card_visa'
+    });
+
+    res.json({ success: true, status: confirmed.status });
+  } catch (err) {
+    console.error('Test confirm error:', err);
+    res.status(500).json({ error: 'Test confirm failed', details: err.message });
+  }
+});
+
 // Stripe Webhook (handles payment completion)
 app.post('/api/payments/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
