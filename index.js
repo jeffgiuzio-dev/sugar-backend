@@ -1337,24 +1337,34 @@ app.post('/api/payments/webhook', async (req, res) => {
   }
 
   // Handle the event
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    console.log('Checkout payment successful:', session.id);
-    const { invoice_id, invoice_type, client_id, client_name, client_email: meta_email } = session.metadata || {};
-    await handlePaymentCompleted({
-      invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
-      clientName: client_name, clientEmail: session.customer_email || meta_email,
-      amountCents: session.amount_total, stripeId: session.id
-    });
-  } else if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
-    console.log('PaymentIntent succeeded:', paymentIntent.id);
-    const { invoice_id, invoice_type, client_id, client_name, client_email } = paymentIntent.metadata || {};
-    await handlePaymentCompleted({
-      invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
-      clientName: client_name, clientEmail: paymentIntent.receipt_email || client_email,
-      amountCents: paymentIntent.amount, stripeId: paymentIntent.id
-    });
+  console.log('Webhook received event:', event.type);
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      console.log('Checkout payment successful:', session.id);
+      const { invoice_id, invoice_type, client_id, client_name, client_email: meta_email } = session.metadata || {};
+      await handlePaymentCompleted({
+        invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
+        clientName: client_name, clientEmail: session.customer_email || meta_email,
+        amountCents: session.amount_total, stripeId: session.id
+      });
+    } else if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      console.log('PaymentIntent succeeded:', paymentIntent.id, 'metadata:', JSON.stringify(paymentIntent.metadata));
+      const { invoice_id, invoice_type, client_id, client_name, client_email } = paymentIntent.metadata || {};
+      console.log('Calling handlePaymentCompleted with email:', paymentIntent.receipt_email || client_email);
+      await handlePaymentCompleted({
+        invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
+        clientName: client_name, clientEmail: paymentIntent.receipt_email || client_email,
+        amountCents: paymentIntent.amount, stripeId: paymentIntent.id
+      });
+      console.log('handlePaymentCompleted finished for:', paymentIntent.id);
+    } else {
+      console.log('Unhandled webhook event type:', event.type);
+    }
+  } catch (eventErr) {
+    console.error('Webhook event handling error:', eventErr.message, eventErr.stack);
   }
 
   res.json({ received: true });
