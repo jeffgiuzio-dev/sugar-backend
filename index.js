@@ -659,7 +659,7 @@ app.get('/api/stripe/status', (req, res) => {
   res.json({
     configured: !!stripe,
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null,
-    version: 'combined-tasting-email-v3'
+    version: 'combined-tasting-email-v4'
   });
 });
 
@@ -969,6 +969,20 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
   }
 });
 
+// Format PostgreSQL time (e.g. "14:00:00") to "2:00 PM"
+function formatTime(timeStr) {
+  if (!timeStr) return null;
+  // If already formatted (contains AM/PM), return as-is
+  if (/[ap]m/i.test(timeStr)) return timeStr;
+  const parts = timeStr.split(':');
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1] || '00';
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  if (hours > 12) hours -= 12;
+  if (hours === 0) hours = 12;
+  return minutes === '00' ? `${hours} ${ampm}` : `${hours}:${minutes} ${ampm}`;
+}
+
 // Build combined Tasting Confirmation + Payment Receipt email (module-level so both webhook and offline-verify can use it)
 function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
@@ -1126,7 +1140,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
                   if (row.tasting_date) {
                     tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
                   }
-                  tastingTime = row.tasting_time || null;
+                  tastingTime = formatTime(row.tasting_time);
                 }
               }
             } catch (dbErr) {
@@ -1360,7 +1374,7 @@ app.post('/api/payments/webhook', async (req, res) => {
                   if (row.tasting_date) {
                     tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
                   }
-                  tastingTime = row.tasting_time || null;
+                  tastingTime = formatTime(row.tasting_time);
                 }
               }
             } catch (dbErr) {
