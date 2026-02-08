@@ -911,13 +911,15 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
     const amountFormatted = '$' + parseFloat(amount).toFixed(2);
     const methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
 
-    // Set invoice status to pending_verification (NOT paid)
+    // Set invoice status to pending_verification (NOT paid) and store payment method
     try {
       if (invoice_id) {
         await pool.query(`
-          UPDATE invoices SET status = 'pending_verification', updated_at = NOW()
+          UPDATE invoices SET status = 'pending_verification',
+          data = COALESCE(data, '{}'::jsonb) || $2::jsonb,
+          updated_at = NOW()
           WHERE invoice_number = $1
-        `, [invoice_id]);
+        `, [invoice_id, JSON.stringify({ payment_method: method })]);
       }
     } catch (dbErr) {
       console.error('Offline claim: Failed to update invoice:', dbErr.message);
