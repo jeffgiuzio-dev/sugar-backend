@@ -152,12 +152,14 @@ app.post('/api/gmail/sync', async (req, res) => {
     const lastSyncResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_last_sync'");
     const lastSync = lastSyncResult.rows.length > 0 ? lastSyncResult.rows[0].value : null;
 
-    // Build query - get emails from last 7 days or since last sync
-    let query = 'newer_than:7d';
+    // Build query - always cap at 7 days max, use lastSync if more recent
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    let sinceDate = sevenDaysAgo;
     if (lastSync) {
       const syncDate = new Date(lastSync);
-      query = `after:${Math.floor(syncDate.getTime() / 1000)}`;
+      if (syncDate > sevenDaysAgo) sinceDate = syncDate;
     }
+    const query = `after:${Math.floor(sinceDate.getTime() / 1000)}`;
 
     // Fetch messages
     const messagesResponse = await gmail.users.messages.list({
