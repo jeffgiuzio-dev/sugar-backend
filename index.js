@@ -2234,9 +2234,116 @@ async function runMigrations() {
   }
 }
 
+// Background Gmail sync — every 5 minutes
+async function backgroundGmailSync() {
+  try {
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) return;
+
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+
+    const lastSyncResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_last_sync'");
+    const lastSync = lastSyncResult.rows.length > 0 ? lastSyncResult.rows[0].value : null;
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    let sinceDate = sevenDaysAgo;
+    if (lastSync) {
+      const syncDate = new Date(lastSync);
+      if (syncDate > sevenDaysAgo) sinceDate = syncDate;
+    }
+
+    const messagesResponse = await gmail.users.messages.list({
+      userId: 'me',
+      q: `after:${Math.floor(sinceDate.getTime() / 1000)}`,
+      maxResults: 50
+    });
+
+    const messages = messagesResponse.data.messages || [];
+    if (messages.length === 0) return;
+
+    const clientsResult = await pool.query('SELECT id, name, email FROM clients WHERE email IS NOT NULL');
+    const clientEmails = {};
+    clientsResult.rows.forEach(c => {
+      if (c.email) clientEmails[c.email.toLowerCase()] = c;
+    });
+
+    let synced = 0;
+    for (const msg of messages) {
+      try {
+        const existingCheck = await pool.query('SELECT id FROM communications WHERE external_id = $1', [msg.id]);
+        if (existingCheck.rows.length > 0) continue;
+
+        const fullMsg = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'full' });
+        const headers = fullMsg.data.payload.headers;
+        const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+
+        const from = getHeader('From');
+        const to = getHeader('To');
+        const subject = getHeader('Subject');
+        const date = getHeader('Date');
+
+        const fromEmail = from.match(/<(.+?)>/) ? from.match(/<(.+?)>/)[1].toLowerCase() : from.toLowerCase();
+        const toEmail = to.match(/<(.+?)>/) ? to.match(/<(.+?)>/)[1].toLowerCase() : to.toLowerCase();
+
+        let client = clientEmails[fromEmail] || clientEmails[toEmail];
+        if (!client) {
+          const teamResult = await pool.query(
+            'SELECT client_id FROM team_members WHERE LOWER(email) = $1 OR LOWER(email) = $2',
+            [fromEmail, toEmail]
+          );
+          if (teamResult.rows.length > 0) {
+            const clientResult = await pool.query('SELECT id, name, email FROM clients WHERE id = $1', [teamResult.rows[0].client_id]);
+            if (clientResult.rows.length > 0) client = clientResult.rows[0];
+          }
+        }
+
+        if (client) {
+          let body = '';
+          if (fullMsg.data.payload.body && fullMsg.data.payload.body.data) {
+            body = Buffer.from(fullMsg.data.payload.body.data, 'base64').toString('utf-8');
+          } else if (fullMsg.data.payload.parts) {
+            const textPart = fullMsg.data.payload.parts.find(p => p.mimeType === 'text/plain');
+            if (textPart && textPart.body && textPart.body.data) {
+              body = Buffer.from(textPart.body.data, 'base64').toString('utf-8');
+            }
+          }
+
+          const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+          const direction = fromEmail.includes(kennaEmail.split('@')[0]) ? 'outbound' : 'inbound';
+
+          await pool.query(`
+            INSERT INTO communications (client_id, type, direction, subject, message, channel, external_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [client.id, 'email', direction, subject, body.substring(0, 10000), 'gmail', msg.id, new Date(date)]);
+          synced++;
+        }
+      } catch (msgErr) {
+        // Skip individual message errors
+      }
+    }
+
+    await pool.query(`
+      INSERT INTO settings (key, value) VALUES ('gmail_last_sync', $1)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [new Date().toISOString()]);
+
+    if (synced > 0) console.log(`Background sync: ${synced} new emails matched`);
+  } catch (err) {
+    // Silent fail — don't crash the server
+    if (!err.message?.includes('No refresh token')) {
+      console.error('Background Gmail sync error:', err.message);
+    }
+  }
+}
+
 // Start server
 runMigrations().then(() => {
   app.listen(PORT, () => {
     console.log(`KGC Portal API running on port ${PORT}`);
+
+    // Start background email sync (every 5 minutes)
+    setInterval(backgroundGmailSync, 5 * 60 * 1000);
+    // Run once on startup after a short delay
+    setTimeout(backgroundGmailSync, 30000);
   });
 });
