@@ -968,6 +968,76 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
   }
 });
 
+// Build combined Tasting Confirmation + Payment Receipt email (module-level so both webhook and offline-verify can use it)
+function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+  const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
+  const tastingSection = tastingDate ? `
+  <!-- Tasting Details -->
+  <tr><td style="padding:24px 40px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
+      <tr><td>
+        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Tasting</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Date:</strong> ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Location:</strong> Queen Anne, Seattle</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1 hour</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <!-- What to Expect -->
+  <tr><td style="padding:16px 40px 0;">
+    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What to Expect</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Sample a variety of cake flavors and fillings</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Discuss your design vision and inspiration</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Review timeline and logistics</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">Feel free to bring inspiration photos, color swatches, or your event team!</p>
+  </td></tr>` : '';
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Payment Receipt -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Tasting Confirmed</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
+    ${methodNote}
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${tastingSection}
+  <!-- Message -->
+  <tr><td style="padding:20px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions before your tasting, don't hesitate to reach out.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">See you soon,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+  const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
+  const tastingInfo = tastingDate ? `\nYOUR TASTING\nDate: ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1 hour\n\nWHAT TO EXPECT\n- Sample a variety of cake flavors and fillings\n- Discuss your design vision and inspiration\n- Review timeline and logistics\n- Feel free to bring inspiration photos, color swatches, or your event team!\n` : '';
+
+  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+}
+
 // Admin verifies an offline payment (Zelle, cash, check) — marks as paid, sends client email
 app.post('/api/payments/offline-verify', async (req, res) => {
   try {
@@ -1167,76 +1237,6 @@ app.post('/api/payments/webhook', async (req, res) => {
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Build combined Tasting Confirmation + Payment Receipt email
-  function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
-    const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
-    const tastingSection = tastingDate ? `
-  <!-- Tasting Details -->
-  <tr><td style="padding:24px 40px 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
-      <tr><td>
-        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Tasting</p>
-        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Date:</strong> ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}</p>
-        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Location:</strong> Queen Anne, Seattle</p>
-        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1 hour</p>
-      </td></tr>
-    </table>
-  </td></tr>
-  <!-- What to Expect -->
-  <tr><td style="padding:16px 40px 0;">
-    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What to Expect</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Sample a variety of cake flavors and fillings</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Discuss your design vision and inspiration</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Review timeline and logistics</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">Feel free to bring inspiration photos, color swatches, or your event team!</p>
-  </td></tr>` : '';
-
-    return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <!-- Banner -->
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <!-- Logo -->
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <!-- Payment Receipt -->
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Tasting Confirmed</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
-    ${methodNote}
-  </td></tr>
-  <!-- Divider -->
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${tastingSection}
-  <!-- Message -->
-  <tr><td style="padding:20px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions before your tasting, don't hesitate to reach out.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">See you soon,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <!-- Footer -->
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
-  }
-
-  function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
-    const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
-    const tastingInfo = tastingDate ? `\nYOUR TASTING\nDate: ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1 hour\n\nWHAT TO EXPECT\n- Sample a variety of cake flavors and fillings\n- Discuss your design vision and inspiration\n- Review timeline and logistics\n- Feel free to bring inspiration photos, color swatches, or your event team!\n` : '';
-
-    return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
   }
 
   // Shared payment completion logic
