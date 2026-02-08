@@ -896,10 +896,83 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
   }
 });
 
-// Zelle payment confirmed by client
-app.post('/api/payments/zelle-confirmed', async (req, res) => {
+// Client claims they sent an offline payment (Zelle, cash, check)
+// Does NOT mark as paid — sets to pending_verification for Kenna to confirm
+app.post('/api/payments/offline-claimed', async (req, res) => {
   try {
-    const { invoice_id, invoice_type, client_id, client_name, client_email, amount } = req.body;
+    const { invoice_id, invoice_type, client_id, client_name, client_email, amount, payment_method } = req.body;
+    const method = payment_method || 'zelle';
+
+    if (!amount) {
+      return res.status(400).json({ error: 'Missing required field: amount' });
+    }
+
+    const amountFormatted = '$' + parseFloat(amount).toFixed(2);
+    const methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
+
+    // Set invoice status to pending_verification (NOT paid)
+    try {
+      if (invoice_id) {
+        await pool.query(`
+          UPDATE invoices SET status = 'pending_verification', updated_at = NOW()
+          WHERE invoice_number = $1
+        `, [invoice_id]);
+      }
+    } catch (dbErr) {
+      console.error('Offline claim: Failed to update invoice:', dbErr.message);
+    }
+
+    // Send notification email to Kenna — she needs to verify
+    try {
+      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+        const emailBody = `${methodLabel} payment claim received!\n\nClient: ${client_name || 'Unknown'}\nAmount: ${amountFormatted}\nMethod: ${methodLabel}\nType: ${invoice_type || 'Payment'}\n\nThe client says they sent payment via ${methodLabel}. Please verify in your bank/records and confirm in the admin portal.\n\n${client_id ? `View client: https://portal.kennagiuziocake.com/clients/view.html?id=${client_id}` : ''}\nVerify payments: https://portal.kennagiuziocake.com/admin/finances.html`;
+
+        const emailLines = [
+          `To: ${kennaEmail}`,
+          `From: ${kennaEmail}`,
+          `Subject: Action Required: Verify ${methodLabel} Payment of ${amountFormatted} from ${client_name || 'Client'}`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          emailBody
+        ];
+
+        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
+          .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedEmail } });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send offline payment notification to Kenna:', emailErr.message);
+    }
+
+    // Log the claim
+    try {
+      if (client_id) {
+        await pool.query(`
+          INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
+          VALUES ($1, 'payment', 'inbound', $2, $3, $4, NOW())
+        `, [client_id, `${methodLabel} payment claimed: ${amountFormatted}`, `Client claims ${methodLabel} payment of ${amountFormatted} for ${invoice_type || 'invoice'}. Pending verification.`, method]);
+      }
+    } catch (dbErr) {
+      console.error('Failed to log offline claim:', dbErr.message);
+    }
+
+    res.json({ success: true, status: 'pending_verification', message: `${methodLabel} payment claim recorded. Awaiting verification.` });
+
+  } catch (err) {
+    console.error('Offline claim error:', err);
+    res.status(500).json({ error: 'Failed to record payment claim', details: err.message });
+  }
+});
+
+// Admin verifies an offline payment (Zelle, cash, check) — marks as paid, sends client email
+app.post('/api/payments/offline-verify', async (req, res) => {
+  try {
+    const { invoice_id, invoice_type, client_id, client_name, client_email, amount, payment_method } = req.body;
+    const method = payment_method || 'zelle';
 
     if (!amount) {
       return res.status(400).json({ error: 'Missing required field: amount' });
@@ -909,8 +982,9 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
     const amountFormatted = '$' + parseFloat(amount).toFixed(2);
     const firstName = (client_name || 'there').split(' ')[0];
     const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
 
-    // Update invoice status to paid
+    // Now mark invoice as paid
     try {
       if (invoice_id) {
         await pool.query(`
@@ -919,10 +993,10 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
         `, [invoice_id]);
       }
     } catch (dbErr) {
-      console.error('Zelle: Failed to update invoice:', dbErr.message);
+      console.error('Offline verify: Failed to update invoice:', dbErr.message);
     }
 
-    // Update client status based on payment type
+    // Update client status
     try {
       if (client_id && invoice_type) {
         if (invoice_type === 'tasting') {
@@ -941,7 +1015,7 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
         }
       }
     } catch (dbErr) {
-      console.error('Zelle: Failed to update client status:', dbErr.message);
+      console.error('Offline verify: Failed to update client status:', dbErr.message);
     }
 
     // Record revenue
@@ -950,47 +1024,21 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
         await pool.query(`
           INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
           VALUES ($1, $2, $3, $4, NOW(), $5)
-        `, [client_id, invoice_id || null, amountCents / 100, invoice_type || 'other', 'Zelle payment confirmed by client']);
+        `, [client_id, invoice_id || null, amountCents / 100, invoice_type || 'other', `${methodLabel} payment verified by admin`]);
       }
     } catch (dbErr) {
-      console.error('Zelle: Failed to record revenue:', dbErr.message);
+      console.error('Offline verify: Failed to record revenue:', dbErr.message);
     }
 
-    // Send notification email to Kenna
-    try {
-      const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
-      if (tokenResult.rows.length > 0) {
-        oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
-        const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
-        const emailBody = `Zelle payment confirmed!\n\nClient: ${client_name || 'Unknown'}\nAmount: ${amountFormatted}\nType: ${invoice_type || 'Payment'}\n\nThe client confirmed they sent this via Zelle. Please verify in your bank account.\n\n${client_id ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${client_id}` : ''}`;
-
-        const emailLines = [
-          `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
-          `Subject: Zelle Payment Confirmed: ${amountFormatted} from ${client_name || 'Client'}`,
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          emailBody
-        ];
-
-        const encodedEmail = Buffer.from(emailLines.join('\r\n'))
-          .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-        await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedEmail } });
-      }
-    } catch (emailErr) {
-      console.error('Failed to send Zelle notification to Kenna:', emailErr.message);
-    }
-
-    // Send confirmation email to client
+    // Send branded confirmation email to client
     if (client_email) {
       try {
-        const tokenResult2 = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
-        if (tokenResult2.rows.length > 0) {
-          oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
+        const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+        if (tokenResult.rows.length > 0) {
+          oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
-          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your Zelle payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 
           const htmlBody = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -1006,7 +1054,7 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
     <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
     <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
     <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 8px;">${paymentDate}</p>
-    <p style="font-size:13px; color:#999; margin:0;">Paid via Zelle</p>
+    <p style="font-size:13px; color:#999; margin:0;">Paid via ${methodLabel}</p>
   </td></tr>
   <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
   <tr><td style="padding:24px 40px 30px;">
@@ -1052,7 +1100,6 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
 
           await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedClientEmail } });
 
-          // Log the communication
           if (client_id) {
             await pool.query(`
               INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
@@ -1061,16 +1108,21 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
           }
         }
       } catch (clientEmailErr) {
-        console.error('Failed to send Zelle confirmation to client:', clientEmailErr.message);
+        console.error('Failed to send offline verification email to client:', clientEmailErr.message);
       }
     }
 
-    res.json({ success: true, message: 'Zelle payment recorded' });
+    res.json({ success: true, message: `${methodLabel} payment verified and confirmed` });
 
   } catch (err) {
-    console.error('Zelle confirmation error:', err);
-    res.status(500).json({ error: 'Failed to record Zelle payment', details: err.message });
+    console.error('Offline verify error:', err);
+    res.status(500).json({ error: 'Failed to verify payment', details: err.message });
   }
+});
+
+// Legacy endpoint — redirect to new one
+app.post('/api/payments/zelle-confirmed', (req, res) => {
+  res.status(301).json({ error: 'Use /api/payments/offline-claimed instead', redirect: '/api/payments/offline-claimed' });
 });
 
 // Stripe Webhook (handles payment completion)
