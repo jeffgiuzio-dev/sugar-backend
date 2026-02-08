@@ -1484,8 +1484,26 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
         console.log(`Inquiry notification sent to ${kennaEmail} for client ${newClient.id}`);
       }
     } catch (emailErr) {
-      // Log but don't fail the request if email fails
       console.error('Failed to send inquiry notification email:', emailErr.message);
+    }
+
+    // Send SMS alert to Kenna
+    try {
+      if (twilioClient && process.env.KENNA_PHONE) {
+        const smsBody = `New inquiry from ${name}!` +
+          (event_type ? ` ${event_type}.` : '') +
+          (event_date ? ` Date: ${event_date}.` : '') +
+          ` Check Sugar for details.`;
+
+        await twilioClient.messages.create({
+          body: smsBody,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: process.env.KENNA_PHONE
+        });
+        console.log('Inquiry SMS sent to Kenna');
+      }
+    } catch (smsErr) {
+      console.error('Failed to send inquiry SMS:', smsErr.message);
     }
 
     res.status(201).json({
