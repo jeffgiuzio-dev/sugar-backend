@@ -1128,7 +1128,7 @@ app.post('/api/payments/zelle-confirmed', (req, res) => {
 // Stripe Webhook (handles payment completion)
 app.post('/api/payments/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
 
   let event;
 
