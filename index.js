@@ -744,7 +744,7 @@ app.post('/api/payments/webhook', async (req, res) => {
     if (invoice_id) {
       await pool.query(`
         UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
-        WHERE id = $1
+        WHERE invoice_number = $1
       `, [invoice_id]);
     }
 
