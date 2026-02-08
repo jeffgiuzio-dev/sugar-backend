@@ -293,7 +293,7 @@ app.post('/api/gmail/disconnect', async (req, res) => {
 // Send email via Gmail
 app.post('/api/gmail/send', async (req, res) => {
   try {
-    const { to, subject, message, client_id } = req.body;
+    const { to, subject, message, html, client_id } = req.body;
 
     if (!to || !message) {
       return res.status(400).json({ error: 'Missing required fields: to, message' });
@@ -310,16 +310,43 @@ app.post('/api/gmail/send', async (req, res) => {
     // Get Kenna's email for the From header
     const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
-    // Build the email
-    const emailLines = [
-      `To: ${to}`,
-      `From: ${kennaEmail}`,
-      `Subject: ${subject || ''}`,
-      'Content-Type: text/plain; charset=utf-8',
-      '',
-      message
-    ];
-    const email = emailLines.join('\r\n');
+    // Build the email (multipart/alternative if HTML provided, plain text otherwise)
+    let email;
+    if (html) {
+      const boundary = 'boundary_' + Date.now().toString(36);
+      const emailLines = [
+        `To: ${to}`,
+        `From: ${kennaEmail}`,
+        `Subject: ${subject || ''}`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/plain; charset=utf-8',
+        'Content-Transfer-Encoding: 7bit',
+        '',
+        message,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/html; charset=utf-8',
+        'Content-Transfer-Encoding: 7bit',
+        '',
+        html,
+        '',
+        `--${boundary}--`
+      ];
+      email = emailLines.join('\r\n');
+    } else {
+      const emailLines = [
+        `To: ${to}`,
+        `From: ${kennaEmail}`,
+        `Subject: ${subject || ''}`,
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        message
+      ];
+      email = emailLines.join('\r\n');
+    }
 
     // Encode to base64url
     const encodedEmail = Buffer.from(email)
