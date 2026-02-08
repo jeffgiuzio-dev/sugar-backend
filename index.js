@@ -715,6 +715,45 @@ app.post('/api/payments/create-checkout', async (req, res) => {
   }
 });
 
+// Create PaymentIntent (for embedded payment form)
+app.post('/api/payments/create-payment-intent', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe not configured' });
+    }
+
+    const { invoice_id, invoice_type, client_id, client_name, client_email, amount, description } = req.body;
+
+    if (!amount || !description) {
+      return res.status(400).json({ error: 'Missing required fields: amount, description' });
+    }
+
+    const amountCents = Math.round(parseFloat(amount) * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountCents,
+      currency: 'usd',
+      metadata: {
+        invoice_id: invoice_id || '',
+        invoice_type: invoice_type || '',
+        client_id: client_id || '',
+        client_name: client_name || ''
+      },
+      receipt_email: client_email || undefined,
+      description: description
+    });
+
+    res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret
+    });
+
+  } catch (err) {
+    console.error('Stripe PaymentIntent error:', err);
+    res.status(500).json({ error: 'Failed to create payment intent', details: err.message });
+  }
+});
+
 // Stripe Webhook (handles payment completion)
 app.post('/api/payments/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -734,55 +773,46 @@ app.post('/api/payments/webhook', async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-
-    console.log('Payment successful:', session.id);
-
-    const { invoice_id, invoice_type, client_id, client_name } = session.metadata || {};
-
+  // Shared payment completion logic
+  async function handlePaymentCompleted({ invoiceId, invoiceType, clientId, clientName, amountCents, stripeId }) {
     // Update invoice status to paid
-    if (invoice_id) {
+    if (invoiceId) {
       await pool.query(`
         UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
         WHERE invoice_number = $1
-      `, [invoice_id]);
+      `, [invoiceId]);
     }
 
     // Update client status based on payment type
-    if (client_id && invoice_type) {
-      if (invoice_type === 'tasting') {
-        // Update portal data - tasting paid
+    if (clientId && invoiceType) {
+      if (invoiceType === 'tasting') {
         await pool.query(`
           INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
           VALUES ($1, TRUE, NOW())
           ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
-        `, [client_id]);
-      } else if (invoice_type === 'deposit') {
-        // Update client status to booked + portal data
-        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [client_id]);
+        `, [clientId]);
+      } else if (invoiceType === 'deposit') {
+        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [clientId]);
         await pool.query(`
           INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
           VALUES ($1, TRUE, NOW())
           ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
-        `, [client_id]);
-      } else if (invoice_type === 'final') {
-        // Update portal data - final paid
+        `, [clientId]);
+      } else if (invoiceType === 'final') {
         await pool.query(`
           INSERT INTO portal_data (client_id, final_paid, final_paid_date)
           VALUES ($1, TRUE, NOW())
           ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
-        `, [client_id]);
+        `, [clientId]);
       }
     }
 
     // Record revenue
-    if (client_id) {
+    if (clientId) {
       await pool.query(`
         INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
         VALUES ($1, $2, $3, $4, NOW(), $5)
-      `, [client_id, invoice_id || null, session.amount_total / 100, invoice_type || 'other', `Stripe payment: ${session.id}`]);
+      `, [clientId, invoiceId || null, amountCents / 100, invoiceType || 'other', `Stripe payment: ${stripeId}`]);
     }
 
     // Send confirmation email to Kenna
@@ -791,21 +821,13 @@ app.post('/api/payments/webhook', async (req, res) => {
       if (tokenResult.rows.length > 0) {
         oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
         const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
-
-        const amountFormatted = (session.amount_total / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-        const emailBody = `Payment received!
-
-Client: ${client_name || 'Unknown'}
-Amount: ${amountFormatted}
-Type: ${invoice_type || 'Payment'}
-Stripe Session: ${session.id}
-
-${client_id ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${client_id}` : ''}`;
+        const amountFormatted = (amountCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        const emailBody = `Payment received!\n\nClient: ${clientName || 'Unknown'}\nAmount: ${amountFormatted}\nType: ${invoiceType || 'Payment'}\nStripe ID: ${stripeId}\n\n${clientId ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${clientId}` : ''}`;
 
         const emailLines = [
           `To: ${kennaEmail}`,
           `From: ${kennaEmail}`,
-          `Subject: Payment Received: ${amountFormatted} from ${client_name || 'Client'}`,
+          `Subject: Payment Received: ${amountFormatted} from ${clientName || 'Client'}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
           emailBody
@@ -825,6 +847,25 @@ ${client_id ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.ht
     } catch (emailErr) {
       console.error('Failed to send payment notification:', emailErr.message);
     }
+  }
+
+  // Handle the event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    console.log('Checkout payment successful:', session.id);
+    const { invoice_id, invoice_type, client_id, client_name } = session.metadata || {};
+    await handlePaymentCompleted({
+      invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
+      clientName: client_name, amountCents: session.amount_total, stripeId: session.id
+    });
+  } else if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object;
+    console.log('PaymentIntent succeeded:', paymentIntent.id);
+    const { invoice_id, invoice_type, client_id, client_name } = paymentIntent.metadata || {};
+    await handlePaymentCompleted({
+      invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
+      clientName: client_name, amountCents: paymentIntent.amount, stripeId: paymentIntent.id
+    });
   }
 
   res.json({ received: true });
@@ -850,6 +891,29 @@ app.get('/api/payments/session/:sessionId', async (req, res) => {
   } catch (err) {
     console.error('Get session error:', err);
     res.status(500).json({ error: 'Failed to get session details' });
+  }
+});
+
+// Get PaymentIntent details (for success page - embedded flow)
+app.get('/api/payments/intent/:intentId', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe not configured' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(req.params.intentId);
+
+    res.json({
+      success: true,
+      paid: paymentIntent.status === 'succeeded',
+      amount: paymentIntent.amount / 100,
+      customerEmail: paymentIntent.receipt_email,
+      metadata: paymentIntent.metadata
+    });
+
+  } catch (err) {
+    console.error('Get PaymentIntent error:', err);
+    res.status(500).json({ error: 'Failed to get payment intent details' });
   }
 });
 
