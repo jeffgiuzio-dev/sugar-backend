@@ -658,7 +658,8 @@ app.get('/api/twilio/status', (req, res) => {
 app.get('/api/stripe/status', (req, res) => {
   res.json({
     configured: !!stripe,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null,
+    version: 'combined-tasting-email-v2'
   });
 });
 
