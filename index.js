@@ -733,11 +733,13 @@ app.post('/api/payments/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'usd',
+      payment_method_types: ['card'],
       metadata: {
         invoice_id: invoice_id || '',
         invoice_type: invoice_type || '',
         client_id: client_id || '',
-        client_name: client_name || ''
+        client_name: client_name || '',
+        client_email: client_email || ''
       },
       receipt_email: client_email || undefined,
       description: description
@@ -774,7 +776,7 @@ app.post('/api/payments/webhook', async (req, res) => {
   }
 
   // Shared payment completion logic
-  async function handlePaymentCompleted({ invoiceId, invoiceType, clientId, clientName, amountCents, stripeId }) {
+  async function handlePaymentCompleted({ invoiceId, invoiceType, clientId, clientName, clientEmail, amountCents, stripeId }) {
     // Update invoice status to paid
     if (invoiceId) {
       await pool.query(`
@@ -847,24 +849,125 @@ app.post('/api/payments/webhook', async (req, res) => {
     } catch (emailErr) {
       console.error('Failed to send payment notification:', emailErr.message);
     }
+
+    // Send branded confirmation email to the client
+    if (clientEmail) {
+      try {
+        const tokenResult2 = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+        if (tokenResult2.rows.length > 0) {
+          oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
+          const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+          const amountFormatted = '$' + (amountCents / 100).toFixed(2);
+          const firstName = (clientName || 'there').split(' ')[0];
+          const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+
+          const htmlBody = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Content -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 8px;">${paymentDate}</p>
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <!-- Message -->
+  <tr><td style="padding:24px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. Your tasting is confirmed!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm so looking forward to meeting you and creating something beautiful together.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+          const boundary = 'boundary_' + Date.now().toString(36);
+          const emailLines = [
+            `To: ${clientEmail}`,
+            `From: ${kennaEmail}`,
+            `Subject: Payment Confirmed - Kenna Giuzio Cake`,
+            'MIME-Version: 1.0',
+            `Content-Type: multipart/alternative; boundary="${boundary}"`,
+            '',
+            `--${boundary}`,
+            'Content-Type: text/plain; charset=utf-8',
+            'Content-Transfer-Encoding: 7bit',
+            '',
+            plainText,
+            '',
+            `--${boundary}`,
+            'Content-Type: text/html; charset=utf-8',
+            'Content-Transfer-Encoding: 7bit',
+            '',
+            htmlBody,
+            '',
+            `--${boundary}--`
+          ];
+
+          const encodedClientEmail = Buffer.from(emailLines.join('\r\n'))
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+          await gmail.users.messages.send({
+            userId: 'me',
+            requestBody: { raw: encodedClientEmail }
+          });
+
+          // Log the communication
+          if (clientId) {
+            await pool.query(`
+              INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
+              VALUES ($1, 'email', 'outbound', 'Payment Confirmed - Kenna Giuzio Cake', $2, 'gmail', NOW())
+            `, [clientId, plainText]);
+          }
+
+          console.log('Payment confirmation email sent to:', clientEmail);
+        }
+      } catch (clientEmailErr) {
+        console.error('Failed to send client confirmation email:', clientEmailErr.message);
+      }
+    }
   }
 
   // Handle the event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     console.log('Checkout payment successful:', session.id);
-    const { invoice_id, invoice_type, client_id, client_name } = session.metadata || {};
+    const { invoice_id, invoice_type, client_id, client_name, client_email: meta_email } = session.metadata || {};
     await handlePaymentCompleted({
       invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
-      clientName: client_name, amountCents: session.amount_total, stripeId: session.id
+      clientName: client_name, clientEmail: session.customer_email || meta_email,
+      amountCents: session.amount_total, stripeId: session.id
     });
   } else if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object;
     console.log('PaymentIntent succeeded:', paymentIntent.id);
-    const { invoice_id, invoice_type, client_id, client_name } = paymentIntent.metadata || {};
+    const { invoice_id, invoice_type, client_id, client_name, client_email } = paymentIntent.metadata || {};
     await handlePaymentCompleted({
       invoiceId: invoice_id, invoiceType: invoice_type, clientId: client_id,
-      clientName: client_name, amountCents: paymentIntent.amount, stripeId: paymentIntent.id
+      clientName: client_name, clientEmail: paymentIntent.receipt_email || client_email,
+      amountCents: paymentIntent.amount, stripeId: paymentIntent.id
     });
   }
 
