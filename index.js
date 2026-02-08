@@ -911,37 +911,49 @@ app.post('/api/payments/zelle-confirmed', async (req, res) => {
     const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     // Update invoice status to paid
-    if (invoice_id) {
-      await pool.query(`
-        UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
-        WHERE invoice_number = $1
-      `, [invoice_id]);
+    try {
+      if (invoice_id) {
+        await pool.query(`
+          UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+          WHERE invoice_number = $1
+        `, [invoice_id]);
+      }
+    } catch (dbErr) {
+      console.error('Zelle: Failed to update invoice:', dbErr.message);
     }
 
     // Update client status based on payment type
-    if (client_id && invoice_type) {
-      if (invoice_type === 'tasting') {
-        await pool.query(`
-          INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
-          VALUES ($1, TRUE, NOW())
-          ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
-        `, [client_id]);
-      } else if (invoice_type === 'deposit') {
-        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [client_id]);
-        await pool.query(`
-          INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
-          VALUES ($1, TRUE, NOW())
-          ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
-        `, [client_id]);
+    try {
+      if (client_id && invoice_type) {
+        if (invoice_type === 'tasting') {
+          await pool.query(`
+            INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
+          `, [client_id]);
+        } else if (invoice_type === 'deposit') {
+          await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [client_id]);
+          await pool.query(`
+            INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
+          `, [client_id]);
+        }
       }
+    } catch (dbErr) {
+      console.error('Zelle: Failed to update client status:', dbErr.message);
     }
 
     // Record revenue
-    if (client_id) {
-      await pool.query(`
-        INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
-        VALUES ($1, $2, $3, $4, NOW(), $5)
-      `, [client_id, invoice_id || null, amountCents / 100, invoice_type || 'other', 'Zelle payment confirmed by client']);
+    try {
+      if (client_id) {
+        await pool.query(`
+          INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
+          VALUES ($1, $2, $3, $4, NOW(), $5)
+        `, [client_id, invoice_id || null, amountCents / 100, invoice_type || 'other', 'Zelle payment confirmed by client']);
+      }
+    } catch (dbErr) {
+      console.error('Zelle: Failed to record revenue:', dbErr.message);
     }
 
     // Send notification email to Kenna
