@@ -1038,9 +1038,34 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
-          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+          let subject, plainText, htmlBody;
 
-          const htmlBody = `<!DOCTYPE html>
+          if (invoice_type === 'tasting') {
+            // Fetch tasting date/time for combined email
+            let tastingDate = null, tastingTime = null;
+            try {
+              if (client_id) {
+                const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [client_id]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  if (row.tasting_date) {
+                    tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  tastingTime = row.tasting_time || null;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Offline verify: Failed to fetch tasting details for email:', dbErr.message);
+            }
+
+            const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: method, tastingDate, tastingTime };
+            subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
+            plainText = buildTastingConfirmationPlain(emailData);
+            htmlBody = buildTastingConfirmationHTML(emailData);
+          } else {
+            subject = 'Payment Confirmed - Kenna Giuzio Cake';
+            plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+            htmlBody = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
@@ -1059,8 +1084,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
   <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
   <tr><td style="padding:24px 40px 30px;">
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. Your tasting is confirmed!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm so looking forward to meeting you and creating something beautiful together.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment.</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
   </td></tr>
@@ -1071,12 +1095,13 @@ app.post('/api/payments/offline-verify', async (req, res) => {
 </table>
 </td></tr></table>
 </body></html>`;
+          }
 
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
             `To: ${client_email}`,
             `From: ${kennaEmail}`,
-            `Subject: Payment Confirmed - Kenna Giuzio Cake`,
+            `Subject: ${subject}`,
             'MIME-Version: 1.0',
             `Content-Type: multipart/alternative; boundary="${boundary}"`,
             '',
@@ -1103,8 +1128,8 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           if (client_id) {
             await pool.query(`
               INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
-              VALUES ($1, 'email', 'outbound', 'Payment Confirmed - Kenna Giuzio Cake', $2, 'gmail', NOW())
-            `, [client_id, plainText]);
+              VALUES ($1, 'email', 'outbound', $2, $3, 'gmail', NOW())
+            `, [client_id, subject, plainText]);
           }
         }
       } catch (clientEmailErr) {
@@ -1142,6 +1167,76 @@ app.post('/api/payments/webhook', async (req, res) => {
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Build combined Tasting Confirmation + Payment Receipt email
+  function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+    const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
+    const tastingSection = tastingDate ? `
+  <!-- Tasting Details -->
+  <tr><td style="padding:24px 40px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
+      <tr><td>
+        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Tasting</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Date:</strong> ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Location:</strong> Queen Anne, Seattle</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1 hour</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <!-- What to Expect -->
+  <tr><td style="padding:16px 40px 0;">
+    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What to Expect</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Sample a variety of cake flavors and fillings</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Discuss your design vision and inspiration</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Review timeline and logistics</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">Feel free to bring inspiration photos, color swatches, or your event team!</p>
+  </td></tr>` : '';
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Payment Receipt -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Tasting Confirmed</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
+    ${methodNote}
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${tastingSection}
+  <!-- Message -->
+  <tr><td style="padding:20px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions before your tasting, don't hesitate to reach out.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">See you soon,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+  }
+
+  function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+    const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
+    const tastingInfo = tastingDate ? `\nYOUR TASTING\nDate: ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1 hour\n\nWHAT TO EXPECT\n- Sample a variety of cake flavors and fillings\n- Discuss your design vision and inspiration\n- Review timeline and logistics\n- Feel free to bring inspiration photos, color swatches, or your event team!\n` : '';
+
+    return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
   }
 
   // Shared payment completion logic
@@ -1247,37 +1342,56 @@ app.post('/api/payments/webhook', async (req, res) => {
           const firstName = (clientName || 'there').split(' ')[0];
           const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-          const plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}. Your tasting is confirmed!\n\nI'm so looking forward to meeting you and creating something beautiful together.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+          let subject, plainText, htmlBody;
 
-          const htmlBody = `<!DOCTYPE html>
+          if (invoiceType === 'tasting') {
+            // Fetch tasting date/time for combined email
+            let tastingDate = null, tastingTime = null;
+            try {
+              if (clientId) {
+                const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [clientId]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  if (row.tasting_date) {
+                    tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  tastingTime = row.tasting_time || null;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Failed to fetch tasting details for email:', dbErr.message);
+            }
+
+            const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', tastingDate, tastingTime };
+            subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
+            plainText = buildTastingConfirmationPlain(emailData);
+            htmlBody = buildTastingConfirmationHTML(emailData);
+          } else {
+            // Generic payment confirmation for deposit/final payments
+            subject = 'Payment Confirmed - Kenna Giuzio Cake';
+            plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+            htmlBody = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <!-- Banner -->
   <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <!-- Logo -->
   <tr><td align="center" style="padding:30px 0 10px;">
     <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
   </td></tr>
-  <!-- Content -->
   <tr><td style="padding:20px 40px 10px; text-align:center;">
     <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
     <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 8px;">${paymentDate}</p>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0;">${paymentDate}</p>
   </td></tr>
-  <!-- Divider -->
   <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <!-- Message -->
   <tr><td style="padding:24px 40px 30px;">
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. Your tasting is confirmed!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm so looking forward to meeting you and creating something beautiful together.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment.</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
   </td></tr>
-  <!-- Footer -->
   <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
     <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
     <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
@@ -1285,12 +1399,13 @@ app.post('/api/payments/webhook', async (req, res) => {
 </table>
 </td></tr></table>
 </body></html>`;
+          }
 
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
             `To: ${clientEmail}`,
             `From: ${kennaEmail}`,
-            `Subject: Payment Confirmed - Kenna Giuzio Cake`,
+            `Subject: ${subject}`,
             'MIME-Version: 1.0',
             `Content-Type: multipart/alternative; boundary="${boundary}"`,
             '',
@@ -1324,11 +1439,11 @@ app.post('/api/payments/webhook', async (req, res) => {
           if (clientId) {
             await pool.query(`
               INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at)
-              VALUES ($1, 'email', 'outbound', 'Payment Confirmed - Kenna Giuzio Cake', $2, 'gmail', NOW())
-            `, [clientId, plainText]);
+              VALUES ($1, 'email', 'outbound', $2, $3, 'gmail', NOW())
+            `, [clientId, subject, plainText]);
           }
 
-          console.log('Payment confirmation email sent to:', clientEmail);
+          console.log('Confirmation email sent to:', clientEmail, 'type:', invoiceType);
         }
       } catch (clientEmailErr) {
         console.error('Failed to send client confirmation email:', clientEmailErr.message);
