@@ -1082,44 +1082,61 @@ app.post('/api/payments/webhook', async (req, res) => {
 
   // Shared payment completion logic
   async function handlePaymentCompleted({ invoiceId, invoiceType, clientId, clientName, clientEmail, amountCents, stripeId }) {
+    console.log('handlePaymentCompleted called:', { invoiceId, invoiceType, clientId, clientName, clientEmail: clientEmail ? '***' : '(empty)', amountCents, stripeId });
+
     // Update invoice status to paid
-    if (invoiceId) {
-      await pool.query(`
-        UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
-        WHERE invoice_number = $1
-      `, [invoiceId]);
+    try {
+      if (invoiceId) {
+        await pool.query(`
+          UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+          WHERE invoice_number = $1
+        `, [invoiceId]);
+        console.log('Invoice updated:', invoiceId);
+      }
+    } catch (dbErr) {
+      console.error('Failed to update invoice:', dbErr.message);
     }
 
     // Update client status based on payment type
-    if (clientId && invoiceType) {
-      if (invoiceType === 'tasting') {
-        await pool.query(`
-          INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
-          VALUES ($1, TRUE, NOW())
-          ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
-        `, [clientId]);
-      } else if (invoiceType === 'deposit') {
-        await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [clientId]);
-        await pool.query(`
-          INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
-          VALUES ($1, TRUE, NOW())
-          ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
-        `, [clientId]);
-      } else if (invoiceType === 'final') {
-        await pool.query(`
-          INSERT INTO portal_data (client_id, final_paid, final_paid_date)
-          VALUES ($1, TRUE, NOW())
-          ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
-        `, [clientId]);
+    try {
+      if (clientId && invoiceType) {
+        if (invoiceType === 'tasting') {
+          await pool.query(`
+            INSERT INTO portal_data (client_id, tasting_paid, tasting_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET tasting_paid = TRUE, tasting_paid_date = NOW(), updated_at = NOW()
+          `, [clientId]);
+        } else if (invoiceType === 'deposit') {
+          await pool.query(`UPDATE clients SET status = 'booked', updated_at = NOW() WHERE id = $1`, [clientId]);
+          await pool.query(`
+            INSERT INTO portal_data (client_id, deposit_paid, deposit_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
+          `, [clientId]);
+        } else if (invoiceType === 'final') {
+          await pool.query(`
+            INSERT INTO portal_data (client_id, final_paid, final_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
+          `, [clientId]);
+        }
+        console.log('Client status updated:', clientId, invoiceType);
       }
+    } catch (dbErr) {
+      console.error('Failed to update client status:', dbErr.message);
     }
 
     // Record revenue
-    if (clientId) {
-      await pool.query(`
-        INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
-        VALUES ($1, $2, $3, $4, NOW(), $5)
-      `, [clientId, invoiceId || null, amountCents / 100, invoiceType || 'other', `Stripe payment: ${stripeId}`]);
+    try {
+      if (clientId) {
+        await pool.query(`
+          INSERT INTO revenue (client_id, invoice_id, amount, type, revenue_date, notes)
+          VALUES ($1, $2, $3, $4, NOW(), $5)
+        `, [clientId, invoiceId || null, amountCents / 100, invoiceType || 'other', `Stripe payment: ${stripeId}`]);
+        console.log('Revenue recorded');
+      }
+    } catch (dbErr) {
+      console.error('Failed to record revenue:', dbErr.message);
     }
 
     // Send confirmation email to Kenna
