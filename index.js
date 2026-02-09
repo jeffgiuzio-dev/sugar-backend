@@ -2166,6 +2166,17 @@ app.delete('/api/invoices/:id', async (req, res) => {
   }
 });
 
+// Delete ALL invoices (for data wipe)
+app.delete('/api/invoices', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM invoices RETURNING *');
+    res.json({ message: `Deleted ${result.rows.length} invoices`, count: result.rows.length });
+  } catch (err) {
+    console.error('Error deleting all invoices:', err);
+    res.status(500).json({ error: 'Failed to delete invoices' });
+  }
+});
+
 // ============================================
 // PROPOSALS
 // ============================================
