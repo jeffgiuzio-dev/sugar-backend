@@ -2195,10 +2195,31 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
       return res.status(503).json({ error: 'OpenAI not configured. Add OPENAI_API_KEY to environment.' });
     }
 
-    const { notes, eventType, instruction } = req.body;
+    const { notes, eventType, instruction, generateSubject } = req.body;
 
     if (!notes || !notes.trim()) {
       return res.status(400).json({ error: 'Please enter some notes to polish.' });
+    }
+
+    // Subject line generation mode
+    if (generateSubject) {
+      const subjectCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate a short, professional email subject line for Kenna Giuzio Cake. The subject must start with "Kenna Giuzio Cake - " followed by a brief, warm descriptor. Keep it under 60 characters total. No emojis. Just return the subject line, nothing else.`
+          },
+          {
+            role: 'user',
+            content: `Generate a subject line for this email body:\n\n${notes.trim().substring(0, 500)}`
+          }
+        ],
+        max_tokens: 50,
+        temperature: 0.7
+      });
+      const subject = subjectCompletion.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+      return res.json({ success: true, narrative: subject });
     }
 
     // Dynamic max_tokens based on input length
