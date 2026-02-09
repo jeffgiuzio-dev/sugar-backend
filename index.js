@@ -1209,14 +1209,18 @@ async function createEventPrepCalendarEvent(clientId) {
 
     const client = clientResult.rows[0];
     const lastName = (client.name || '').split(' ').pop();
-    const title = `${lastName} Event Prep`;
+    const prepTitle = `${lastName} Event Prep`;
+    const eventTitle = `${lastName} ${client.name.includes('Wedding') ? 'Wedding' : 'Event'}`;
 
-    // Start 7 days before event
-    const eventDate = new Date(client.event_date);
+    // Parse date correctly to avoid timezone shift
+    // client.event_date comes from DB as YYYY-MM-DD, append time to treat as local date
+    const eventDateStr = client.event_date.split('T')[0]; // Clean YYYY-MM-DD
+    const eventDate = new Date(eventDateStr + 'T00:00:00');
+
+    // Create 7 prep events (7 days before the event)
     const prepStart = new Date(eventDate);
     prepStart.setDate(prepStart.getDate() - 7);
 
-    // Create one event per day for the 7-day prep period
     for (let i = 0; i < 7; i++) {
       const day = new Date(prepStart);
       day.setDate(day.getDate() + i);
@@ -1225,10 +1229,18 @@ async function createEventPrepCalendarEvent(clientId) {
       await pool.query(
         `INSERT INTO calendar_events (client_id, title, event_date, event_type, notes)
          VALUES ($1, $2, $3, 'prep', $4)`,
-        [clientId, title, dateStr, `Day ${i + 1} of 7 — event prep for ${client.name}`]
+        [clientId, prepTitle, dateStr, `Day ${i + 1} of 7 — event prep for ${client.name}`]
       );
     }
-    console.log(`Created 7-day event prep calendar events for ${client.name}`);
+
+    // Create the actual event date
+    await pool.query(
+      `INSERT INTO calendar_events (client_id, title, event_date, event_type, notes)
+       VALUES ($1, $2, $3, 'event', $4)`,
+      [clientId, eventTitle, eventDateStr, `Event day for ${client.name}`]
+    );
+
+    console.log(`Created 7-day prep + event calendar entries for ${client.name}`);
   } catch (err) {
     console.error('Failed to create event prep calendar events:', err.message);
   }
@@ -1967,12 +1979,12 @@ app.put('/api/clients/:id', async (req, res) => {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    // If event date changed and client is booked, recreate prep events
+    // If event date changed and client is booked, recreate calendar events
     if (eventDateChanged && isBooked) {
-      console.log(`Event date changed for booked client ${req.params.id}, recreating prep events`);
-      // Delete old prep events
-      await pool.query(`DELETE FROM calendar_events WHERE client_id = $1 AND event_type = 'prep'`, [req.params.id]);
-      // Create new prep events
+      console.log(`Event date changed for booked client ${req.params.id}, recreating calendar events`);
+      // Delete old prep and event entries
+      await pool.query(`DELETE FROM calendar_events WHERE client_id = $1 AND event_type IN ('prep', 'event')`, [req.params.id]);
+      // Create new prep and event entries
       await createEventPrepCalendarEvent(req.params.id);
     }
 
@@ -2356,19 +2368,19 @@ app.delete('/api/events/:id', async (req, res) => {
 // Clean up orphaned prep events (prep events for clients that don't exist or aren't booked)
 app.post('/api/events/cleanup-prep', async (req, res) => {
   try {
-    // Delete prep events where client doesn't exist or isn't booked
+    // Delete prep and event entries where client doesn't exist or isn't booked
     const result = await pool.query(`
       DELETE FROM calendar_events
-      WHERE event_type = 'prep'
+      WHERE event_type IN ('prep', 'event')
       AND (client_id IS NULL
            OR client_id NOT IN (SELECT id FROM clients WHERE status = 'booked'))
       RETURNING *
     `);
-    console.log(`Cleaned up ${result.rows.length} orphaned prep events`);
+    console.log(`Cleaned up ${result.rows.length} orphaned calendar events`);
     res.json({ success: true, deleted: result.rows.length, events: result.rows });
   } catch (err) {
-    console.error('Error cleaning up prep events:', err);
-    res.status(500).json({ error: 'Failed to cleanup prep events' });
+    console.error('Error cleaning up calendar events:', err);
+    res.status(500).json({ error: 'Failed to cleanup calendar events' });
   }
 });
 
