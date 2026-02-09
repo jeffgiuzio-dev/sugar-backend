@@ -904,6 +904,70 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
   }
 });
 
+// ============================================
+// DEV TOOLS — Sandbox only
+// ============================================
+
+// Trigger reminder check on demand (same as 9 AM cron)
+app.post('/api/test/check-reminders', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    await checkUpcomingEvents();
+    res.json({ success: true, message: 'Reminder check completed' });
+  } catch (err) {
+    console.error('Test check-reminders error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reset reminders for a client (so you can re-test)
+app.post('/api/test/reset-reminders', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const { clientId } = req.body;
+    if (clientId) {
+      await pool.query('DELETE FROM reminders_sent WHERE client_id = $1', [clientId]);
+      res.json({ success: true, message: `Reminders reset for client ${clientId}` });
+    } else {
+      await pool.query('DELETE FROM reminders_sent');
+      res.json({ success: true, message: 'All reminders reset' });
+    }
+  } catch (err) {
+    console.error('Test reset-reminders error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get reminder status for all booked clients
+app.get('/api/test/reminder-status', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const clients = await pool.query(`
+      SELECT c.id, c.name, c.email, c.status, c.event_date,
+             EXTRACT(DAY FROM (c.event_date - NOW())) as days_until
+      FROM clients c
+      WHERE c.status = 'booked' AND c.event_date IS NOT NULL AND c.event_date > NOW()
+      ORDER BY c.event_date ASC
+    `);
+    const reminders = await pool.query('SELECT * FROM reminders_sent ORDER BY sent_at DESC');
+    res.json({
+      booked_clients: clients.rows,
+      reminders_sent: reminders.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Client claims they sent an offline payment (Zelle, cash, check)
 // Does NOT mark as paid — sets to pending_verification for Kenna to confirm
 app.post('/api/payments/offline-claimed', async (req, res) => {
