@@ -6,6 +6,8 @@ const { Pool } = require('pg');
 const { google } = require('googleapis');
 const twilio = require('twilio');
 const Stripe = require('stripe');
+const OpenAI = require('openai');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +39,11 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
 // Stripe setup
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+// OpenAI setup
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
 // Middleware
@@ -1059,6 +1066,110 @@ function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate
   return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
+// Build Booking Confirmation email (sent when deposit is paid)
+function buildBookingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate }) {
+  const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
+  const eventSection = `
+  <!-- Event Details -->
+  <tr><td style="padding:24px 40px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
+      <tr><td>
+        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Event</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event:</strong> ${eventType || 'Wedding'}</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Date:</strong> ${eventDate || 'To be confirmed'}</p>
+        ${venue ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Venue:</strong> ${venue}</p>` : ''}
+        ${balanceDueDate ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Final Balance Due:</strong> ${balanceDueDate}</p>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>
+  <!-- What's Next -->
+  <tr><td style="padding:16px 40px 0;">
+    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What's Next</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Your date is officially reserved</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; I'll begin working on your custom design</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; You'll receive a final balance reminder closer to your event</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">&#8226; Feel free to reach out anytime with questions or updates!</p>
+  </td></tr>`;
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Payment Receipt -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">You're Booked!</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
+    ${methodNote}
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${eventSection}
+  <!-- Message -->
+  <tr><td style="padding:20px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your deposit! Your date is now officially reserved and I couldn't be more excited to create something beautiful for your ${(eventType || 'celebration').toLowerCase()}.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'll be in touch as we get closer to your event with updates on your design. If you have any questions or inspiration along the way, don't hesitate to reach out!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">With excitement,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function buildBookingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate }) {
+  const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
+  const eventInfo = `\nYOUR EVENT\nEvent: ${eventType || 'Wedding'}\nDate: ${eventDate || 'To be confirmed'}${venue ? `\nVenue: ${venue}` : ''}${balanceDueDate ? `\nFinal Balance Due: ${balanceDueDate}` : ''}\n\nWHAT'S NEXT\n- Your date is officially reserved\n- I'll begin working on your custom design\n- You'll receive a final balance reminder closer to your event\n- Feel free to reach out anytime with questions or updates!\n`;
+
+  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\nDear ${firstName},\n\nThank you for your deposit! Your date is now officially reserved and I couldn't be more excited to create something beautiful for your ${(eventType || 'celebration').toLowerCase()}.\n\nI'll be in touch as we get closer to your event with updates on your design. If you have any questions or inspiration along the way, don't hesitate to reach out!\n\nWith excitement,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+}
+
+// Create "Event Prep" multi-day calendar event starting 1 week before event
+async function createEventPrepCalendarEvent(clientId) {
+  try {
+    const clientResult = await pool.query('SELECT name, event_date FROM clients WHERE id = $1', [clientId]);
+    if (clientResult.rows.length === 0 || !clientResult.rows[0].event_date) return;
+
+    const client = clientResult.rows[0];
+    const lastName = (client.name || '').split(' ').pop();
+    const title = `${lastName} Event Prep`;
+
+    // Start 7 days before event
+    const eventDate = new Date(client.event_date);
+    const prepStart = new Date(eventDate);
+    prepStart.setDate(prepStart.getDate() - 7);
+
+    // Create one event per day for the 7-day prep period
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(prepStart);
+      day.setDate(day.getDate() + i);
+      const dateStr = day.toISOString().split('T')[0];
+
+      await pool.query(
+        `INSERT INTO calendar_events (client_id, title, event_date, event_type, notes)
+         VALUES ($1, $2, $3, 'prep', $4)`,
+        [clientId, title, dateStr, `Day ${i + 1} of 7 — event prep for ${client.name}`]
+      );
+    }
+    console.log(`Created 7-day event prep calendar events for ${client.name}`);
+  } catch (err) {
+    console.error('Failed to create event prep calendar events:', err.message);
+  }
+}
+
 // Admin verifies an offline payment (Zelle, cash, check) — marks as paid, sends client email
 app.post('/api/payments/offline-verify', async (req, res) => {
   try {
@@ -1103,6 +1214,8 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             VALUES ($1, TRUE, NOW())
             ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
           `, [client_id]);
+          // Create multi-day "Event Prep" calendar event
+          await createEventPrepCalendarEvent(client_id);
         }
       }
     } catch (dbErr) {
@@ -1153,7 +1266,35 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
             plainText = buildTastingConfirmationPlain(emailData);
             htmlBody = buildTastingConfirmationHTML(emailData);
+          } else if (invoice_type === 'deposit') {
+            // Booking confirmation for deposit payments
+            let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
+            try {
+              if (client_id) {
+                const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [client_id]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  eventType = row.event_type;
+                  if (row.event_date) {
+                    eventDate = new Date(row.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                    // Balance due = 2 weeks before event
+                    const balDate = new Date(row.event_date);
+                    balDate.setDate(balDate.getDate() - 14);
+                    balanceDueDate = balDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  venueStr = row.venue;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Offline verify: Failed to fetch event details for booking email:', dbErr.message);
+            }
+
+            const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: method, eventType, eventDate, venue: venueStr, balanceDueDate };
+            subject = eventDate ? `You're Booked! - ${eventDate}` : "You're Booked! - Kenna Giuzio Cake";
+            plainText = buildBookingConfirmationPlain(bookingData);
+            htmlBody = buildBookingConfirmationHTML(bookingData);
           } else {
+            // Generic payment confirmation for final/other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
             plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
             htmlBody = `<!DOCTYPE html>
@@ -1293,6 +1434,8 @@ app.post('/api/payments/webhook', async (req, res) => {
             VALUES ($1, TRUE, NOW())
             ON CONFLICT (client_id) DO UPDATE SET deposit_paid = TRUE, deposit_paid_date = NOW(), updated_at = NOW()
           `, [clientId]);
+          // Create multi-day "Event Prep" calendar event
+          await createEventPrepCalendarEvent(clientId);
         } else if (invoiceType === 'final') {
           await pool.query(`
             INSERT INTO portal_data (client_id, final_paid, final_paid_date)
@@ -1387,8 +1530,34 @@ app.post('/api/payments/webhook', async (req, res) => {
             subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
             plainText = buildTastingConfirmationPlain(emailData);
             htmlBody = buildTastingConfirmationHTML(emailData);
+          } else if (invoiceType === 'deposit') {
+            // Booking confirmation for deposit payments
+            let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
+            try {
+              if (clientId) {
+                const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [clientId]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  eventType = row.event_type;
+                  if (row.event_date) {
+                    eventDate = new Date(row.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                    const balDate = new Date(row.event_date);
+                    balDate.setDate(balDate.getDate() - 14);
+                    balanceDueDate = balDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  venueStr = row.venue;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Failed to fetch event details for booking email:', dbErr.message);
+            }
+
+            const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', eventType, eventDate, venue: venueStr, balanceDueDate };
+            subject = eventDate ? `You're Booked! - ${eventDate}` : "You're Booked! - Kenna Giuzio Cake";
+            plainText = buildBookingConfirmationPlain(bookingData);
+            htmlBody = buildBookingConfirmationHTML(bookingData);
           } else {
-            // Generic payment confirmation for deposit/final payments
+            // Generic payment confirmation for final/other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
             plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
             htmlBody = `<!DOCTYPE html>
@@ -1954,6 +2123,51 @@ app.put('/api/proposals/:id', async (req, res) => {
 });
 
 // ============================================
+// AI NARRATIVE GENERATION
+// ============================================
+app.post('/api/ai/generate-narrative', async (req, res) => {
+  try {
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI not configured. Add OPENAI_API_KEY to environment.' });
+    }
+
+    const { notes, eventType } = req.body;
+
+    if (!notes || !notes.trim()) {
+      return res.status(400).json({ error: 'Please enter some notes to polish.' });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a luxury cake artist's copywriter. Transform rough notes into an elegant, descriptive 2-3 sentence narrative for a client proposal. Guidelines:
+- Warm but professional tone
+- No emojis
+- Mention specific design elements from the notes (tiers, colors, flowers, textures, flavors)
+- Write in third person ("The cake will feature..." not "Your cake will...")
+- Keep it concise — 2-3 sentences max
+- Make it feel bespoke and artisanal`
+        },
+        {
+          role: 'user',
+          content: `Event type: ${eventType || 'Wedding'}\n\nRough notes:\n${notes}`
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.7
+    });
+
+    const narrative = completion.choices[0].message.content.trim();
+    res.json({ success: true, narrative });
+  } catch (err) {
+    console.error('AI narrative generation error:', err.message);
+    res.status(500).json({ error: 'Failed to generate narrative. Please try again.' });
+  }
+});
+
+// ============================================
 // CALENDAR EVENTS
 // ============================================
 app.get('/api/events', async (req, res) => {
@@ -2354,6 +2568,17 @@ async function runMigrations() {
     `);
     console.log('✓ Calendar events table updated');
 
+    // Create reminders_sent table (for automatic reminder emails)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reminders_sent (
+        id SERIAL PRIMARY KEY,
+        client_id UUID NOT NULL,
+        type VARCHAR(30) NOT NULL,
+        sent_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✓ Reminders sent table ready');
+
     // Verify schema
     console.log('Verifying schema...');
     const result = await pool.query(`
@@ -2481,6 +2706,247 @@ async function backgroundGmailSync() {
     }
   }
 }
+
+// Automatic reminder emails — check daily for upcoming events
+async function checkUpcomingEvents() {
+  console.log('Checking upcoming events for reminders...');
+  try {
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) {
+      console.log('Reminders: No Gmail token configured, skipping');
+      return;
+    }
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+    // Get all booked clients with future event dates
+    const result = await pool.query(`
+      SELECT c.id, c.name, c.email, c.event_type, c.event_date, c.venue,
+             pd.deposit_paid_date
+      FROM clients c
+      LEFT JOIN portal_data pd ON pd.client_id = c.id
+      WHERE c.status = 'booked'
+        AND c.event_date IS NOT NULL
+        AND c.event_date > NOW()
+      ORDER BY c.event_date ASC
+    `);
+
+    for (const client of result.rows) {
+      const eventDate = new Date(client.event_date);
+      const now = new Date();
+      const daysUntil = Math.floor((eventDate - now) / (1000 * 60 * 60 * 24));
+      const firstName = (client.name || 'there').split(' ')[0];
+      const eventDateFormatted = eventDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+      // Check if reminder already sent
+      const alreadySent = async (type) => {
+        const check = await pool.query(
+          'SELECT id FROM reminders_sent WHERE client_id = $1 AND type = $2',
+          [client.id, type]
+        );
+        return check.rows.length > 0;
+      };
+
+      // 30 days out — One month reminder
+      if (daysUntil <= 30 && daysUntil > 14) {
+        if (await alreadySent('one_month')) continue;
+
+        // Calculate balance info
+        let balanceAmount = 'your remaining balance';
+        try {
+          const invResult = await pool.query(
+            "SELECT data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
+            [client.id]
+          );
+          if (invResult.rows.length > 0) {
+            const invData = invResult.rows[0].data || {};
+            const proposalTotal = parseFloat(invData.proposalTotal) || 0;
+            const tastingCredit = parseFloat(invData.tastingCredit) || 0;
+            const depositPaid = parseFloat(invData.amount) || 0;
+            const remaining = (proposalTotal - tastingCredit) - depositPaid;
+            if (remaining > 0) balanceAmount = '$' + remaining.toFixed(2);
+          }
+        } catch (e) { console.log('Could not calculate balance for reminder'); }
+
+        const balanceDueDate = new Date(eventDate);
+        balanceDueDate.setDate(balanceDueDate.getDate() - 14);
+        const balanceDueDateStr = balanceDueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        const subject = `One Month Until Your ${client.event_type || 'Event'}!`;
+        const plainText = `Hi ${firstName},\n\nYour ${(client.event_type || 'event').toLowerCase()} is just one month away! We're getting so excited.\n\nJust a friendly reminder that your final balance of ${balanceAmount} will be due by ${balanceDueDateStr}.\n\nIf you have any questions or last-minute details to share, don't hesitate to reach out!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+
+        const htmlBody = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <tr><td style="padding:20px 40px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">One Month to Go!</h1>
+  </td></tr>
+  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <tr><td style="padding:24px 40px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Your ${(client.event_type || 'event').toLowerCase()} is just one month away! We're getting so excited.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
+      <tr><td>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDateFormatted}</p>
+        ${client.venue ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Venue:</strong> ${client.venue}</p>` : ''}
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Final Balance:</strong> ${balanceAmount} due by ${balanceDueDateStr}</p>
+      </td></tr>
+    </table>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions or last-minute details to share, don't hesitate to reach out!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+        try {
+          const boundary = 'boundary_' + Date.now().toString(36);
+          const emailLines = [
+            `To: ${client.email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`, '',
+            `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', plainText, '',
+            `--${boundary}`, 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', htmlBody, '',
+            `--${boundary}--`
+          ];
+          const encoded = Buffer.from(emailLines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
+
+          await pool.query('INSERT INTO reminders_sent (client_id, type) VALUES ($1, $2)', [client.id, 'one_month']);
+          await pool.query(
+            `INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at) VALUES ($1, 'email', 'outbound', $2, $3, 'gmail', NOW())`,
+            [client.id, subject, plainText]
+          );
+          console.log(`Sent 1-month reminder to ${client.name} (${client.email})`);
+        } catch (emailErr) {
+          console.error(`Failed to send 1-month reminder to ${client.name}:`, emailErr.message);
+        }
+      }
+
+      // 14 days out — Two week reminder + final balance invoice link
+      if (daysUntil <= 14 && daysUntil > 0) {
+        if (await alreadySent('two_week')) continue;
+
+        // Calculate balance and build final balance link
+        let balanceAmount = 0;
+        let proposalTotal = 0, tastingCredit = 0, depositPaid = 0;
+        try {
+          const invResult = await pool.query(
+            "SELECT amount, data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
+            [client.id]
+          );
+          if (invResult.rows.length > 0) {
+            const invData = invResult.rows[0].data || {};
+            proposalTotal = parseFloat(invData.proposalTotal) || 0;
+            tastingCredit = parseFloat(invData.tastingCredit) || 0;
+            depositPaid = parseFloat(invResult.rows[0].amount) || parseFloat(invData.amount) || 0;
+            balanceAmount = (proposalTotal - tastingCredit) - depositPaid;
+          }
+        } catch (e) { console.log('Could not calculate balance for 2-week reminder'); }
+
+        const balanceFormatted = balanceAmount > 0 ? '$' + balanceAmount.toFixed(2) : 'your remaining balance';
+        const finalBalanceLink = `https://portal.kennagiuziocake.com/welcome-proposal.html?dest=final-balance&clientId=${client.id}&mode=final-balance&total=${proposalTotal}&tastingCredit=${tastingCredit}&depositPaid=${depositPaid}`;
+
+        const subject = `Final Balance Due - ${client.event_type || 'Event'}`;
+        const plainText = `Hi ${firstName},\n\nYour ${(client.event_type || 'event').toLowerCase()} is just two weeks away!\n\nYour final balance of ${balanceFormatted} is now due. You can view and pay your final balance here:\n${finalBalanceLink}\n\nPayment can be made by credit card, Zelle, or check.\n\nI can't wait to see it all come together!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+
+        const htmlBody = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <tr><td style="padding:20px 40px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 8px;">Final Balance Due</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:8px;">${balanceFormatted}</div>
+    <p style="font-size:14px; color:#666; margin:0;">Due before ${eventDateFormatted}</p>
+  </td></tr>
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <tr><td style="padding:24px 40px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Your ${(client.event_type || 'event').toLowerCase()} is just two weeks away! Your final balance is now due.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
+      <tr><td>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDateFormatted}</p>
+        ${client.venue ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Venue:</strong> ${client.venue}</p>` : ''}
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Balance Due:</strong> ${balanceFormatted}</p>
+      </td></tr>
+    </table>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 24px;">Payment can be made by credit card, Zelle, or check.</p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="background:#b5956a; border-radius:4px;">
+      <a href="${finalBalanceLink}" style="display:inline-block; padding:16px 40px; color:#ffffff; font-family:Arial, sans-serif; font-size:14px; font-weight:bold; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">VIEW YOUR FINAL BALANCE</a>
+    </td></tr></table>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:24px 0 16px;">I can't wait to see it all come together!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+        try {
+          // Create final balance invoice record
+          const fbInvoiceId = 'FB-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+          await pool.query(`
+            INSERT INTO invoices (invoice_number, client_id, type, status, amount, data, created_at)
+            VALUES ($1, $2, 'final', 'sent', $3, $4, NOW())
+            ON CONFLICT DO NOTHING
+          `, [fbInvoiceId, client.id, balanceAmount, JSON.stringify({
+            proposalTotal, tastingCredit, depositPaid,
+            clientName: client.name, clientEmail: client.email,
+            eventType: client.event_type, eventDate: client.event_date, venue: client.venue
+          })]);
+
+          const boundary = 'boundary_' + Date.now().toString(36);
+          const emailLines = [
+            `To: ${client.email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`, '',
+            `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', plainText, '',
+            `--${boundary}`, 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', htmlBody, '',
+            `--${boundary}--`
+          ];
+          const encoded = Buffer.from(emailLines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
+
+          await pool.query('INSERT INTO reminders_sent (client_id, type) VALUES ($1, $2)', [client.id, 'two_week']);
+          await pool.query(
+            `INSERT INTO communications (client_id, type, direction, subject, message, channel, created_at) VALUES ($1, 'email', 'outbound', $2, $3, 'gmail', NOW())`,
+            [client.id, subject, plainText]
+          );
+          console.log(`Sent 2-week reminder + final balance to ${client.name} (${client.email})`);
+        } catch (emailErr) {
+          console.error(`Failed to send 2-week reminder to ${client.name}:`, emailErr.message);
+        }
+      }
+    }
+
+    console.log('Reminder check complete');
+  } catch (err) {
+    console.error('checkUpcomingEvents error:', err.message);
+  }
+}
+
+// Schedule daily reminder check at 9:00 AM Pacific
+cron.schedule('0 9 * * *', checkUpcomingEvents, { timezone: 'America/Los_Angeles' });
 
 // Start server
 runMigrations().then(() => {
