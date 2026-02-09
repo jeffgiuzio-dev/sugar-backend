@@ -2195,7 +2195,7 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
       return res.status(503).json({ error: 'OpenAI not configured. Add OPENAI_API_KEY to environment.' });
     }
 
-    const { notes, eventType } = req.body;
+    const { notes, eventType, instruction } = req.body;
 
     if (!notes || !notes.trim()) {
       return res.status(400).json({ error: 'Please enter some notes to polish.' });
@@ -2205,23 +2205,33 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
     const inputLength = notes.trim().length;
     const maxTokens = inputLength > 600 ? 800 : inputLength > 300 ? 600 : inputLength > 100 ? 400 : 200;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are helping Kenna, a cake artist, polish her writing for clients. Transform rough notes into polished, ready-to-send text. Guidelines:
+    // Build messages based on whether this is a full polish or a targeted revision
+    const isRevision = instruction && instruction.trim();
+    const systemPrompt = isRevision
+      ? `You are helping Kenna, a cake artist, revise her writing for clients. Guidelines:
+- ONLY change the specific parts mentioned in the instruction
+- Keep everything else EXACTLY as-is — do not rephrase, reorder, or touch unchanged sections
+- Warm, professional, and elegant — never over-the-top or pretentious
+- Detail-oriented but modest — Kenna's natural voice
+- No emojis
+- Return the COMPLETE text with only the requested changes applied`
+      : `You are helping Kenna, a cake artist, polish her writing for clients. Transform rough notes into polished, ready-to-send text. Guidelines:
 - Warm, professional, and elegant — never over-the-top or pretentious
 - Detail-oriented but modest — Kenna's natural voice
 - No emojis
 - Mention specific details from the notes
 - Keep it concise but thorough
-- Match the appropriate voice: third person for product descriptions, first person for emails and messages`
-        },
-        {
-          role: 'user',
-          content: `Polish this:\n${notes}`
-        }
+- Match the appropriate voice: third person for product descriptions, first person for emails and messages`;
+
+    const userMessage = isRevision
+      ? `Here is the current text:\n\n${notes}\n\nInstruction: ${instruction.trim()}`
+      : `Polish this:\n${notes}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
       ],
       max_tokens: maxTokens,
       temperature: 0.7
