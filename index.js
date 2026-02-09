@@ -2235,6 +2235,7 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
 - Warm, professional, and elegant — never over-the-top or pretentious
 - Detail-oriented but modest — Kenna's natural voice
 - No emojis
+- Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix
 - Return the COMPLETE text with only the requested changes applied`
       : `You are helping Kenna, a cake artist, polish her writing for clients. Transform rough notes into polished, ready-to-send text. Guidelines:
 - Warm, professional, and elegant — never over-the-top or pretentious
@@ -2242,7 +2243,8 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
 - No emojis
 - Mention specific details from the notes
 - Keep it concise but thorough
-- Match the appropriate voice: third person for product descriptions, first person for emails and messages`;
+- Match the appropriate voice: third person for product descriptions, first person for emails and messages
+- Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix`;
 
     const userMessage = isRevision
       ? `Here is the current text:\n\n${notes}\n\nInstruction: ${instruction.trim()}`
