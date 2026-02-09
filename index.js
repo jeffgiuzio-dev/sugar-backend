@@ -1316,7 +1316,8 @@ async function getDepositReminderTemplate() {
   try {
     const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
     if (result.rows.length > 0) {
-      const custom = result.rows[0].value;
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
       if (custom && custom['deposit-reminder']) {
         return { ...defaultDepositReminderTemplate, ...custom['deposit-reminder'] };
       }
@@ -1520,7 +1521,8 @@ async function getInquiryResponseTemplate() {
   try {
     const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
     if (result.rows.length > 0) {
-      const custom = result.rows[0].value;
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
       if (custom && custom['inquiry-response']) {
         return { ...defaultInquiryResponseTemplate, ...custom['inquiry-response'] };
       }
