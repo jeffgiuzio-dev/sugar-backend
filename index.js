@@ -2137,25 +2137,29 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
       return res.status(400).json({ error: 'Please enter some notes to polish.' });
     }
 
+    // Dynamic max_tokens based on input length
+    const inputLength = notes.trim().length;
+    const maxTokens = inputLength > 600 ? 800 : inputLength > 300 ? 600 : inputLength > 100 ? 400 : 200;
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `You are a luxury cake artist's copywriter. Transform rough notes into an elegant, descriptive 2-3 sentence narrative for a client proposal. Guidelines:
-- Warm but professional tone
+          content: `You are helping Kenna, a cake artist, polish her writing for clients. Transform rough notes into polished, ready-to-send text. Guidelines:
+- Warm, professional, and elegant — never over-the-top or pretentious
+- Detail-oriented but modest — Kenna's natural voice
 - No emojis
-- Mention specific design elements from the notes (tiers, colors, flowers, textures, flavors)
-- Write in third person ("The cake will feature..." not "Your cake will...")
-- Keep it concise — 2-3 sentences max
-- Make it feel bespoke and artisanal`
+- Mention specific details from the notes
+- Keep it concise but thorough
+- Match the appropriate voice: third person for product descriptions, first person for emails and messages`
         },
         {
           role: 'user',
-          content: `Event type: ${eventType || 'Wedding'}\n\nRough notes:\n${notes}`
+          content: `Polish this:\n${notes}`
         }
       ],
-      max_tokens: 200,
+      max_tokens: maxTokens,
       temperature: 0.7
     });
 
