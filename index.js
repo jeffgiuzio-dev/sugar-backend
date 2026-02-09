@@ -21,6 +21,18 @@ const pool = new Pool({
 // Helper to convert empty strings to null
 const nullIfEmpty = (val) => (val === '' || val === undefined) ? null : val;
 
+// Extract first name(s) — handles couples: "Sophia & Emma Williams" → "Sophia & Emma"
+function getFirstName(fullName) {
+  if (!fullName) return 'there';
+  const name = fullName.trim();
+  if (name.includes(' & ')) {
+    const parts = name.split(' ');
+    parts.pop(); // remove last name
+    return parts.join(' ');
+  }
+  return name.split(' ')[0];
+}
+
 // Google OAuth2 setup
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -827,7 +839,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
         const clientEmail = pi.receipt_email || meta.client_email;
         const clientName = meta.client_name || 'Test';
         const amountCents = pi.amount;
-        const firstName = clientName.split(' ')[0];
+        const firstName = getFirstName(clientName);
         const amountFormatted = '$' + (amountCents / 100).toFixed(2);
         const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -1265,7 +1277,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
 
     const amountCents = Math.round(parseFloat(amount) * 100);
     const amountFormatted = '$' + parseFloat(amount).toFixed(2);
-    const firstName = (client_name || 'there').split(' ')[0];
+    const firstName = getFirstName(client_name);
     const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
 
@@ -1586,7 +1598,7 @@ app.post('/api/payments/webhook', async (req, res) => {
           oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
           const amountFormatted = '$' + (amountCents / 100).toFixed(2);
-          const firstName = (clientName || 'there').split(' ')[0];
+          const firstName = getFirstName(clientName);
           const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
           let subject, plainText, htmlBody;
@@ -2914,7 +2926,7 @@ async function checkUpcomingEvents() {
       const eventDate = new Date(client.event_date);
       const now = new Date();
       const daysUntil = Math.floor((eventDate - now) / (1000 * 60 * 60 * 24));
-      const firstName = (client.name || 'there').split(' ')[0];
+      const firstName = getFirstName(client.name);
       const eventDateFormatted = eventDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
       // Check if reminder already sent
