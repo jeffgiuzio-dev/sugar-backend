@@ -1289,7 +1289,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                         <span>$<span id="previewSubtotal">250.00</span></span>
                     </div>
                     <div class="preview-total-row fee">
-                        <span>Processing Fee (3.4%)</span>
+                        <span>Processing Fee (3%)</span>
                         <span>$<span id="previewProcessingFee">8.50</span></span>
                     </div>
                     <div class="preview-total-row total">
@@ -1531,7 +1531,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             document.getElementById('previewFee').textContent = tastingFee.toFixed(0);
 
             // Calculate totals
-            const processingFee = tastingFee * 0.034;
+            const processingFee = tastingFee * 0.03;
             const total = tastingFee + processingFee;
 
             document.getElementById('previewSubtotal').textContent = tastingFee.toFixed(2);

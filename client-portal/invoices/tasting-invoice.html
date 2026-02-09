@@ -795,7 +795,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
                     <span>$250.00</span>
                 </div>
                 <div class="totals-row fee" id="processingFeeRow">
-                    <span>Processing Fee (3.4%)</span>
+                    <span>Processing Fee (3%)</span>
                     <span id="processingFee">$8.50</span>
                 </div>
                 <div class="totals-row total">
@@ -813,7 +813,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
                     <div class="payment-option-icon">💳</div>
                     <div class="payment-option-title">Credit Card</div>
                     <div class="payment-option-desc">Visa, Mastercard, Amex</div>
-                    <div class="payment-option-fee">+3.4% processing fee</div>
+                    <div class="payment-option-fee">+3% processing fee</div>
                 </div>
                 <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
                     <div class="payment-option-icon">🏦</div>
@@ -933,7 +933,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
 
             if (selectedPayment === 'card') {
                 // Calculate total with processing fee
-                const processingFee = baseAmount * 0.034;
+                const processingFee = baseAmount * 0.03;
                 const totalAmount = baseAmount + processingFee;
 
                 const payButton = document.getElementById('payButton');
@@ -1064,7 +1064,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             }
 
             const fee = parseFloat(invoice.amount || data.amount || data.fee) || 250;
-            const processingFee = fee * 0.034;
+            const processingFee = fee * 0.03;
             const total = fee + processingFee;
 
             document.querySelector('.line-item-price').textContent = '$' + fee;
@@ -1105,7 +1105,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             }
             if (params.get('fee')) {
                 const fee = parseFloat(params.get('fee')) || 250;
-                const processingFee = fee * 0.034;
+                const processingFee = fee * 0.03;
                 const total = fee + processingFee;
 
                 document.querySelector('.line-item-price').textContent = '$' + fee;

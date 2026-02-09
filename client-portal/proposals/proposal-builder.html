@@ -1613,7 +1613,7 @@
                     <div class="form-group">
                         <label class="form-label">Payment Method</label>
                         <select class="form-input" id="paymentMethod" onchange="updatePreview()">
-                            <option value="card">Credit Card (+3.4% fee)</option>
+                            <option value="card">Credit Card (+3% fee)</option>
                             <option value="zelle">Zelle (No fee)</option>
                         </select>
                     </div>
@@ -1632,7 +1632,7 @@
                     <div class="form-group">
                         <label class="form-label">Terms & Conditions</label>
                         <textarea class="form-textarea" id="terms" style="min-height: 400px; font-size: 0.85rem; line-height: 1.8;">PAYMENT TERMS
-A 50% deposit is required to secure your date. The remaining balance is due 30 days before your event. Payment may be made by credit card (3.4% processing fee applies) or Zelle (no fee).
+A 50% deposit is required to secure your date. The remaining balance is due 30 days before your event. Payment may be made by credit card (3% processing fee applies) or Zelle (no fee).
 
 CANCELLATION POLICY
 Cancellations made more than 90 days before the event will receive a full refund of the deposit. Cancellations made 60-90 days before the event will receive a 50% refund of the deposit. Cancellations within 60 days are non-refundable.
@@ -1718,7 +1718,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                         <span id="previewUpgrade">+$0.00</span>
                     </div>
                     <div class="preview-total-row" id="serviceFeeRow">
-                        <span>Service Fee (3.4%)</span>
+                        <span>Service Fee (3%)</span>
                         <span id="previewServiceFee">$0.00</span>
                     </div>
                     <div class="preview-total-row">
@@ -2234,7 +2234,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
             document.getElementById('previewDescription').style.display = cakeDescription ? 'block' : 'none';
 
             const subtotalWithCake = subtotal + selectedDesignPrice;
-            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+            const serviceFeeRate = paymentMethod === 'card' ? 0.03 : 0;
             const serviceFee = subtotalWithCake * serviceFeeRate;
             const total = subtotalWithCake + serviceFee - tastingCredit;
 
@@ -2261,7 +2261,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                 feeNote.innerHTML = '<strong>No service fee</strong> — Client pays by Zelle';
             } else {
                 feeNote.className = 'service-fee-note';
-                feeNote.innerHTML = `Service fee of <strong>${formatCurrency(serviceFee)}</strong> (3.4%) added for credit card payment.`;
+                feeNote.innerHTML = `Service fee of <strong>${formatCurrency(serviceFee)}</strong> (3%) added for credit card payment.`;
             }
 
             // Terms
@@ -3247,7 +3247,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                             currentSelection = design;
                             const selectedPrice = prices[design] || 0;
                             const subtotal = additionalServicesTotal + selectedPrice;
-                            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+                            const serviceFeeRate = paymentMethod === 'card' ? 0.03 : 0;
                             const serviceFee = subtotal * serviceFeeRate;
                             const total = Math.max(0, subtotal + serviceFee - tastingCredit);
 
@@ -3435,7 +3435,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                                 // Save to localStorage directly
                                 const selectedPrice = prices[currentSelection] || 0;
                                 const subtotal = additionalServicesTotal + selectedPrice;
-                                const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+                                const serviceFeeRate = paymentMethod === 'card' ? 0.03 : 0;
                                 const serviceFee = subtotal * serviceFeeRate;
                                 const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
 
@@ -3717,7 +3717,7 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
             const subtotal = finalPrice + additionalTotal;
             const tastingCredit = parseFloat(document.getElementById('tastingCredit').value) || 0;
             const paymentMethod = document.getElementById('paymentMethod').value;
-            const serviceFee = paymentMethod === 'card' ? subtotal * 0.034 : 0;
+            const serviceFee = paymentMethod === 'card' ? subtotal * 0.03 : 0;
             const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
 
             const signatureData = {

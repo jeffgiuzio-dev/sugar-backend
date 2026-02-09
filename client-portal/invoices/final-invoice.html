@@ -577,7 +577,7 @@
                     <span id="subtotalAmount">$0.00</span>
                 </div>
                 <div class="totals-row fee" id="processingFeeRow">
-                    <span>Processing Fee (3.4%)</span>
+                    <span>Processing Fee (3%)</span>
                     <span id="processingFee">$0.00</span>
                 </div>
                 <div class="totals-row total">
@@ -595,7 +595,7 @@
                     <div class="payment-option-icon">💳</div>
                     <div class="payment-option-title">Credit Card</div>
                     <div class="payment-option-desc">Visa, Mastercard, Amex</div>
-                    <div class="payment-option-fee">+3.4% processing fee</div>
+                    <div class="payment-option-fee">+3% processing fee</div>
                 </div>
                 <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
                     <div class="payment-option-icon">🏦</div>
@@ -915,7 +915,7 @@
             const adjustedTotal = contractTotal - tastingCredit;
             const depositPaid = parseFloat(data.depositPaid) || adjustedTotal / 2;
             finalAmount = adjustedTotal - depositPaid;
-            const processingFee = finalAmount * 0.034;
+            const processingFee = finalAmount * 0.03;
             finalWithFee = finalAmount + processingFee;
 
             updateFinancialDisplay(contractTotal, tastingCredit, adjustedTotal, depositPaid, processingFee);
@@ -980,7 +980,7 @@
             const adjustedTotal = contractTotal - tastingCredit;
             const depositPaid = parseFloat(params.get('depositPaid')) || adjustedTotal / 2;
             finalAmount = adjustedTotal - depositPaid;
-            const processingFee = finalAmount * 0.034;
+            const processingFee = finalAmount * 0.03;
             finalWithFee = finalAmount + processingFee;
 
             updateFinancialDisplay(contractTotal, tastingCredit, adjustedTotal, depositPaid, processingFee);
