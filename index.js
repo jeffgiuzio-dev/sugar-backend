@@ -1946,6 +1946,13 @@ app.put('/api/clients/:id', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
             tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company } = req.body;
+
+    // Check if event_date is changing and client has deposit paid
+    const oldClient = await pool.query('SELECT event_date, status FROM clients WHERE id = $1', [req.params.id]);
+    const isBooked = oldClient.rows[0]?.status === 'booked';
+    const eventDateChanged = event_date && oldClient.rows[0]?.event_date &&
+                             new Date(event_date).getTime() !== new Date(oldClient.rows[0].event_date).getTime();
+
     const result = await pool.query(
       `UPDATE clients SET name=$1, email=$2, phone=$3, status=$4, event_date=$5, event_type=$6,
        guest_count=$7, venue=$8, source=$9, notes=$10, address=$11,
@@ -1955,9 +1962,20 @@ app.put('/api/clients/:id', async (req, res) => {
       [name, nullIfEmpty(email), nullIfEmpty(phone), status, nullIfEmpty(event_date), nullIfEmpty(event_type), nullIfEmpty(guest_count), nullIfEmpty(venue), nullIfEmpty(source), nullIfEmpty(notes), nullIfEmpty(address),
        nullIfEmpty(tasting_date), nullIfEmpty(tasting_time), nullIfEmpty(tasting_end_time), nullIfEmpty(tasting_guests), nullIfEmpty(event_time), nullIfEmpty(event_end_time), archived, nullIfEmpty(instagram), nullIfEmpty(linkedin), nullIfEmpty(website), nullIfEmpty(company), req.params.id]
     );
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
     }
+
+    // If event date changed and client is booked, recreate prep events
+    if (eventDateChanged && isBooked) {
+      console.log(`Event date changed for booked client ${req.params.id}, recreating prep events`);
+      // Delete old prep events
+      await pool.query(`DELETE FROM calendar_events WHERE client_id = $1 AND event_type = 'prep'`, [req.params.id]);
+      // Create new prep events
+      await createEventPrepCalendarEvent(req.params.id);
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Error updating client:', err);
@@ -2332,6 +2350,25 @@ app.delete('/api/events/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting event:', err);
     res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
+// Clean up orphaned prep events (prep events for clients that don't exist or aren't booked)
+app.post('/api/events/cleanup-prep', async (req, res) => {
+  try {
+    // Delete prep events where client doesn't exist or isn't booked
+    const result = await pool.query(`
+      DELETE FROM calendar_events
+      WHERE event_type = 'prep'
+      AND (client_id IS NULL
+           OR client_id NOT IN (SELECT id FROM clients WHERE status = 'booked'))
+      RETURNING *
+    `);
+    console.log(`Cleaned up ${result.rows.length} orphaned prep events`);
+    res.json({ success: true, deleted: result.rows.length, events: result.rows });
+  } catch (err) {
+    console.error('Error cleaning up prep events:', err);
+    res.status(500).json({ error: 'Failed to cleanup prep events' });
   }
 });
 
