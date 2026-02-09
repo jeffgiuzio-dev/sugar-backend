@@ -3247,11 +3247,26 @@ async function runMigrations() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reminders_sent (
         id SERIAL PRIMARY KEY,
-        client_id UUID NOT NULL,
+        client_id INTEGER NOT NULL,
         type VARCHAR(30) NOT NULL,
         sent_at TIMESTAMP DEFAULT NOW()
       );
     `);
+    // Fix: migrate client_id from UUID to INTEGER if needed
+    try {
+      const colCheck = await pool.query(`
+        SELECT data_type FROM information_schema.columns
+        WHERE table_name = 'reminders_sent' AND column_name = 'client_id'
+      `);
+      if (colCheck.rows.length > 0 && colCheck.rows[0].data_type === 'uuid') {
+        console.log('Migrating reminders_sent.client_id from UUID to INTEGER...');
+        await pool.query('DELETE FROM reminders_sent');
+        await pool.query('ALTER TABLE reminders_sent ALTER COLUMN client_id TYPE INTEGER USING 0');
+        console.log('✓ reminders_sent.client_id migrated to INTEGER');
+      }
+    } catch (migErr) {
+      console.error('reminders_sent migration error:', migErr.message);
+    }
     console.log('✓ Reminders sent table ready');
 
     // Verify schema
