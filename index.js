@@ -1212,35 +1212,42 @@ async function createEventPrepCalendarEvent(clientId) {
     const prepTitle = `${lastName} Event Prep`;
     const eventTitle = `${lastName} ${client.name.includes('Wedding') ? 'Wedding' : 'Event'}`;
 
-    // Parse date correctly to avoid timezone shift
-    // client.event_date comes from DB as YYYY-MM-DD, append time to treat as local date
-    const eventDateStr = client.event_date.split('T')[0]; // Clean YYYY-MM-DD
-    const eventDate = new Date(eventDateStr + 'T00:00:00');
+    // Extract clean YYYY-MM-DD string (handles both Date objects and strings from Postgres)
+    let eventDateStr;
+    if (typeof client.event_date === 'string') {
+      eventDateStr = client.event_date.split('T')[0];
+    } else if (client.event_date instanceof Date) {
+      eventDateStr = client.event_date.toISOString().split('T')[0];
+    } else {
+      console.error('Invalid event_date format:', client.event_date);
+      return;
+    }
 
-    // Create 7 prep events (7 days before the event)
-    const prepStart = new Date(eventDate);
-    prepStart.setDate(prepStart.getDate() - 7);
+    console.log(`Creating calendar events for ${client.name}, event date: ${eventDateStr}`);
 
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(prepStart);
-      day.setDate(day.getDate() + i);
-      const dateStr = day.toISOString().split('T')[0];
+    // Parse date components
+    const [year, month, day] = eventDateStr.split('-').map(Number);
+
+    // Create 7 prep events (7 days before the event) using Date in UTC
+    for (let i = 7; i >= 1; i--) {
+      const prepDate = new Date(Date.UTC(year, month - 1, day - i));
+      const dateStr = prepDate.toISOString().split('T')[0];
 
       await pool.query(
         `INSERT INTO calendar_events (client_id, title, event_date, event_type, notes)
          VALUES ($1, $2, $3, 'prep', $4)`,
-        [clientId, prepTitle, dateStr, `Day ${i + 1} of 7 — event prep for ${client.name}`]
+        [clientId, prepTitle, dateStr, `Day ${8 - i} of 7 — event prep for ${client.name}`]
       );
     }
 
-    // Create the actual event date
+    // Create the actual event date (use the original string, don't manipulate it)
     await pool.query(
       `INSERT INTO calendar_events (client_id, title, event_date, event_type, notes)
        VALUES ($1, $2, $3, 'event', $4)`,
       [clientId, eventTitle, eventDateStr, `Event day for ${client.name}`]
     );
 
-    console.log(`Created 7-day prep + event calendar entries for ${client.name}`);
+    console.log(`Created 7-day prep (ending ${day - 1}) + event (${eventDateStr}) for ${client.name}`);
   } catch (err) {
     console.error('Failed to create event prep calendar events:', err.message);
   }
