@@ -1385,9 +1385,10 @@
             // First column: empty for both views (In Studio name click goes to portal, All Contacts name click edits)
             const firstColContent = '';
 
-            // Name click: In Studio goes to portal, All Contacts opens edit
+            // Name click: In Studio goes to portal (team members go to parent's portal), All Contacts opens edit
+            const portalId = isTeamMember && parentId ? parentId : client.id;
             const nameClick = isStudioView
-                ? `openClientPortal(${client.id})`
+                ? `openClientPortal(${portalId})`
                 : `openEditModal(${client.id})`;
 
             return `
@@ -1710,6 +1711,12 @@
                 notes: document.getElementById('inquiryMessage').value
             };
 
+            // Include extra test data if available (address, instagram, etc.)
+            if (window._testInquiryExtra) {
+                Object.assign(inquiry, window._testInquiryExtra);
+                window._testInquiryExtra = null;
+            }
+
             // Immediate localStorage update
             const clients = getClientsLocal();
             clients.unshift(inquiry);
@@ -1737,6 +1744,13 @@
             } catch (error) {
                 console.log('API sync failed:', error.message);
             }
+
+            // Log "Inquiry received" to comm log
+            const logs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+            const cid = String(redirectId);
+            if (!logs[cid]) logs[cid] = [];
+            logs[cid].unshift({ type: 'inquiry_received', title: 'Inquiry received', timestamp: new Date().toISOString() });
+            localStorage.setItem('kgc_comm_logs', JSON.stringify(logs));
 
             // Open the new client's portal page
             window.location.href = '/clients/view.html?id=' + redirectId + '&mode=admin';
@@ -1776,6 +1790,14 @@
             const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
             const venues = ['The Foundry Seattle', 'Golden Gardens', 'The Edgewater Hotel', 'Olympic Rooftop', 'Willows Lodge', 'Salish Lodge', 'Woodinville Wine Country'];
             const eventTypes = ['Wedding', 'Birthday', 'Anniversary', 'Corporate'];
+            const addresses = [
+                '1423 NW Market St, Seattle, WA 98107',
+                '742 Bellevue Way NE, Bellevue, WA 98004',
+                '305 Harrison St, Seattle, WA 98109',
+                '8912 Linden Ave N, Seattle, WA 98103',
+                '2201 Westlake Ave, Seattle, WA 98121',
+                '4507 Brooklyn Ave NE, Seattle, WA 98105'
+            ];
             const messages = [
                 'Looking for an elegant three-tier cake with fresh flowers. Colors: blush pink, ivory, and gold accents. We love a romantic, garden-inspired aesthetic.',
                 'Want something modern and minimalist - geometric design with clean lines. Navy blue and white color scheme. Semi-naked with berries.',
@@ -1795,13 +1817,19 @@
             const dateStr = futureDate.toISOString().split('T')[0];
 
             document.getElementById('inquiryName').value = `${firstName} ${lastName}`;
-            document.getElementById('inquiryEmail').value = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
+            document.getElementById('inquiryEmail').value = 'jeff.giuzio@gmail.com';
             document.getElementById('inquiryPhone').value = `(${randNum(206, 425)}) ${randNum(100, 999)}-${randNum(1000, 9999)}`;
             document.getElementById('inquiryEventDate').value = dateStr;
             document.getElementById('inquiryGuestCount').value = `${randNum(50, 200)}`;
             document.getElementById('inquiryEventType').value = rand(eventTypes);
             document.getElementById('inquiryVenue').value = rand(venues);
             document.getElementById('inquiryMessage').value = rand(messages);
+
+            // Store extra client data for submit handler
+            window._testInquiryExtra = {
+                address: rand(addresses),
+                instagram: '@' + firstName.toLowerCase() + lastName.toLowerCase()
+            };
         }
 
         function fillTestContact() {

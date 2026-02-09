@@ -2485,10 +2485,11 @@
         // Get event colors from secondary accent colors
         function getEventColors(palette) {
             const accents = (palette?.secondary || []).filter(c => c.isAccent);
-            // Returns colors for: event, tasting, inquiry, proposal, signed, custom, personal
+            // Returns colors for: event, tasting, tasting-prep, inquiry, proposal, signed, custom, personal
             return {
                 event: accents[0]?.hex || '#a8b5a0',    // Sage Green
                 tasting: accents[1]?.hex || '#dfc89f', // Champagne
+                'tasting-prep': accents[1]?.hex || '#dfc89f', // Same as tasting (Champagne)
                 inquiry: accents[4]?.hex || '#b8a9c9', // Muted Mauve
                 proposal: accents[3]?.hex || '#a5c4d4', // Soft Blue
                 signed: accents[2]?.hex || '#d4a5a5',  // Dusty Rose
@@ -2616,7 +2617,7 @@
             const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
             const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
             const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
-            const proposalDrafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            // Note: proposalDrafts no longer auto-generate calendar events (tracked in comm log instead)
             const customEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
 
             clients.forEach(client => {
@@ -2659,17 +2660,19 @@
                     });
                 }
 
-                // Tasting date
+                // Tasting date - check drafts first, then client record as fallback
                 const tasting = tastingDrafts[client.id] || tastingDrafts[String(client.id)];
-                if (tasting && tasting.tastingDate) {
+                const tastingDate = (tasting && tasting.tastingDate) ? tasting.tastingDate : client.tastingDate;
+                if (tastingDate) {
+                    const lastName = client.name.split(' ').pop();
                     allEvents.push({
                         id: `tasting-${client.id}`,
-                        title: `${client.name} - Tasting`,
-                        date: tasting.tastingDate,
-                        time: tasting.tastingTime || '',
-                        endTime: tasting.tastingEndTime || '',
+                        title: `${lastName} Tasting`,
+                        date: tastingDate,
+                        time: (tasting && tasting.tastingTime) || client.tastingTime || '',
+                        endTime: (tasting && tasting.tastingEndTime) || '',
                         type: 'tasting',
-                        meta: tasting.location || 'Tasting appointment',
+                        meta: (tasting && tasting.location) || 'Tasting appointment',
                         clientId: client.id
                     });
                 }
@@ -2688,19 +2691,7 @@
                     });
                 }
 
-                // Proposal draft date (if saved)
-                const proposal = proposalDrafts[client.id] || proposalDrafts[String(client.id)];
-                if (proposal && proposal.savedAt) {
-                    const proposalDate = proposal.savedAt.split('T')[0];
-                    allEvents.push({
-                        id: `proposal-${client.id}`,
-                        title: `${client.name} - Proposal Sent`,
-                        date: proposalDate,
-                        type: 'proposal',
-                        meta: 'Proposal created',
-                        clientId: client.id
-                    });
-                }
+                // Proposal events removed from calendar — tracked in communications log instead
             });
 
             // Add custom events

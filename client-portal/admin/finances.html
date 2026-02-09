@@ -1807,6 +1807,114 @@
             }
         }
 
+        /* Kenna Branded Alert/Confirm */
+        .kenna-alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 5000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .kenna-alert-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .kenna-alert-box {
+            background: #faf8f5;
+            max-width: 420px;
+            width: 90%;
+            padding: 36px 32px 28px;
+            text-align: center;
+            border-top: 3px solid #b5956a;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+            transform: translateY(-10px);
+            transition: transform 0.3s ease;
+        }
+        .kenna-alert-overlay.active .kenna-alert-box {
+            transform: translateY(0);
+        }
+        .kenna-alert-icon {
+            font-size: 1.8rem;
+            color: #b5956a;
+            margin-bottom: 12px;
+        }
+        .kenna-alert-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .kenna-alert-message {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .kenna-alert-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .kenna-alert-btn {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px 28px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .kenna-alert-btn.primary {
+            background: #b5956a;
+            color: #fff;
+        }
+        .kenna-alert-btn.primary:hover {
+            background: #a07f55;
+        }
+        .kenna-alert-btn.secondary {
+            background: transparent;
+            color: #888;
+            border: 1px solid #ddd;
+        }
+        .kenna-alert-btn.secondary:hover {
+            border-color: #bbb;
+            color: #555;
+        }
+
+        /* Kenna Toast Notification */
+        .kenna-toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #faf8f5;
+            border-left: 3px solid #b5956a;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            z-index: 5000;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: #333;
+            max-width: 380px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+        }
+        .kenna-toast.visible {
+            transform: translateX(0);
+        }
+        .kenna-toast.error {
+            border-left-color: #c0392b;
+        }
+
     </style>
     <!-- ExcelJS for formatted Excel export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -2007,6 +2115,34 @@
                         <div class="section-subtotal">
                             <span class="subtotal-label">Subtotal</span>
                             <span class="subtotal-value pending" id="subtotalSent">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Verification Section -->
+                <div class="collapsible-section" id="section-pending-verification">
+                    <div class="section-header" onclick="toggleSection('pending-verification')">
+                        <div class="section-title-row">
+                            <span class="section-title">Pending Verification</span>
+                            <span class="section-count" id="pendingVerificationCount">0</span>
+                        </div>
+                        <span class="header-subtotal pending" id="headerSubtotalPending">$0.00</span>
+                        <span class="section-toggle"><span class="icon-minus">−</span><span class="icon-plus">+</span></span>
+                    </div>
+                    <div class="section-content">
+                        <div class="data-table" style="border: none;">
+                            <div class="finance-table-header">
+                                <div>Date</div>
+                                <div>Client</div>
+                                <div>Method</div>
+                                <div style="text-align: right;">Amount</div>
+                                <div style="text-align: center;">Action</div>
+                            </div>
+                            <div id="pendingVerificationList"></div>
+                        </div>
+                        <div class="section-subtotal">
+                            <span class="subtotal-label">Subtotal</span>
+                            <span class="subtotal-value pending" id="subtotalPending">$0.00</span>
                         </div>
                     </div>
                 </div>
@@ -2519,7 +2655,53 @@
 
             // Load clients from API in background
             loadClientsFromAPI();
+
+            // Sync invoice statuses from API (catches payments made on other devices)
+            syncInvoiceStatuses();
         });
+
+        async function syncInvoiceStatuses() {
+            try {
+                const response = await fetch('https://sugar-backend-production.up.railway.app/api/invoices');
+                if (!response.ok) return;
+                const apiInvoices = await response.json();
+                if (!Array.isArray(apiInvoices) || apiInvoices.length === 0) return;
+
+                const localInvoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                let updated = false;
+
+                apiInvoices.forEach(api => {
+                    const invoiceId = api.invoice_number || api.id;
+                    const localIdx = localInvoices.findIndex(l => l.id === invoiceId);
+                    if (localIdx >= 0) {
+                        // Sync paid status
+                        if (api.status === 'paid' && localInvoices[localIdx].status !== 'paid') {
+                            localInvoices[localIdx].status = 'paid';
+                            localInvoices[localIdx].paidAt = api.paid_at || new Date().toISOString();
+                            updated = true;
+                        }
+                        // Sync pending_verification status (Zelle/check claims)
+                        if (api.status === 'pending_verification' && localInvoices[localIdx].status === 'sent') {
+                            localInvoices[localIdx].status = 'pending_verification';
+                            localInvoices[localIdx].claimedAt = api.updated_at || new Date().toISOString();
+                            // Sync payment method from API data
+                            const apiData = typeof api.data === 'string' ? JSON.parse(api.data) : (api.data || {});
+                            if (apiData.payment_method) {
+                                localInvoices[localIdx].paymentMethod = apiData.payment_method;
+                            }
+                            updated = true;
+                        }
+                    }
+                });
+
+                if (updated) {
+                    localStorage.setItem('kgc_invoices', JSON.stringify(localInvoices));
+                    loadData(); // Refresh the page data
+                }
+            } catch (err) {
+                // Silent fail - API sync is best-effort
+            }
+        }
 
         function setupFilterListeners() {
             document.querySelectorAll('#yearBoxes .filter-box').forEach(box => {
@@ -3067,6 +3249,7 @@
             const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
             const allPaidInvoices = invoices.filter(i => i.status === 'paid');
             const allSentInvoices = invoices.filter(i => i.status === 'sent');
+            const allPendingInvoices = invoices.filter(i => i.status === 'pending_verification');
 
             // Merge invoice revenue (avoid duplicates by checking invoiceId)
             const existingInvoiceIds = revenue.filter(r => r.invoiceId).map(r => r.invoiceId);
@@ -3088,6 +3271,7 @@
             // Filter by selected dates
             const sentInvoices = filterByDate(allSentInvoices, i => i.sentAt);
             const paidInvoices = filterByDate(allPaidInvoices, i => i.paidAt);
+            const pendingInvoices = filterByDate(allPendingInvoices, i => i.sentAt || i.claimedAt);
             const expenses = filterByDate(allExpenses, 'date');
 
             // Calculate totals for filtered data
@@ -3095,9 +3279,13 @@
             const paidAmount = paidInvoices.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
             const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
+            // Pending verification totals
+            const pendingAmount = pendingInvoices.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+
             // Update section counts
             document.getElementById('invoicesSentCount').textContent = sentInvoices.length;
             document.getElementById('invoicesPaidCount').textContent = paidInvoices.length;
+            document.getElementById('pendingVerificationCount').textContent = pendingInvoices.length;
             document.getElementById('expensesCount').textContent = expenses.length;
 
             // Update subtotals (both in section footer and header)
@@ -3105,8 +3293,10 @@
             document.getElementById('subtotalPaid').textContent = formatCurrency(paidAmount);
             document.getElementById('subtotalExpenses').textContent = formatCurrency(totalExpenses);
 
+            document.getElementById('subtotalPending').textContent = formatCurrency(pendingAmount);
             document.getElementById('headerSubtotalSent').textContent = formatCurrency(sentAmount);
             document.getElementById('headerSubtotalPaid').textContent = formatCurrency(paidAmount);
+            document.getElementById('headerSubtotalPending').textContent = formatCurrency(pendingAmount);
             document.getElementById('headerSubtotalExpenses').textContent = formatCurrency(totalExpenses);
 
             // Update summary bar chart
@@ -3137,8 +3327,12 @@
             allExpensesData = expenses;
 
             renderInvoicesSent(sentInvoices);
+            renderPendingVerification(pendingInvoices);
             renderInvoicesPaid(paidInvoices);
             renderExpenses(expenses);
+
+            // Hide pending section if empty
+            document.getElementById('section-pending-verification').style.display = pendingInvoices.length > 0 ? '' : 'none';
 
             // Clear search when data reloads
             document.getElementById('universalSearch').value = '';
@@ -3147,7 +3341,7 @@
         function renderInvoicesSent(items) {
             const container = document.getElementById('invoicesSentList');
             if (items.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📤</div><p>No pending invoices</p></div>';
+                container.innerHTML = '';
                 return;
             }
             const sorted = [...items].sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0));
@@ -3166,10 +3360,88 @@
             `;}).join('');
         }
 
+        function renderPendingVerification(items) {
+            const container = document.getElementById('pendingVerificationList');
+            if (items.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            const sorted = [...items].sort((a, b) => new Date(b.claimedAt || b.sentAt || 0) - new Date(a.claimedAt || a.sentAt || 0));
+            container.innerHTML = sorted.map(item => {
+                const eventName = item.clientName || 'Unknown Client';
+                const method = (item.paymentMethod || 'zelle').charAt(0).toUpperCase() + (item.paymentMethod || 'zelle').slice(1);
+                return `
+                <div class="finance-table-row" style="align-items: center;">
+                    <div class="row-date">${formatDate((item.claimedAt || item.sentAt || '').split('T')[0])}</div>
+                    <div class="clickable" onclick="openInvoice('${item.id}')">${eventName}</div>
+                    <div><span class="row-type" style="background: #fff3cd; color: #856404;">${method}</span></div>
+                    <div style="text-align: right; color: #b5956a; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;">${formatCurrency(item.amount)}</div>
+                    <div style="text-align: center;">
+                        <button onclick="verifyOfflinePayment('${item.id}')" style="padding: 6px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; font-family: 'Montserrat', sans-serif; font-size: 0.7rem; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase;">Verify</button>
+                    </div>
+                </div>
+            `;}).join('');
+        }
+
+        async function verifyOfflinePayment(invoiceId) {
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const invoice = invoices.find(i => i.id === invoiceId);
+            if (!invoice) { kennaToast('Invoice not found', { type: 'error' }); return; }
+
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const client = clients.find(c => String(c.id) === String(invoice.clientId));
+            const clientName = invoice.clientName || (client ? client.name : 'this client');
+            const amount = '$' + parseFloat(invoice.amount || 0).toFixed(2);
+
+            const confirmed = await kennaConfirm(
+                'Verify Payment',
+                `Mark ${amount} from ${clientName} as verified? A confirmation email will be sent to the client.`,
+                { confirmText: 'Verify', cancelText: 'Cancel' }
+            );
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch('https://sugar-backend-production.up.railway.app/api/payments/offline-verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        invoice_id: invoice.invoiceNumber || invoiceId,
+                        invoice_type: invoice.type || 'tasting',
+                        client_id: invoice.clientId,
+                        client_name: invoice.clientName || (client ? client.name : ''),
+                        client_email: invoice.clientEmail || (client ? client.email : ''),
+                        amount: invoice.amount,
+                        payment_method: invoice.paymentMethod || 'zelle'
+                    })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    invoice.status = 'paid';
+                    invoice.paidAt = new Date().toISOString();
+                    localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+                    if (client && invoice.type === 'tasting') {
+                        client.tastingPaid = true;
+                        client.tastingPaidDate = new Date().toISOString();
+                        localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                    }
+
+                    loadData();
+                    kennaToast('Payment verified. Confirmation email sent to ' + clientName + '.');
+                } else {
+                    kennaToast('Error: ' + (data.error || 'Verification failed'), { type: 'error' });
+                }
+            } catch (err) {
+                console.error('Verify error:', err);
+                kennaToast('Connection error. Please try again.', { type: 'error' });
+            }
+        }
+
         function renderInvoicesPaid(items) {
             const container = document.getElementById('invoicesPaidList');
             if (items.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No paid invoices yet</p></div>';
+                container.innerHTML = '';
                 return;
             }
             const sorted = [...items].sort((a, b) => new Date(b.paidAt || 0) - new Date(a.paidAt || 0));
@@ -3188,7 +3460,7 @@
         function renderExpenses(items) {
             const container = document.getElementById('expensesList');
             if (items.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧾</div><p>No expenses recorded</p></div>';
+                container.innerHTML = '';
                 return;
             }
             // Store for filtering
@@ -3201,7 +3473,7 @@
             const sorted = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (sorted.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧾</div><p>No expenses found</p></div>';
+                container.innerHTML = '';
                 return;
             }
 
@@ -4358,6 +4630,67 @@
             });
         })();
 
+    </script>
+
+    <!-- Kenna Branded Alert/Confirm -->
+    <div class="kenna-alert-overlay" id="kennaAlertOverlay">
+        <div class="kenna-alert-box">
+            <div class="kenna-alert-icon" id="kennaAlertIcon"></div>
+            <div class="kenna-alert-title" id="kennaAlertTitle"></div>
+            <div class="kenna-alert-message" id="kennaAlertMessage"></div>
+            <div class="kenna-alert-buttons" id="kennaAlertButtons"></div>
+        </div>
+    </div>
+
+    <script>
+        // Kenna-branded confirm dialog (returns a Promise)
+        function kennaConfirm(title, message, { confirmText = 'Confirm', cancelText = 'Cancel', icon = '' } = {}) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('kennaAlertOverlay');
+                document.getElementById('kennaAlertIcon').textContent = icon;
+                document.getElementById('kennaAlertTitle').textContent = title;
+                document.getElementById('kennaAlertMessage').textContent = message;
+
+                const btnHtml = `
+                    <button class="kenna-alert-btn secondary" id="kennaAlertCancel">${cancelText}</button>
+                    <button class="kenna-alert-btn primary" id="kennaAlertConfirm">${confirmText}</button>
+                `;
+                document.getElementById('kennaAlertButtons').innerHTML = btnHtml;
+
+                // Force reflow then show
+                overlay.style.display = 'flex';
+                requestAnimationFrame(() => overlay.classList.add('active'));
+
+                function close(result) {
+                    overlay.classList.remove('active');
+                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                    resolve(result);
+                }
+
+                document.getElementById('kennaAlertConfirm').onclick = () => close(true);
+                document.getElementById('kennaAlertCancel').onclick = () => close(false);
+                overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+            });
+        }
+
+        // Kenna-branded toast notification (auto-dismisses)
+        function kennaToast(message, { type = 'success', duration = 4000 } = {}) {
+            // Remove existing toast
+            const existing = document.querySelector('.kenna-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'kenna-toast' + (type === 'error' ? ' error' : '');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('visible'));
+
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 400);
+            }, duration);
+        }
     </script>
 </body>
 </html>

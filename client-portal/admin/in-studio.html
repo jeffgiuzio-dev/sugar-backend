@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         :root {
             --bg-primary: #faf8f5;
@@ -975,6 +976,88 @@
         .btn-primary:hover {
             background: var(--accent-gold-hover);
         }
+
+        /* Flatpickr Custom Styling */
+        .flatpickr-calendar {
+            font-family: 'Montserrat', sans-serif;
+            border: none;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border-radius: 0;
+            background: var(--modal-bg);
+        }
+
+        .flatpickr-calendar.arrowTop:before,
+        .flatpickr-calendar.arrowTop:after { display: none; }
+
+        .flatpickr-months { padding: 12px 0; }
+        .flatpickr-months .flatpickr-month { height: 40px; }
+
+        .flatpickr-current-month {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+        }
+
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            font-family: 'Cormorant Garamond', serif;
+            background: var(--modal-bg);
+            color: var(--text-primary);
+        }
+
+        .flatpickr-current-month input.cur-year {
+            color: var(--text-primary);
+        }
+
+        .flatpickr-months .flatpickr-prev-month,
+        .flatpickr-months .flatpickr-next-month { padding: 12px; }
+
+        .flatpickr-months .flatpickr-prev-month svg,
+        .flatpickr-months .flatpickr-next-month svg { fill: var(--text-secondary); }
+
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--accent-gold); }
+
+        .flatpickr-weekdays { background: transparent; }
+
+        span.flatpickr-weekday {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            background: transparent;
+        }
+
+        .flatpickr-day {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            color: var(--text-primary);
+            border-radius: 0;
+        }
+
+        .flatpickr-day:hover {
+            background: var(--bg-tertiary);
+            border-color: transparent;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: #fff;
+        }
+
+        .flatpickr-day.today { border-color: var(--accent-gold); }
+        .flatpickr-day.today:hover { background: var(--accent-gold); color: #fff; }
+
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay { color: var(--text-muted); }
+
+        .flatpickr-innerContainer { background: var(--modal-bg); }
+        .flatpickr-rContainer { background: var(--modal-bg); }
+        .flatpickr-days { background: var(--modal-bg); }
     </style>
 </head>
 <body>
@@ -1190,7 +1273,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Event Date</label>
-                            <input type="date" class="form-input" id="inquiryEventDate">
+                            <input type="text" class="form-input" id="inquiryEventDate" placeholder="Select date">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Guest Count</label>
@@ -1225,8 +1308,8 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Phone (optional)</label>
-                            <input type="tel" class="form-input" id="inquiryPhone" placeholder="(206) 555-0123">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-input" id="inquiryPhone" placeholder="(206) 555-0123" maxlength="14">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Source</label>
@@ -1324,6 +1407,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="/js/api.js"></script>
     <script>
         // Dark Mode - check saved preference on load
@@ -1334,6 +1418,28 @@
             }
             document.addEventListener('DOMContentLoaded', updateDarkModeButton);
         })();
+
+        // Initialize Flatpickr on inquiry date input
+        let fpInquiryDate;
+        document.addEventListener('DOMContentLoaded', function() {
+            fpInquiryDate = flatpickr('#inquiryEventDate', {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'F j, Y',
+                disableMobile: true,
+                monthSelectorType: 'static',
+                animate: true
+            });
+
+            // Phone auto-format: (xxx) xxx-xxxx
+            document.getElementById('inquiryPhone').addEventListener('input', function(e) {
+                let digits = this.value.replace(/\D/g, '').substring(0, 10);
+                if (digits.length === 0) { this.value = ''; return; }
+                if (digits.length <= 3) { this.value = '(' + digits; }
+                else if (digits.length <= 6) { this.value = '(' + digits.substring(0,3) + ') ' + digits.substring(3); }
+                else { this.value = '(' + digits.substring(0,3) + ') ' + digits.substring(3,6) + '-' + digits.substring(6); }
+            });
+        });
 
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
@@ -1575,12 +1681,30 @@
             return '';
         }
 
+        // Check if tasting is paid (portal data OR localStorage invoice)
+        function isTastingPaid(clientId) {
+            const portalData = getPortalData(clientId);
+            if (portalData.tastingPaid) return true;
+
+            // Fallback: check localStorage invoices
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            const tastingInvoice = invoices.find(i => String(i.clientId) === String(clientId) && i.type === 'tasting');
+            if (tastingInvoice && tastingInvoice.status === 'paid') return true;
+
+            // Fallback: check client data
+            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const client = clients.find(c => String(c.id) === String(clientId));
+            if (client && client.tastingPaid) return true;
+
+            return false;
+        }
+
         function getProgressInfo(client) {
             const signed = isProposalSigned(client.id);
             const portalData = getPortalData(client.id);
             const tastingDraft = getTastingDraft(client.id);
             const proposalDraft = hasProposalDraft(client.id);
-            const tastingPaid = portalData.tastingPaid;
+            const tastingPaid = isTastingPaid(client.id);
             const tastingStarted = client.status === 'tasting' || tastingDraft || tastingPaid;
 
             const steps = ['inquiry', 'tasting', 'proposal', 'booked', 'delivered'];
@@ -1948,6 +2072,16 @@
 
                     // Update via API (also updates cache)
                     await updateClient(client.id, updates);
+
+                    // Also sync tasting date to kgc_tasting_drafts so calendar picks it up
+                    if (calendarEditingField === 'tasting') {
+                        const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+                        if (!tastingDrafts[client.id]) tastingDrafts[client.id] = {};
+                        tastingDrafts[client.id].tastingDate = pendingDate;
+                        tastingDrafts[client.id].tastingTime = time;
+                        tastingDrafts[client.id].guestCount = guests;
+                        localStorage.setItem('kgc_tasting_drafts', JSON.stringify(tastingDrafts));
+                    }
                 }
             }
 
@@ -2030,7 +2164,7 @@
                     proposalBtnClass = 'btn-small status-draft';
                 }
 
-                const tastingPaid = portalData.tastingPaid;
+                const tastingPaid = isTastingPaid(client.id);
                 const tastingSent = client.status === 'tasting';
 
                 let tastingBtnClass = 'btn-small';
@@ -2116,6 +2250,16 @@
             const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Chen', 'Thompson'];
             const venues = ['The Foundry Seattle', 'Golden Gardens', 'The Edgewater Hotel', 'Olympic Rooftop', 'Willows Lodge', 'Salish Lodge', 'Woodinville Wine Country'];
             const eventTypes = ['Wedding', 'Birthday', 'Anniversary', 'Corporate'];
+            const addresses = [
+                '1423 NW Market St, Seattle, WA 98107',
+                '742 Bellevue Way NE, Bellevue, WA 98004',
+                '305 Harrison St, Seattle, WA 98109',
+                '8912 Linden Ave N, Seattle, WA 98103',
+                '2201 Westlake Ave, Seattle, WA 98121',
+                '4507 Brooklyn Ave NE, Seattle, WA 98105',
+                '1100 Fairview Ave N, Seattle, WA 98109',
+                '3421 Thorndyke Ave W, Seattle, WA 98199'
+            ];
             const messages = [
                 'Looking for an elegant three-tier cake with fresh flowers. Colors: blush pink, ivory, and gold accents.',
                 'Want something modern and minimalist - geometric design with clean lines. Navy blue and white.',
@@ -2125,20 +2269,30 @@
             const rand = arr => arr[Math.floor(Math.random() * arr.length)];
             const randNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
+            const firstName1 = rand(firstNames);
+            const firstName2 = rand(firstNames);
+            const lastName = rand(lastNames);
+
             // Random date 2-6 months out
             const eventDate = new Date();
             eventDate.setMonth(eventDate.getMonth() + randNum(2, 6));
             eventDate.setDate(randNum(1, 28));
 
-            document.getElementById('inquiryName').value = rand(firstNames) + ' & ' + rand(firstNames) + ' ' + rand(lastNames);
-            document.getElementById('inquiryEmail').value = rand(firstNames).toLowerCase() + '@email.com';
-            document.getElementById('inquiryPhone').value = `(206) ${randNum(200,999)}-${randNum(1000,9999)}`;
-            document.getElementById('inquiryEventDate').value = eventDate.toISOString().split('T')[0];
+            document.getElementById('inquiryName').value = firstName1 + ' & ' + firstName2 + ' ' + lastName;
+            document.getElementById('inquiryEmail').value = 'jeff.giuzio@gmail.com';
+            document.getElementById('inquiryPhone').value = `(${randNum(206,425)}) ${randNum(200,999)}-${randNum(1000,9999)}`;
+            if (fpInquiryDate) fpInquiryDate.setDate(eventDate, true);
             document.getElementById('inquiryGuestCount').value = randNum(50, 250);
             document.getElementById('inquiryEventType').value = rand(eventTypes);
             document.getElementById('inquiryVenue').value = rand(venues);
             document.getElementById('inquirySource').value = ['Website', 'Instagram', 'Referral'][randNum(0, 2)];
             document.getElementById('inquiryMessage').value = rand(messages);
+
+            // Store extra client data for submit handler
+            window._testInquiryExtra = {
+                address: rand(addresses),
+                instagram: '@' + firstName1.toLowerCase() + lastName.toLowerCase()
+            };
         }
 
         // Inquiry Modal functions
@@ -2217,6 +2371,7 @@
             const modal = document.getElementById('addInquiryModal');
             modal.classList.remove('active');
             document.getElementById('addInquiryForm').reset();
+            if (fpInquiryDate) fpInquiryDate.clear();
             setTimeout(() => {
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
@@ -2245,14 +2400,30 @@
                 status: 'inquiry'
             };
 
+            // Include extra test data if available (address, instagram, etc.)
+            if (window._testInquiryExtra) {
+                Object.assign(inquiry, window._testInquiryExtra);
+                window._testInquiryExtra = null;
+            }
+
             try {
                 // Save to API
                 const result = await apiCreateClient(inquiry);
                 console.log('Client created in API:', result);
 
-                // Update cache with new client
+                // Update cache and localStorage with new client
                 const newClient = toCamelCase(result);
                 clientsCache.unshift(newClient);
+                const localClients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                localClients.unshift(newClient);
+                localStorage.setItem('kgc_clients', JSON.stringify(localClients));
+
+                // Log "Inquiry received" to comm log
+                const logs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+                const cid = String(newClient.id);
+                if (!logs[cid]) logs[cid] = [];
+                logs[cid].unshift({ type: 'inquiry_received', title: 'Inquiry received', timestamp: new Date().toISOString() });
+                localStorage.setItem('kgc_comm_logs', JSON.stringify(logs));
             } catch (error) {
                 console.error('Failed to create client:', error);
                 alert('Error creating inquiry. Please try again.');

@@ -14,39 +14,59 @@
             padding: 0;
             box-sizing: border-box;
         }
+        html {
+            background: #0a0a0a;
+        }
         body {
             font-family: 'Montserrat', sans-serif;
             font-weight: 300;
-            background: #faf8f5;
+            background: #0a0a0a;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            transition: background 3.5s ease-in-out;
         }
-        .container {
+        body.revealed {
+            background: #faf8f5;
+        }
+
+        /* Banner */
+        .banner {
+            width: 100%;
+            height: 220px;
+            background: url('../images/header-flowers.jpg') 30% center / cover no-repeat;
+            opacity: 0;
+            transition: opacity 4s ease-in-out;
+        }
+        .banner.visible {
+            opacity: 1;
+        }
+
+        /* Content area */
+        .content {
             max-width: 500px;
+            margin: 0 auto;
             text-align: center;
+            padding: 0 20px 60px;
         }
+
         .logo {
             height: 80px;
-            margin-bottom: 40px;
+            margin-top: 40px;
+            margin-bottom: 36px;
+            opacity: 0;
+            transition: opacity 3s ease-in-out;
         }
-        .checkmark {
-            width: 80px;
-            height: 80px;
-            background: #4a7c59;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
+        .logo.visible {
+            opacity: 1;
         }
-        .checkmark svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
+
+        .success-text {
+            opacity: 0;
+            transition: opacity 3s ease-in-out;
         }
+        .success-text.visible {
+            opacity: 1;
+        }
+
         h1 {
             font-family: 'Cormorant Garamond', serif;
             font-size: 2rem;
@@ -57,8 +77,8 @@
         .amount {
             font-size: 2.5rem;
             font-weight: 500;
-            color: #4a7c59;
-            margin-bottom: 16px;
+            color: #b5956a;
+            margin-bottom: 20px;
         }
         p {
             font-size: 0.95rem;
@@ -66,74 +86,37 @@
             line-height: 1.7;
             margin-bottom: 12px;
         }
-        .details {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            margin: 30px 0;
-            text-align: left;
+        a {
+            color: #b5956a;
         }
-        .details p {
-            margin-bottom: 8px;
-        }
-        .details strong {
-            color: #1a1a1a;
-        }
-        .btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: #b5956a;
-            color: white;
-            text-decoration: none;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: #9a7d5a;
-        }
+
         .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        .loading.hide {
             display: none;
-        }
-        .loading.show {
-            display: block;
-        }
-        .content {
-            display: none;
-        }
-        .content.show {
-            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="/images/logo.png" alt="Kenna Giuzio Cake" class="logo">
+    <div class="loading" id="loading">
+        <p>Confirming your payment...</p>
+    </div>
 
-        <div class="loading show" id="loading">
-            <p>Confirming your payment...</p>
-        </div>
+    <div class="banner" id="banner"></div>
 
-        <div class="content" id="content">
-            <div class="checkmark">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
+    <div class="content">
+        <img src="/images/logo.png" alt="Kenna Giuzio Cake" class="logo" id="logo">
 
-            <h1>Payment Successful</h1>
-
+        <div class="success-text" id="successText">
+            <h1 id="successTitle">Payment Successful</h1>
             <div class="amount" id="amount"></div>
-
-            <p>Thank you for your payment. A confirmation has been sent to your email.</p>
-
-            <div class="details" id="details" style="display: none;">
-                <p><strong>Payment Type:</strong> <span id="paymentType"></span></p>
-                <p><strong>Email:</strong> <span id="email"></span></p>
-            </div>
-
-            <p style="margin-top: 30px;">If you have any questions, please contact<br>
-            <a href="mailto:kenna@kennagiuziocake.com" style="color: #b5956a;">kenna@kennagiuziocake.com</a></p>
+            <p id="successMessage">Thank you for your payment. A confirmation has been sent to your email.</p>
+            <p style="margin-top: 24px;">If you have any questions, please contact<br>
+            <a href="mailto:kenna@kennagiuziocake.com">kenna@kennagiuziocake.com</a></p>
         </div>
     </div>
 
@@ -143,44 +126,102 @@
         async function loadPaymentDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const sessionId = urlParams.get('session_id');
+            const paymentIntentId = urlParams.get('payment_intent');
+            const isZelle = urlParams.get('zelle') === 'true';
+            const zelleAmount = urlParams.get('amount');
 
-            if (!sessionId) {
-                document.getElementById('loading').innerHTML = '<p>Payment confirmed. Thank you!</p>';
-                document.getElementById('content').classList.add('show');
-                document.getElementById('loading').classList.remove('show');
+            // Handle pending offline payments (Zelle/Check — not yet verified)
+            const isPending = urlParams.get('pending') === 'true';
+            const pendingAmount = urlParams.get('amount');
+            const pendingMethod = urlParams.get('method');
+
+            if (isPending && pendingAmount) {
+                const methodLabel = pendingMethod === 'check' ? 'Check' : 'Zelle';
+                document.getElementById('amount').textContent = '$' + parseFloat(pendingAmount).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                document.getElementById('successTitle').textContent = 'Thank You';
+                document.getElementById('successMessage').textContent = `Your ${methodLabel} payment notification has been received. Once verified, a confirmation will be sent to your email.`;
+                document.title = 'Thank You - Kenna Giuzio Cake';
+                revealSequence();
+                return;
+            }
+
+            // Handle Zelle payments (no Stripe lookup needed) — legacy
+            if (isZelle && zelleAmount) {
+                document.getElementById('amount').textContent = '$' + parseFloat(zelleAmount).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                revealSequence();
+                return;
+            }
+
+            if (!sessionId && !paymentIntentId) {
+                revealSequence();
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/payments/session/${sessionId}`);
-                const data = await response.json();
+                let data;
 
-                if (data.success && data.paid) {
+                if (sessionId) {
+                    const response = await fetch(`${API_URL}/api/payments/session/${sessionId}`);
+                    data = await response.json();
+                } else if (paymentIntentId) {
+                    const response = await fetch(`${API_URL}/api/payments/intent/${paymentIntentId}`);
+                    data = await response.json();
+                }
+
+                if (data && data.success && data.paid) {
                     document.getElementById('amount').textContent = '$' + data.amount.toLocaleString('en-US', { minimumFractionDigits: 2 });
 
-                    if (data.metadata && data.metadata.invoice_type) {
-                        const typeMap = {
-                            'tasting': 'Tasting Fee',
-                            'deposit': 'Deposit (50%)',
-                            'final': 'Final Payment'
-                        };
-                        document.getElementById('paymentType').textContent = typeMap[data.metadata.invoice_type] || data.metadata.invoice_type;
-                        document.getElementById('details').style.display = 'block';
+                    // Update invoice status in localStorage
+                    if (data.metadata && data.metadata.invoice_id) {
+                        const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                        const idx = invoices.findIndex(i => i.id === data.metadata.invoice_id);
+                        if (idx >= 0) {
+                            invoices[idx].status = 'paid';
+                            invoices[idx].paidAt = new Date().toISOString();
+                            invoices[idx].paymentMethod = 'card';
+                            localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+                        }
                     }
 
-                    if (data.customerEmail) {
-                        document.getElementById('email').textContent = data.customerEmail;
+                    // Update client status in localStorage
+                    if (data.metadata && data.metadata.client_id) {
+                        const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                        const cIdx = clients.findIndex(c => String(c.id) === String(data.metadata.client_id));
+                        if (cIdx >= 0 && data.metadata.invoice_type === 'tasting') {
+                            clients[cIdx].tastingPaid = true;
+                            clients[cIdx].tastingPaidDate = new Date().toISOString();
+                            localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                        }
                     }
                 }
 
-                document.getElementById('content').classList.add('show');
-                document.getElementById('loading').classList.remove('show');
+                revealSequence();
 
             } catch (err) {
                 console.error('Error loading payment details:', err);
-                document.getElementById('content').classList.add('show');
-                document.getElementById('loading').classList.remove('show');
+                revealSequence();
             }
+        }
+
+        function revealSequence() {
+            // Hide loading
+            document.getElementById('loading').classList.add('hide');
+
+            // Step 1: Fade in banner from black + change body bg
+            setTimeout(() => {
+                document.body.classList.add('revealed');
+                document.getElementById('banner').classList.add('visible');
+            }, 600);
+
+            // Step 2: Fade in logo
+            setTimeout(() => {
+                document.getElementById('logo').classList.add('visible');
+            }, 3500);
+
+            // Step 3: Fade in "Payment Successful" + amount
+            setTimeout(() => {
+                document.getElementById('successText').classList.add('visible');
+            }, 5500);
         }
 
         loadPaymentDetails();

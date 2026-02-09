@@ -214,8 +214,7 @@
         .main {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto 1fr;
-            min-height: calc(100vh - 73px);
+            grid-template-rows: auto auto;
         }
 
         @media (max-width: 1200px) {
@@ -231,7 +230,6 @@
         .form-panel {
             background: #fff;
             border-right: 1px solid #eee;
-            overflow-y: auto;
         }
 
         .panel-header {
@@ -342,6 +340,10 @@
         .preview-panel {
             background: #f0ece6;
             padding: 40px;
+            position: sticky;
+            top: 140px;
+            align-self: start;
+            max-height: calc(100vh - 140px);
             overflow-y: auto;
         }
 
@@ -742,6 +744,12 @@
             color: #6b5b7a;
         }
 
+        .day-event.tasting-prep {
+            background: #e8edf5;
+            color: #5a6b8b;
+            font-style: italic;
+        }
+
         .day-event-more {
             font-size: 0.6rem;
             color: #999;
@@ -771,6 +779,7 @@
         }
 
         .calendar-legend-dot.tasting { background: #f5eee3; border: 1px solid #dfc89f; }
+        .calendar-legend-dot.tasting-prep { background: #e8edf5; border: 1px solid #a0b0d0; }
         .calendar-legend-dot.event { background: #e8ede5; border: 1px solid #a8b5a0; }
         .calendar-legend-dot.personal { background: #fae5e1; border: 1px solid #e6a89c; }
 
@@ -1115,6 +1124,7 @@
                     <div class="client-details">
                         <span id="displayClientEmail"></span><br>
                         <span id="displayEventType"></span> - <span id="displayEventDate"></span>
+                        <span id="displayVenue" style="display: none;"><br><span id="displayVenueText"></span></span>
                     </div>
                 </div>
 
@@ -1210,17 +1220,14 @@
                 <div class="form-row full">
                     <div class="form-group">
                         <label class="form-label">Tasting Description</label>
-                        <textarea class="form-textarea" id="tastingDescription" oninput="autoSave()" style="min-height: 80px;">A bespoke tasting party and design consultation for you and your guests at my studio during which we will sample cakes, review designs and discuss your vision.</textarea>
-                        <button class="make-default-btn" onclick="makeDefault('description', this)">Make Default</button>
+                        <textarea class="form-textarea" id="tastingDescription" oninput="autoSave()" style="min-height: 80px;"></textarea>
                     </div>
                 </div>
 
                 <div class="form-row full">
                     <div class="form-group">
                         <label class="form-label">Arrival Instructions</label>
-                        <textarea class="form-textarea" id="arrivalInstructions" oninput="autoSave()" style="min-height: 60px;">The studio entrance is on the W 3rd Ave side of the house.
-I'll meet you there! At the tall white gate in front of my blue studio door.</textarea>
-                        <button class="make-default-btn" onclick="makeDefault('arrival', this)">Make Default</button>
+                        <textarea class="form-textarea" id="arrivalInstructions" oninput="autoSave()" style="min-height: 60px;"></textarea>
                     </div>
                 </div>
 
@@ -1228,7 +1235,6 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</te
                     <div class="form-group">
                         <label class="form-label">Notes (internal - not shown on invoice)</label>
                         <textarea class="form-textarea" id="internalNotes" oninput="autoSave()" placeholder="Any notes about this tasting..."></textarea>
-                        <button class="make-default-btn" onclick="makeDefault('notes', this)">Make Default</button>
                     </div>
                 </div>
             </div>
@@ -1258,6 +1264,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</te
                         <div class="preview-bill-label">Bill To</div>
                         <div id="previewClientName">Client Name</div>
                         <div style="color: #666;" id="previewClientEmail">email@example.com</div>
+                        <div style="color: #666;" id="previewClientAddress"></div>
                     </div>
                     <div>
                         <div class="preview-bill-label">Event</div>
@@ -1301,12 +1308,60 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                     <img src="../images/logo.png" alt="Kenna Giuzio Cake">
                     <p>Thank you for considering Kenna Giuzio Cake</p>
                 </div>
-                <button class="btn btn-primary send-invoice-btn" id="sendInvoiceBtn" onclick="sendInvoice()">Send Invoice</button>
+                <button class="btn btn-primary send-invoice-btn" id="sendInvoiceBtn" onclick="openEmailPreview()">Send Invoice</button>
                 <div class="resend-notice" id="resendNotice">Changes will be sent as a revision and logged in communication history.</div>
             </div>
         </div>
     </main>
     </div><!-- end main-wrapper -->
+
+    <!-- Email Preview Modal -->
+    <div id="emailModalOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:#fff; width:720px; max-width:95vw; max-height:90vh; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 30px rgba(0,0,0,0.2);">
+
+            <!-- Modal Header -->
+            <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; margin:0;">Send Tasting Invoice</h2>
+                <button onclick="closeEmailModal()" style="background:none; border:none; font-size:1.5rem; color:#999; cursor:pointer; padding:0; line-height:1;">&times;</button>
+            </div>
+
+            <!-- To / Subject fields -->
+            <div style="padding:16px 24px; border-bottom:1px solid #eee;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">TO</label>
+                    <input type="email" id="emailTo" readonly style="flex:1; padding:8px 12px; border:1px solid #eee; background:#fafafa; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; color:#333; border-radius:4px;">
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">SUBJECT</label>
+                    <input type="text" id="emailSubject" style="flex:1; padding:8px 12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; color:#333; border-radius:4px;">
+                </div>
+            </div>
+
+            <!-- Email Preview -->
+            <div style="flex:1; overflow-y:auto; padding:24px; background:#f0eeeb; min-height:300px; max-height:50vh;">
+                <div id="emailPreviewFrame" style="background:#fff; max-width:600px; margin:0 auto; box-shadow:0 1px 8px rgba(0,0,0,0.08); border-radius:2px;">
+                    <!-- Branded HTML email rendered here -->
+                </div>
+            </div>
+
+            <!-- Body editor (toggled) -->
+            <div id="emailBodyEditor" style="display:none; padding:16px 24px; border-top:1px solid #eee; background:#fafafa;">
+                <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999;">EDIT EMAIL BODY</label>
+                <textarea id="emailBodyText" style="width:100%; min-height:180px; padding:12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; margin-top:8px; resize:vertical; border-radius:4px; box-sizing:border-box;"></textarea>
+                <button onclick="updateEmailPreview()" style="margin-top:8px; padding:6px 16px; background:#b5956a; color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer;">Update Preview</button>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#fafafa;">
+                <button onclick="toggleBodyEditor()" style="padding:6px 16px; background:none; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#666; cursor:pointer;">Edit Body</button>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <span id="emailSendStatus" style="font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;"></span>
+                    <button onclick="closeEmailModal()" style="padding:8px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; color:#666; cursor:pointer;">Cancel</button>
+                    <button onclick="sendEmailFromModal()" id="emailSendBtn" style="padding:8px 24px; background:#b5956a; color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; min-width:120px;">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Event Detail Popup -->
     <div class="event-detail-backdrop" id="eventDetailBackdrop" onclick="closeEventDetail()"></div>
@@ -1362,6 +1417,10 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                     <span>Tasting</span>
                 </div>
                 <div class="calendar-legend-item">
+                    <span class="calendar-legend-dot tasting-prep"></span>
+                    <span>Tasting Prep</span>
+                </div>
+                <div class="calendar-legend-item">
                     <span class="calendar-legend-dot event"></span>
                     <span>Client Event</span>
                 </div>
@@ -1389,10 +1448,23 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
         // Load clients from API and sync to localStorage
         async function loadClientsFromAPI() {
             try {
-                const clients = await getClients();
-                localStorage.setItem('kgc_clients', JSON.stringify(clients));
-                loadClient(); // Reload with API data
-                console.log('Tasting scheduler: Loaded', clients.length, 'clients from API');
+                const apiClients = await getClients();
+                const localClients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+
+                // Merge: preserve local tasting fields if API doesn't have them
+                const merged = apiClients.map(ac => {
+                    const local = localClients.find(lc => String(lc.id) === String(ac.id));
+                    if (local) {
+                        if (!ac.tastingDate && local.tastingDate) ac.tastingDate = local.tastingDate;
+                        if (!ac.tastingTime && local.tastingTime) ac.tastingTime = local.tastingTime;
+                        if (!ac.tastingGuests && local.tastingGuests) ac.tastingGuests = local.tastingGuests;
+                    }
+                    return ac;
+                });
+
+                localStorage.setItem('kgc_clients', JSON.stringify(merged));
+                loadClient(); // Reload with merged data
+                console.log('Tasting scheduler: Loaded', merged.length, 'clients from API (merged with local tasting data)');
             } catch (error) {
                 console.log('Tasting scheduler: Using localStorage fallback:', error.message);
             }
@@ -1413,9 +1485,19 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                 document.getElementById('displayEventType').textContent = client.eventType || 'Wedding';
                 document.getElementById('displayEventDate').textContent = formatDate(client.eventDate);
 
+                // Show venue/address if available
+                const clientVenue = client.venue || client.address || '';
+                if (clientVenue) {
+                    document.getElementById('displayVenue').style.display = 'inline';
+                    document.getElementById('displayVenueText').textContent = clientVenue;
+                } else {
+                    document.getElementById('displayVenue').style.display = 'none';
+                }
+
                 // Update preview
                 document.getElementById('previewClientName').textContent = client.name;
                 document.getElementById('previewClientEmail').textContent = client.email;
+                document.getElementById('previewClientAddress').textContent = client.address || client.venue || '';
                 document.getElementById('previewEventInfo').textContent =
                     (client.eventType || 'Wedding') + ' - ' + formatDate(client.eventDate);
 
@@ -1444,6 +1526,46 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
         // API URL for backend
         const API_URL = 'https://sugar-backend-production.up.railway.app';
 
+        // Save tasting date/time to the database so it persists across API refreshes
+        async function syncTastingDateToDB(cId, tastingDate, tastingTime) {
+            try {
+                const resp = await fetch(`${API_URL}/api/clients/${cId}`);
+                if (!resp.ok) return;
+                const client = await resp.json();
+                await fetch(`${API_URL}/api/clients/${cId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: client.name,
+                        email: client.email,
+                        phone: client.phone,
+                        status: client.status,
+                        event_date: client.event_date,
+                        event_type: client.event_type,
+                        guest_count: client.guest_count,
+                        venue: client.venue,
+                        source: client.source,
+                        notes: client.notes,
+                        address: client.address,
+                        tasting_date: tastingDate || client.tasting_date,
+                        tasting_time: tastingTime || client.tasting_time || '',
+                        tasting_end_time: client.tasting_end_time,
+                        tasting_guests: client.tasting_guests,
+                        event_time: client.event_time,
+                        event_end_time: client.event_end_time,
+                        archived: client.archived,
+                        instagram: client.instagram,
+                        linkedin: client.linkedin,
+                        website: client.website,
+                        company: client.company
+                    })
+                });
+                console.log('Tasting date synced to DB for client', cId);
+            } catch (err) {
+                console.error('Failed to sync tasting date to DB:', err);
+            }
+        }
+
         // Track if we're in editing mode (unlocked after send)
         let isEditingMode = false;
         let existingInvoice = null;
@@ -1452,7 +1574,8 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
             existingInvoice = invoices.find(i => i.clientId == clientId && i.type === 'tasting');
 
-            if (existingInvoice && existingInvoice.status === 'sent') {
+            // Only lock if the email was actually sent (not just invoice saved)
+            if (existingInvoice && existingInvoice.emailSent === true) {
                 lockFields();
             }
         }
@@ -1493,7 +1616,9 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
 
         function formatDate(dateStr) {
             if (!dateStr) return 'TBD';
-            return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+            const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
+            if (isNaN(d.getTime())) return 'TBD';
+            return d.toLocaleDateString('en-US', {
                 month: 'long', day: 'numeric', year: 'numeric'
             });
         }
@@ -1505,6 +1630,14 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             const ampm = h >= 12 ? 'PM' : 'AM';
             const hour12 = h % 12 || 12;
             return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        function formatDateString(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function guestCountText(count) {
@@ -1631,7 +1764,27 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             // Load stored defaults
             const defaults = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
 
-            // These come from draft first, then defaults
+            // Fallback defaults (match templates.html)
+            const fallbackDefaults = {
+                description: 'A bespoke tasting party and design consultation for you and your guests at my studio during which we will sample cakes, review designs and discuss your vision.',
+                arrival: 'The studio entrance is on the W 3rd Ave side of the house.\nI\'ll meet you there! At the tall white gate in front of my blue studio door.',
+                location: 'Queen Anne Studio, Seattle',
+                fee: '250',
+                guests: '2',
+                notes: ''
+            };
+
+            // Merge: saved template defaults > fallback defaults
+            const tpl = {
+                description: defaults.description || fallbackDefaults.description,
+                arrival: defaults.arrival || fallbackDefaults.arrival,
+                location: defaults.location || fallbackDefaults.location,
+                fee: defaults.fee || fallbackDefaults.fee,
+                guests: defaults.guests || fallbackDefaults.guests,
+                notes: defaults.notes || fallbackDefaults.notes
+            };
+
+            // Draft values override template defaults
             if (draft) {
                 if (draft.tastingFee) document.getElementById('tastingFee').value = draft.tastingFee;
                 if (draft.tastingLocation) document.getElementById('tastingLocation').value = draft.tastingLocation;
@@ -1640,21 +1793,35 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                 if (draft.internalNotes) document.getElementById('internalNotes').value = draft.internalNotes;
             }
 
-            // Apply stored defaults for fields that don't have draft values
-            if (!draft?.tastingDescription && defaults.description) {
-                document.getElementById('tastingDescription').value = defaults.description;
+            // Apply template defaults for fields without draft values
+            if (!draft?.tastingDescription) {
+                document.getElementById('tastingDescription').value = tpl.description;
             }
-            if (!draft?.arrivalInstructions && defaults.arrival) {
-                document.getElementById('arrivalInstructions').value = defaults.arrival;
+            if (!draft?.arrivalInstructions) {
+                document.getElementById('arrivalInstructions').value = tpl.arrival;
             }
-            if (!draft?.internalNotes && defaults.notes) {
-                document.getElementById('internalNotes').value = defaults.notes;
+            if (!draft?.tastingLocation) {
+                document.getElementById('tastingLocation').value = tpl.location;
+            }
+            if (!draft?.tastingFee) {
+                document.getElementById('tastingFee').value = tpl.fee;
+            }
+            if (!draft?.guestCount && !tastingGuests) {
+                document.getElementById('guestCount').value = tpl.guests;
+            }
+            if (!draft?.internalNotes && tpl.notes) {
+                document.getElementById('internalNotes').value = tpl.notes;
             }
 
             updatePreview();
         }
 
         function buildInvoiceUrl(preview = false) {
+            // Re-read client data fresh in case address was added on contacts page
+            const freshClients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const freshClient = freshClients.find(c => c.id == clientId || String(c.id) === String(clientId));
+            if (freshClient) window.currentClient = freshClient;
+
             const tastingDate = getTastingDateValue();
             const invoiceNumber = preview ? 'PREVIEW' : ('TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4));
 
@@ -1663,6 +1830,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
                 invoiceId: invoiceNumber,
                 name: window.currentClient.name,
                 email: window.currentClient.email,
+                address: window.currentClient.address || window.currentClient.venue || '',
                 eventType: window.currentClient.eventType || 'Wedding',
                 eventDate: formatDate(window.currentClient.eventDate),
                 tastingDate: formatDate(tastingDate),
@@ -1710,161 +1878,86 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             window.open(buildInvoiceUrl(true), '_blank');
         }
 
-        function sendInvoice() {
+        // ============================================
+        // EMAIL PREVIEW + SEND FLOW
+        // ============================================
+
+        function buildBrandedEmailHtml(bodyText, clientData, welcomeLink) {
+            const lastName = clientData.name.split(' ').pop();
+
+            // Convert plain text body to HTML paragraphs
+            const paragraphs = bodyText.split('\n\n').map(p =>
+                '<p style="margin:0 0 16px 0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.7; color:#333333;">' +
+                p.replace(/\n/g, '<br>') + '</p>'
+            ).join('');
+
+            // Clean up any leftover {proposalLink} placeholders (no inline link needed — CTA button handles it)
+            const processedBody = paragraphs.replace(/\{proposalLink\}/g, '');
+
+            return '<div style="background-color:#f5f3f0; padding:30px 20px;">' +
+                '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff;">' +
+
+                '<!-- Gold accent bar -->' +
+                '<tr><td style="height:4px; background-color:#b5956a;"></td></tr>' +
+
+                '<!-- Logo -->' +
+                '<tr><td align="center" style="padding:30px 40px 10px;">' +
+                '<img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" width="140" style="display:block;">' +
+                '</td></tr>' +
+
+                '<!-- Body -->' +
+                '<tr><td style="padding:20px 40px 10px;">' +
+                processedBody +
+                '</td></tr>' +
+
+                '<!-- CTA Button -->' +
+                '<tr><td align="center" style="padding:10px 40px 30px;">' +
+                '<table role="presentation" cellpadding="0" cellspacing="0">' +
+                '<tr><td style="background-color:#b5956a; border-radius:4px; padding:14px 32px;">' +
+                '<a href="' + welcomeLink + '" style="color:#ffffff; text-decoration:none; font-family:Arial,Helvetica,sans-serif; font-size:13px; letter-spacing:1.5px; font-weight:500; text-transform:uppercase;">VIEW YOUR TASTING INVOICE</a>' +
+                '</td></tr>' +
+                '</table>' +
+                '</td></tr>' +
+
+                '<!-- Divider -->' +
+                '<tr><td style="padding:0 40px;"><hr style="border:none; border-top:1px solid #eeeeee; margin:0;"></td></tr>' +
+
+                '<!-- Footer -->' +
+                '<tr><td align="center" style="padding:24px 40px 30px;">' +
+                '<p style="margin:0; font-family:Georgia,serif; font-size:13px; color:#999999; line-height:1.6;">' +
+                'Kenna Giuzio Cake<br>' +
+                '(206) 472-5401 &nbsp;|&nbsp; kenna@kennagiuziocake.com<br>' +
+                'Queen Anne, Seattle' +
+                '</p>' +
+                '</td></tr>' +
+
+                '</table>' +
+                '</div>';
+        }
+
+        function openEmailPreview() {
             const tastingDate = getTastingDateValue();
             if (!tastingDate) {
                 alert('Please select a tasting date before sending.');
                 return;
             }
-
             if (!window.currentClient) {
                 alert('Client not found.');
                 return;
             }
 
-            const isResend = isEditingMode && existingInvoice;
-            const confirmMsg = isResend
-                ? 'Resend revised invoice to ' + window.currentClient.name + '?'
-                : 'Send this invoice to ' + window.currentClient.name + '?';
-
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-
-            // Save the tasting info (without showing alert)
+            // Only save draft — do NOT save invoice or update client status yet
             saveDraft(false);
 
             const tastingFee = parseFloat(document.getElementById('tastingFee').value) || 250;
+            const isResend = isEditingMode && existingInvoice;
 
-            // Update client status to "tasting" (sent tasting invoice)
-            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-            const clientIndex = clients.findIndex(c => c.id == clientId || String(c.id) === String(clientId));
-            if (clientIndex >= 0) {
-                clients[clientIndex].status = 'tasting';
-                clients[clientIndex].tastingDate = tastingDate;
-                clients[clientIndex].tastingTime = document.getElementById('tastingTime').value;
-                localStorage.setItem('kgc_clients', JSON.stringify(clients));
-            }
+            // Generate invoice number for the welcome link (but don't save yet)
+            const invoiceNumber = isResend
+                ? existingInvoice.id
+                : 'TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
 
-            // Save invoice to invoices list
-            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
-            let invoiceNumber;
-            let revisionNumber = 1;
-
-            if (isResend) {
-                // Update existing invoice
-                const invoiceIndex = invoices.findIndex(i => i.id === existingInvoice.id);
-                if (invoiceIndex >= 0) {
-                    // Increment revision number
-                    revisionNumber = (invoices[invoiceIndex].revision || 1) + 1;
-
-                    // Update the invoice
-                    invoices[invoiceIndex].amount = tastingFee;
-                    invoices[invoiceIndex].sentAt = new Date().toISOString();
-                    invoices[invoiceIndex].tastingDate = tastingDate;
-                    invoices[invoiceIndex].tastingTime = document.getElementById('tastingTime').value;
-                    invoices[invoiceIndex].guestCount = document.getElementById('guestCount').value;
-                    invoices[invoiceIndex].location = document.getElementById('tastingLocation').value;
-                    invoices[invoiceIndex].tastingDescription = document.getElementById('tastingDescription').value;
-                    invoices[invoiceIndex].arrivalInstructions = document.getElementById('arrivalInstructions').value;
-                    invoices[invoiceIndex].revision = revisionNumber;
-                    invoices[invoiceIndex].lastRevisedAt = new Date().toISOString();
-
-                    invoiceNumber = existingInvoice.id;
-                }
-                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
-
-                // Log revision to communication log
-                addCommLogEntry(clientId, 'tasting_invoice_revised', 'Tasting invoice revision v' + revisionNumber + ' sent');
-            } else {
-                // Generate new invoice number
-                invoiceNumber = 'TI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
-
-                const invoiceData = {
-                    clientName: window.currentClient.name,
-                    clientEmail: window.currentClient.email,
-                    client_name: window.currentClient.name,
-                    client_email: window.currentClient.email,
-                    eventType: window.currentClient.eventType || 'Wedding',
-                    eventDate: formatDate(window.currentClient.eventDate),
-                    tastingDate: formatDate(tastingDate),
-                    tastingTime: formatTime(document.getElementById('tastingTime').value),
-                    guestCount: document.getElementById('guestCount').value,
-                    location: document.getElementById('tastingLocation').value,
-                    description: document.getElementById('tastingDescription').value,
-                    arrival: document.getElementById('arrivalInstructions').value,
-                    fee: tastingFee
-                };
-
-                const invoice = {
-                    id: invoiceNumber,
-                    type: 'tasting',
-                    clientId: clientId,
-                    clientName: window.currentClient.name,
-                    clientEmail: window.currentClient.email,
-                    amount: tastingFee,
-                    status: 'sent',
-                    sentAt: new Date().toISOString(),
-                    createdAt: new Date().toISOString(),
-                    eventType: window.currentClient.eventType || 'Wedding',
-                    eventDate: window.currentClient.eventDate,
-                    tastingDate: tastingDate,
-                    tastingTime: document.getElementById('tastingTime').value,
-                    guestCount: document.getElementById('guestCount').value,
-                    location: document.getElementById('tastingLocation').value,
-                    tastingDescription: document.getElementById('tastingDescription').value,
-                    arrivalInstructions: document.getElementById('arrivalInstructions').value,
-                    revision: 1
-                };
-                invoices.push(invoice);
-                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
-
-                // Also save to API for cross-device access
-                try {
-                    fetch(`${API_URL}/api/invoices`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            client_id: clientId,
-                            invoice_number: invoiceNumber,
-                            type: 'tasting',
-                            amount: tastingFee,
-                            status: 'sent',
-                            data: invoiceData
-                        })
-                    });
-                } catch (err) {
-                    console.log('API save failed, invoice still saved locally:', err);
-                }
-
-                // Log to communication log
-                addCommLogEntry(clientId, 'tasting_invoice_sent', 'Tasting invoice sent');
-            }
-
-            // Update existingInvoice reference
-            existingInvoice = invoices.find(i => i.id === invoiceNumber);
-
-            // Build invoice URL
-            const invoiceParams = new URLSearchParams({
-                clientId: clientId,
-                invoiceId: invoiceNumber,
-                name: window.currentClient.name,
-                email: window.currentClient.email,
-                eventType: window.currentClient.eventType || 'Wedding',
-                eventDate: formatDate(window.currentClient.eventDate),
-                tastingDate: formatDate(tastingDate),
-                tastingTime: formatTime(document.getElementById('tastingTime').value),
-                guestCount: document.getElementById('guestCount').value,
-                fee: document.getElementById('tastingFee').value,
-                location: document.getElementById('tastingLocation').value,
-                description: document.getElementById('tastingDescription').value,
-                arrival: document.getElementById('arrivalInstructions').value
-            });
-
-            const invoiceUrl = window.location.pathname.replace('tasting-scheduler.html', 'tasting-invoice.html') +
-                '?' + invoiceParams.toString();
-
-            // Build magic welcome link (with video intro)
+            // Build welcome link
             const welcomeParams = new URLSearchParams({
                 dest: 'tasting',
                 clientId: clientId,
@@ -1873,64 +1966,311 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</di
             const baseUrl = window.location.origin;
             const welcomeLink = baseUrl + '/welcome.html?' + welcomeParams.toString();
 
-            // Build email content
+            // Load email template
+            const customTemplates = JSON.parse(localStorage.getItem('kgc_email_templates') || '{}');
+            const defaultTemplate = {
+                subject: 'Your Tasting Invitation - {tastingDate}',
+                body: 'Dear {firstName},\n\nThank you so much for reaching out! I\'m thrilled at the opportunity to create something beautiful for your {eventType}.\n\nI\'d love to invite you to a tasting party at my studio where we can sample cakes, explore designs, and discuss your vision together.\n\nYour tasting is scheduled for:\n{tastingDate} at {tastingTime}\n\nClick below to view your invoice to schedule your tasting.\n\nI can\'t wait to meet you and hear all about what you\'re dreaming of!\n\nWarmly,\nKenna'
+            };
+            const template = customTemplates['tasting-invoice-email']
+                ? { ...defaultTemplate, ...customTemplates['tasting-invoice-email'] }
+                : defaultTemplate;
+
+            // Replace placeholders
             const clientFirstName = window.currentClient.name.split(' ')[0];
             const tastingDateFormatted = formatDate(tastingDate);
             const tastingTimeFormatted = formatTime(document.getElementById('tastingTime').value);
 
-            const emailSubject = `Your Tasting Invitation - ${tastingDateFormatted}`;
-            const emailBody = `Dear ${clientFirstName},
+            const subject = template.subject
+                .replace(/\{tastingDate\}/g, tastingDateFormatted)
+                .replace(/\{firstName\}/g, clientFirstName)
+                .replace(/\{eventType\}/g, window.currentClient.eventType || 'celebration');
 
-Thank you so much for reaching out! I'm thrilled at the opportunity to create something beautiful for your ${window.currentClient.eventType || 'celebration'}.
+            const body = template.body
+                .replace(/\{firstName\}/g, clientFirstName)
+                .replace(/\{eventType\}/g, window.currentClient.eventType || 'celebration')
+                .replace(/\{tastingDate\}/g, tastingDateFormatted)
+                .replace(/\{tastingTime\}/g, tastingTimeFormatted)
+                .replace(/\{eventDate\}/g, formatDate(window.currentClient.eventDate));
 
-I'd love to invite you to a tasting party at my studio where we can sample cakes, explore designs, and discuss your vision together.
+            // Check if we already have saved edits for this client
+            const hasEdits = window._emailData && window._emailData.clientId === clientId && window._emailData.editedBody;
+            const finalSubject = hasEdits ? window._emailData.editedSubject : subject;
+            const finalBody = hasEdits ? window._emailData.editedBody : body;
 
-Your tasting is scheduled for:
-${tastingDateFormatted} at ${tastingTimeFormatted}
-
-Click below to view your invoice and secure your date:
-${welcomeLink}
-
-I can't wait to meet you and hear all about what you're dreaming of!
-
-Warmly,
-Kenna
-
-Kenna Giuzio Cake
-(206) 472-5401
-kenna@kennagiuziocake.com`;
-
-            // Open Gmail compose directly
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(window.currentClient.email)}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-            window.open(gmailUrl, '_blank');
-
-            // Also log to communications
-            const comms = JSON.parse(localStorage.getItem('kgc_communications') || '[]');
-            comms.push({
-                id: Date.now().toString(),
-                type: 'email',
-                category: 'tasting',
+            // Store data for send (invoice will be saved when Send is actually clicked)
+            window._emailData = {
+                to: window.currentClient.email,
+                welcomeLink: welcomeLink,
+                clientData: window.currentClient,
                 clientId: clientId,
-                clientName: window.currentClient.name,
-                clientEmail: window.currentClient.email,
-                subject: emailSubject,
-                message: emailBody,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('kgc_communications', JSON.stringify(comms));
+                invoiceNumber: invoiceNumber,
+                tastingFee: tastingFee,
+                isResend: isResend,
+                editedSubject: hasEdits ? window._emailData.editedSubject : null,
+                editedBody: hasEdits ? window._emailData.editedBody : null
+            };
 
-            // Re-lock the fields after sending
-            isEditingMode = false;
-            document.getElementById('resendNotice').classList.remove('visible');
-            lockFields();
+            // Populate modal
+            document.getElementById('emailTo').value = window.currentClient.email;
+            document.getElementById('emailSubject').value = finalSubject;
+            document.getElementById('emailBodyText').value = finalBody;
 
-            // Show success message
-            alert('Email opened in your mail app!\\n\\nThe invoice has been logged and the client link is ready.');
+            // Build and show HTML preview
+            const htmlEmail = buildBrandedEmailHtml(finalBody, window.currentClient, welcomeLink);
+            document.getElementById('emailPreviewFrame').innerHTML = htmlEmail;
+
+            // Reset state
+            document.getElementById('emailSendStatus').textContent = '';
+            document.getElementById('emailSendBtn').disabled = false;
+            document.getElementById('emailSendBtn').textContent = 'Send Email';
+            document.getElementById('emailSendBtn').style.background = '#b5956a';
+            document.getElementById('emailBodyEditor').style.display = 'none';
+
+            // Show modal
+            document.getElementById('emailModalOverlay').style.display = 'flex';
+        }
+
+        async function sendEmailFromModal() {
+            const data = window._emailData;
+            if (!data) return;
+
+            const btn = document.getElementById('emailSendBtn');
+            const status = document.getElementById('emailSendStatus');
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            status.textContent = '';
+
+            try {
+                // NOW save the invoice and update client status (only on actual send)
+                const tastingDate = getTastingDateValue();
+                const tastingFee = data.tastingFee;
+
+                // Update client status
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                const clientIndex = clients.findIndex(c => c.id == data.clientId || String(c.id) === String(data.clientId));
+                if (clientIndex >= 0) {
+                    clients[clientIndex].status = 'tasting';
+                    clients[clientIndex].tastingDate = tastingDate;
+                    clients[clientIndex].tastingTime = document.getElementById('tastingTime').value;
+                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
+                    manageTastingEvents(clients[clientIndex].name, tastingDate, document.getElementById('tastingTime').value);
+                }
+
+                // Save invoice
+                const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                let revisionNumber = 1;
+
+                if (data.isResend) {
+                    const invoiceIndex = invoices.findIndex(i => i.id === existingInvoice.id);
+                    if (invoiceIndex >= 0) {
+                        revisionNumber = (invoices[invoiceIndex].revision || 1) + 1;
+                        invoices[invoiceIndex].amount = tastingFee;
+                        invoices[invoiceIndex].sentAt = new Date().toISOString();
+                        invoices[invoiceIndex].tastingDate = tastingDate;
+                        invoices[invoiceIndex].tastingTime = document.getElementById('tastingTime').value;
+                        invoices[invoiceIndex].guestCount = document.getElementById('guestCount').value;
+                        invoices[invoiceIndex].location = document.getElementById('tastingLocation').value;
+                        invoices[invoiceIndex].tastingDescription = document.getElementById('tastingDescription').value;
+                        invoices[invoiceIndex].arrivalInstructions = document.getElementById('arrivalInstructions').value;
+                        invoices[invoiceIndex].revision = revisionNumber;
+                        invoices[invoiceIndex].lastRevisedAt = new Date().toISOString();
+                    }
+                    localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+                } else {
+                    const invoiceData = {
+                        clientName: data.clientData.name,
+                        clientEmail: data.clientData.email,
+                        client_name: data.clientData.name,
+                        client_email: data.clientData.email,
+                        eventType: data.clientData.eventType || 'Wedding',
+                        eventDate: formatDate(data.clientData.eventDate),
+                        tastingDate: formatDate(tastingDate),
+                        tastingTime: formatTime(document.getElementById('tastingTime').value),
+                        guestCount: document.getElementById('guestCount').value,
+                        location: document.getElementById('tastingLocation').value,
+                        description: document.getElementById('tastingDescription').value,
+                        arrival: document.getElementById('arrivalInstructions').value,
+                        fee: tastingFee
+                    };
+                    const invoice = {
+                        id: data.invoiceNumber,
+                        type: 'tasting',
+                        clientId: data.clientId,
+                        clientName: data.clientData.name,
+                        clientEmail: data.clientData.email,
+                        amount: tastingFee,
+                        status: 'sent',
+                        sentAt: new Date().toISOString(),
+                        createdAt: new Date().toISOString(),
+                        eventType: data.clientData.eventType || 'Wedding',
+                        eventDate: data.clientData.eventDate,
+                        tastingDate: tastingDate,
+                        tastingTime: document.getElementById('tastingTime').value,
+                        guestCount: document.getElementById('guestCount').value,
+                        location: document.getElementById('tastingLocation').value,
+                        tastingDescription: document.getElementById('tastingDescription').value,
+                        arrivalInstructions: document.getElementById('arrivalInstructions').value,
+                        revision: 1
+                    };
+                    invoices.push(invoice);
+                    localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+                    try {
+                        fetch(`${API_URL}/api/invoices`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                client_id: data.clientId,
+                                invoice_number: data.invoiceNumber,
+                                type: 'tasting',
+                                amount: tastingFee,
+                                status: 'sent',
+                                data: invoiceData
+                            })
+                        });
+                    } catch (err) {
+                        console.log('API save failed, invoice still saved locally:', err);
+                    }
+                }
+
+                existingInvoice = invoices.find(i => i.id === data.invoiceNumber);
+
+                // Send the email
+                const finalSubject = document.getElementById('emailSubject').value;
+                const finalBody = document.getElementById('emailBodyText').value;
+                const finalHtml = buildBrandedEmailHtml(finalBody, data.clientData, data.welcomeLink);
+
+                const response = await fetch(`${API_URL}/api/gmail/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: data.to,
+                        subject: finalSubject,
+                        message: finalBody,
+                        html: finalHtml,
+                        client_id: data.clientId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    status.style.color = '#5a6b52';
+                    status.textContent = 'Sent successfully!';
+                    btn.textContent = 'Sent';
+                    btn.style.background = '#5a6b52';
+
+                    // Mark invoice as actually emailed (controls form locking)
+                    const allInvoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                    const sentIdx = allInvoices.findIndex(i => i.id === data.invoiceNumber);
+                    if (sentIdx >= 0) {
+                        allInvoices[sentIdx].emailSent = true;
+                        localStorage.setItem('kgc_invoices', JSON.stringify(allInvoices));
+                    }
+
+                    // Log to localStorage communications
+                    const comms = JSON.parse(localStorage.getItem('kgc_communications') || '[]');
+                    comms.push({
+                        id: Date.now().toString(),
+                        type: 'email',
+                        category: 'tasting',
+                        clientId: data.clientId,
+                        clientName: data.clientData.name,
+                        clientEmail: data.to,
+                        subject: finalSubject,
+                        message: finalBody,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('kgc_communications', JSON.stringify(comms));
+
+                    addCommLogEntry(data.clientId,
+                        data.isResend ? 'tasting_invoice_revised' : 'tasting_invoice_sent',
+                        data.isResend ? 'Tasting invoice revision v' + revisionNumber + ' sent' : 'Tasting invoice sent');
+
+                    // Save invoice copy to client's files/agreements section
+                    const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + data.clientId) || '{}');
+                    portalData.files = portalData.files || [];
+                    const invoiceFileName = data.isResend
+                        ? `Tasting Invoice ${data.invoiceNumber} (v${revisionNumber})`
+                        : `Tasting Invoice ${data.invoiceNumber}`;
+                    // Remove previous version of this invoice if exists
+                    portalData.files = portalData.files.filter(f => !f.invoiceId || f.invoiceId !== data.invoiceNumber);
+                    portalData.files.push({
+                        name: invoiceFileName,
+                        type: 'text/html',
+                        data: data.welcomeLink,
+                        invoiceId: data.invoiceNumber,
+                        uploadedAt: new Date().toISOString()
+                    });
+                    localStorage.setItem('kgc_portal_' + data.clientId, JSON.stringify(portalData));
+
+                    // Clear saved edits after successful send
+                    window._emailData = null;
+
+                    // Close modal and lock form after short delay
+                    setTimeout(() => {
+                        closeEmailModal();
+                        isEditingMode = false;
+                        document.getElementById('resendNotice').classList.remove('visible');
+                        lockFields();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Send failed');
+                }
+            } catch (err) {
+                status.style.color = '#dc3545';
+                status.textContent = 'Failed: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Retry Send';
+                btn.style.background = '#b5956a';
+            }
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModalOverlay').style.display = 'none';
+        }
+
+        function toggleBodyEditor() {
+            const editor = document.getElementById('emailBodyEditor');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateEmailPreview() {
+            const body = document.getElementById('emailBodyText').value;
+            const subject = document.getElementById('emailSubject').value;
+            const data = window._emailData;
+            if (data) {
+                // Save edits so they persist if modal is closed and reopened
+                data.editedBody = body;
+                data.editedSubject = subject;
+
+                const html = buildBrandedEmailHtml(body, data.clientData, data.welcomeLink);
+                document.getElementById('emailPreviewFrame').innerHTML = html;
+                document.getElementById('emailBodyEditor').style.display = 'none';
+            }
         }
 
         // Initialize
         loadClient();
         updatePreview();
+
+        // Reload fresh client data when navigating back (browser back/forward cache)
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) {
+                loadClient();
+                updatePreview();
+            }
+        });
+
+        // Apply banner image from template defaults
+        (function() {
+            const defaults = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
+            if (defaults.bannerImage) {
+                document.querySelector('.preview-header').style.backgroundImage = `url('${defaults.bannerImage}')`;
+            }
+        })();
 
         // Load from API in background
         loadClientsFromAPI();
@@ -1985,6 +2325,15 @@ kenna@kennagiuziocake.com`;
             renderCalendar();
         }
 
+        // Extract YYYY-MM-DD from any date format (ISO string, date-only, etc.)
+        function toDateOnly(dateStr) {
+            if (!dateStr) return null;
+            // If it's an ISO string like "2026-02-11T00:00:00.000Z", take just the date part
+            if (dateStr.includes('T')) return dateStr.split('T')[0];
+            // Already YYYY-MM-DD
+            return dateStr;
+        }
+
         function getEventsForMonth(year, month) {
             // Get all clients with event dates or tasting dates
             const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
@@ -1992,11 +2341,12 @@ kenna@kennagiuziocake.com`;
 
             clients.forEach(client => {
                 // Event dates (actual events like weddings, birthdays)
-                if (client.eventDate) {
-                    const d = new Date(client.eventDate + 'T00:00:00');
+                const eventDateStr = toDateOnly(client.eventDate);
+                if (eventDateStr) {
+                    const d = new Date(eventDateStr + 'T00:00:00');
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         events.push({
-                            date: client.eventDate,
+                            date: eventDateStr,
                             type: 'event',
                             name: client.name,
                             eventType: client.eventType || 'Event',
@@ -2005,13 +2355,15 @@ kenna@kennagiuziocake.com`;
                     }
                 }
                 // Tasting dates
-                if (client.tastingDate) {
-                    const d = new Date(client.tastingDate + 'T00:00:00');
+                const tastingDateStr = toDateOnly(client.tastingDate);
+                if (tastingDateStr) {
+                    const d = new Date(tastingDateStr + 'T00:00:00');
                     if (d.getFullYear() === year && d.getMonth() === month) {
+                        const lastName = client.name.split(' ').pop();
                         events.push({
-                            date: client.tastingDate,
+                            date: tastingDateStr,
                             type: 'tasting',
-                            name: client.name,
+                            name: lastName + ' Tasting',
                             eventType: 'Tasting',
                             time: client.tastingTime ? formatTime(client.tastingTime) : null
                         });
@@ -2019,12 +2371,12 @@ kenna@kennagiuziocake.com`;
                 }
                 // Inquiry dates (when client was created)
                 if (client.createdAt) {
-                    const inquiryDate = client.createdAt.split('T')[0];
-                    const d = new Date(inquiryDate + 'T00:00:00');
+                    const createdDateStr = toDateOnly(client.createdAt);
+                    const d = new Date(createdDateStr + 'T00:00:00');
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         const lastName = client.name.split(' ').pop();
                         events.push({
-                            date: inquiryDate,
+                            date: createdDateStr,
                             type: 'inquiry',
                             name: lastName + ' Inquiry',
                             eventType: 'Inquiry',
@@ -2073,8 +2425,8 @@ kenna@kennagiuziocake.com`;
             const monthStart = new Date(year, month, 1);
             const monthEnd = new Date(year, month + 1, 0);
 
-            const start = new Date(startDate + 'T00:00:00');
-            const end = endDate ? new Date(endDate + 'T00:00:00') : start;
+            const start = new Date(toDateOnly(startDate) + 'T00:00:00');
+            const end = endDate ? new Date(toDateOnly(endDate) + 'T00:00:00') : start;
 
             // Iterate through each day of the event
             const current = new Date(Math.max(start.getTime(), monthStart.getTime()));
@@ -2188,6 +2540,7 @@ kenna@kennagiuziocake.com`;
             input.value = formatDate(dateStr);
             updatePreview();
             syncToClient(); // Sync to In Studio
+            saveDraft(false); // Save draft without alert
 
             // Brief visual feedback then close
             renderCalendar();
@@ -2202,7 +2555,7 @@ kenna@kennagiuziocake.com`;
             return input.dataset.value || '';
         }
 
-        // Sync tasting date/time/guests to client object for In Studio display
+        // Sync tasting date/time/guests to client object for In Studio display + DB
         function syncToClient() {
             const tastingDate = getTastingDateValue();
             const tastingTime = document.getElementById('tastingTime').value;
@@ -2215,7 +2568,67 @@ kenna@kennagiuziocake.com`;
                 if (tastingTime) clients[clientIndex].tastingTime = tastingTime;
                 if (guestCount) clients[clientIndex].tastingGuests = guestCount;
                 localStorage.setItem('kgc_clients', JSON.stringify(clients));
+
+                // Save to database so it survives API refreshes
+                if (tastingDate) {
+                    syncTastingDateToDB(clientId, tastingDate, tastingTime);
+                    manageTastingEvents(clients[clientIndex].name, tastingDate, tastingTime);
+                }
             }
+        }
+
+        // Create or update tasting prep event (tasting itself comes from client.tastingDate)
+        function manageTastingEvents(clientName, tastingDateStr, tastingTimeStr) {
+            // Only create prep event - the actual tasting is rendered from client.tastingDate
+            manageTastingPrepEvent(clientName, tastingDateStr);
+        }
+
+        // Create or update 2-day "Tasting Prep" event before tasting date
+        function manageTastingPrepEvent(clientName, tastingDateStr) {
+            const lastName = clientName.split(' ').pop();
+            const prepTitle = `Prep: ${lastName}`;
+
+            // Calculate prep dates (2 days before tasting, ending day before tasting)
+            const tastingDate = new Date(tastingDateStr + 'T00:00:00');
+            const prepEndDate = new Date(tastingDate);
+            prepEndDate.setDate(prepEndDate.getDate() - 1); // Day before tasting
+            const prepStartDate = new Date(prepEndDate);
+            prepStartDate.setDate(prepStartDate.getDate() - 1); // 2 days before tasting
+
+            const prepStartStr = formatDateString(prepStartDate);
+            const prepEndStr = formatDateString(prepEndDate);
+
+            // Load existing calendar events
+            const customEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+
+            // Find existing prep event for this client (match new or old title format)
+            const oldTitle = `${lastName} Tasting Prep`;
+            const existingPrepIndex = customEvents.findIndex(e =>
+                (e.title === prepTitle || e.title === oldTitle) && e.type === 'tasting-prep'
+            );
+
+            if (existingPrepIndex >= 0) {
+                // Update existing prep event
+                customEvents[existingPrepIndex].title = prepTitle; // Normalize to new format
+                customEvents[existingPrepIndex].date = prepStartStr;
+                customEvents[existingPrepIndex].endDate = prepEndStr;
+            } else {
+                // Create new prep event
+                const prepEvent = {
+                    id: 'prep-' + Date.now(),
+                    title: prepTitle,
+                    date: prepStartStr,
+                    endDate: prepEndStr,
+                    time: null,
+                    endTime: null,
+                    type: 'tasting-prep',
+                    isMultiDay: true,
+                    location: ''
+                };
+                customEvents.push(prepEvent);
+            }
+
+            localStorage.setItem('kgc_calendar_events', JSON.stringify(customEvents));
         }
 
         // Show event detail popup

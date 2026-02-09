@@ -547,17 +547,46 @@
         </header>
 
         <main class="main">
-            <!-- Email Templates Section -->
-            <div class="section-header">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <h2>Email Templates</h2>
-            </div>
+            <div style="display: flex; gap: 40px; align-items: flex-start;">
+                <!-- Email Templates Section -->
+                <div style="flex: 1;">
+                    <div class="section-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <h2>Email Templates</h2>
+                    </div>
 
-            <div class="template-list" id="templateList">
-                <!-- Populated by JS -->
+                    <div class="template-list" id="templateList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Tasting Proposal Template Section -->
+                <div style="flex: 1;">
+                    <div class="section-header">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <h2>Tasting Proposal</h2>
+                    </div>
+
+                    <div class="template-list">
+                        <div class="template-item">
+                            <div class="template-info">
+                                <h3>Default Tasting Proposal <span id="tastingCustomBadge" style="color:#b5956a; font-size:0.7rem;"></span></h3>
+                                <p>Description, arrival instructions, location, and fee used when scheduling new tastings</p>
+                            </div>
+                            <div class="template-actions">
+                                <button class="btn" onclick="openTastingModal()">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -607,6 +636,123 @@
             <div class="confirm-actions">
                 <button class="btn" onclick="closeConfirmModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveTemplate()">Yes, Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasting Proposal Edit Modal -->
+    <div class="modal-overlay" id="tastingModal">
+        <div class="modal" style="width: 900px; max-width: 95vw; height: 80vh;">
+            <div class="modal-header">
+                <h2>Tasting Proposal Template</h2>
+                <button class="modal-close" onclick="closeTastingModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="flex-direction: row; gap: 24px; padding: 24px;">
+                <!-- Edit Fields -->
+                <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Invoice Banner Image</label>
+                        <div id="bannerPicker" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Tasting Description</label>
+                        <textarea id="tastingTplDescription" oninput="updateTastingPreview()" style="min-height: 100px;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Arrival Instructions</label>
+                        <textarea id="tastingTplArrival" oninput="updateTastingPreview()" style="min-height: 80px;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 16px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Default Location</label>
+                            <input type="text" id="tastingTplLocation" oninput="updateTastingPreview()">
+                        </div>
+                        <div class="form-group" style="flex: 0 0 120px; margin-bottom: 0;">
+                            <label>Default Fee ($)</label>
+                            <input type="text" id="tastingTplFee" oninput="updateTastingPreview()">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Default Number of Guests</label>
+                        <select id="tastingTplGuests" oninput="updateTastingPreview()" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); font-family: 'Montserrat', sans-serif; font-size: 0.9rem;">
+                            <option value="2">2 guests</option>
+                            <option value="3">3 guests</option>
+                            <option value="4">4 guests</option>
+                            <option value="5">5 guests</option>
+                            <option value="6">6 guests</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Default Internal Notes</label>
+                        <textarea id="tastingTplNotes" style="min-height: 60px;" placeholder="Internal only - not shown on invoice"></textarea>
+                    </div>
+                </div>
+
+                <!-- Live Preview -->
+                <div style="flex: 1; overflow-y: auto; background: #fff; border: 1px solid var(--border-color); font-family: 'Cormorant Garamond', serif; color: #1a1a1a;">
+                    <!-- Banner -->
+                    <div id="tastingPreviewBanner" style="height: 90px; background: url('/images/header-flowers.jpg') 30% center / cover no-repeat; display: flex; align-items: center; padding-left: 16px; position: relative;">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15);"></div>
+                        <img src="/images/logo.png" alt="Kenna Giuzio Cake" style="width: 80px; position: relative; z-index: 1;">
+                    </div>
+                    <div style="text-align: center; font-family: 'Montserrat', sans-serif; font-size: 0.7rem; color: #666; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        (206) 472-5401 | kenna@kennagiuziocake.com<br>Queen Anne, Seattle
+                    </div>
+                    <div style="padding: 20px 30px;">
+                    <div style="text-align: right; margin-bottom: 20px;">
+                        <div style="font-size: 1.4rem; font-weight: 400;">Tasting Invoice</div>
+                        <div style="font-size: 0.75rem; font-family: 'Montserrat', sans-serif; color: #999; margin-top: 4px;">PREVIEW</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+                        <div>
+                            <div style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #999;">Bill To</div>
+                            <div style="font-size: 1rem;">Sample Client</div>
+                            <div style="font-size: 0.85rem; color: #666;">client@email.com</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.65rem; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #999;">Event</div>
+                            <div style="font-size: 1rem;">Wedding - Summer 2026</div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1.1rem; font-weight: 400; margin-bottom: 8px;">Tasting Party</h3>
+                    <p id="tastingPreviewDesc" style="font-size: 0.85rem; font-family: 'Montserrat', sans-serif; font-weight: 300; color: #444; line-height: 1.6; white-space: pre-line;"></p>
+                    <p style="font-size: 0.7rem; font-style: italic; color: #888; margin-top: 10px; margin-bottom: 14px; font-family: 'Montserrat', sans-serif;">Custom cake commissions begin at $2,500. This tasting is designed to explore fit, flavor, and creative direction before moving forward.</p>
+
+                    <div style="background: #faf8f5; border: 1px solid #eee; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 0.6rem; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1.5px; color: #999; margin-bottom: 8px;">Tasting Details</div>
+                        <div style="font-size: 0.9rem;" id="tastingPreviewDate">February 20, 2026</div>
+                        <div style="font-size: 0.9rem;">12:00 PM</div>
+                        <div style="font-size: 0.9rem;" id="tastingPreviewLocation"></div>
+                        <div style="font-size: 0.6rem; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1.5px; color: #999; margin-top: 12px; margin-bottom: 6px;">Arrival</div>
+                        <div id="tastingPreviewArrival" style="font-size: 0.85rem; color: #666; line-height: 1.5; font-family: 'Montserrat', sans-serif; font-weight: 300; white-space: pre-line;"></div>
+                    </div>
+
+                    <div style="text-align: right; font-size: 1.1rem; margin-bottom: 16px;">$<span id="tastingPreviewFee">250</span></div>
+
+                    <div style="border-top: 1px solid #eee; padding-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
+                            <span>Subtotal</span>
+                            <span>$<span id="tastingPreviewSubtotal">250.00</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #999; margin-bottom: 6px;">
+                            <span>Processing Fee (3.4%)</span>
+                            <span>$<span id="tastingPreviewProcessing">8.50</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 400; border-top: 1px solid #1a1a1a; padding-top: 10px;">
+                            <span>Total</span>
+                            <span>$<span id="tastingPreviewTotal">258.50</span></span>
+                        </div>
+                    </div>
+                    </div><!-- close padding div -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="resetTastingTemplate()">Reset to Default</button>
+                <div class="modal-footer-right">
+                    <button class="btn" onclick="closeTastingModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveTastingTemplate()">Save as Default</button>
+                </div>
             </div>
         </div>
     </div>
@@ -674,15 +820,13 @@ Kenna`
                 subject: 'Tasting Options for Your {eventType}',
                 body: `Hi {firstName},
 
-I'd love to schedule your tasting consultation! Here are a few dates and times that work for me:
+I'd love to schedule your tasting consultation! Here is a date and time that works for me:
 
-OPTION 1: [Click to select date/time]
-OPTION 2: [Click to select date/time]
-OPTION 3: [Click to select date/time]
+[Click to select date/time]
 
 Tastings typically last about an hour. We'll sample flavors, discuss your design vision, and I'll answer any questions you have.
 
-Please let me know which option works best for you, or if none of these work, share a few times that fit your schedule and I'll do my best to accommodate.
+Please let me know if this works for you, or if you'd prefer a different time, share a few times that fit your schedule and I'll do my best to accommodate.
 
 Looking forward to meeting you!
 
@@ -691,25 +835,32 @@ Kenna`
             },
             'tasting-confirmation': {
                 name: 'Tasting Confirmation',
-                description: 'Confirm tasting appointment details',
+                description: 'Combined tasting confirmation + payment receipt (sent automatically after payment)',
                 subject: 'Tasting Confirmed - {tastingDate}',
-                body: `Hi {firstName},
+                body: `Dear {firstName},
 
-Your tasting is confirmed for {tastingDate} at {tastingTime}!
+Thank you for your payment of {amount}. Your tasting is confirmed!
+
+YOUR TASTING:
+Date: {tastingDate} at {tastingTime}
+Location: Queen Anne, Seattle
+Duration: Approximately 1 hour
 
 WHAT TO EXPECT:
 - Sample a variety of cake flavors and fillings
 - Discuss your design vision and inspiration
 - Review timeline and logistics
-- Duration: approximately 1 hour
 
-LOCATION:
-[Studio Address]
+Feel free to bring any inspiration photos, color swatches, or your event team members.
 
-Feel free to bring any inspiration photos, color swatches, or your event team members. I'm looking forward to meeting you!
+If you have any questions before your tasting, don't hesitate to reach out.
 
 See you soon,
-Kenna`
+Kenna
+
+Kenna Giuzio Cake
+(206) 472-5401
+kenna@kennagiuziocake.com`
             },
             'proposal-delivery': {
                 name: 'Proposal Ready',
@@ -792,6 +943,30 @@ So excited for your big day!
 
 Warmly,
 Kenna`
+            },
+            'tasting-invoice-email': {
+                name: 'Tasting Invoice Email',
+                description: 'Branded email sent with tasting invoice link',
+                subject: 'Your Tasting Invitation - {tastingDate}',
+                body: `Dear {firstName},
+
+Thank you so much for reaching out! I'm thrilled at the opportunity to create something beautiful for your {eventType}.
+
+I'd love to invite you to a tasting party at my studio where we can sample cakes, explore designs, and discuss your vision together.
+
+Your tasting is scheduled for:
+{tastingDate} at {tastingTime}
+
+Click below to view your invoice to schedule your tasting.
+
+I can't wait to meet you and hear all about what you're dreaming of!
+
+Warmly,
+Kenna
+
+Kenna Giuzio Cake
+(206) 472-5401
+kenna@kennagiuziocake.com`
             }
         };
 
@@ -811,15 +986,21 @@ Kenna`
             return defaultTemplates[id];
         }
 
+        function getVersionLabel(custom) {
+            if (!custom) return '<span style="color:var(--text-muted); font-size:0.7rem;">Original Default</span>';
+            const v = custom.version || 1;
+            return `<span style="color:#b5956a; font-size:0.7rem;">Version ${v}</span>`;
+        }
+
         // Render template list
         function renderTemplates() {
             const container = document.getElementById('templateList');
             container.innerHTML = Object.entries(defaultTemplates).map(([id, t]) => {
-                const isCustomized = customTemplates[id];
+                const custom = customTemplates[id];
                 return `
                     <div class="template-item">
                         <div class="template-info">
-                            <h3>${t.name}${isCustomized ? ' <span style="color:#b5956a; font-size:0.7rem;">customized</span>' : ''}</h3>
+                            <h3>${t.name} ${getVersionLabel(custom)}</h3>
                             <p>${t.description}</p>
                         </div>
                         <div class="template-actions">
@@ -878,7 +1059,8 @@ Kenna`
             const subject = document.getElementById('editSubject').value;
             const body = document.getElementById('editBody').value;
 
-            customTemplates[currentTemplateId] = { subject, body };
+            const currentVersion = (customTemplates[currentTemplateId]?.version || 0) + 1;
+            customTemplates[currentTemplateId] = { subject, body, version: currentVersion };
             localStorage.setItem('kgc_email_templates', JSON.stringify(customTemplates));
 
             document.getElementById('confirmModal').style.display = 'none';
@@ -963,6 +1145,157 @@ Kenna`
 
         // Apply draggable to edit modal
         makeDraggable(document.querySelector('#editModal .modal'));
+
+        // ===== Tasting Proposal Template =====
+        const tastingDefaults = {
+            description: 'A bespoke tasting party and design consultation for you and your guests at my studio during which we will sample cakes, review designs and discuss your vision.',
+            arrival: 'The studio entrance is on the W 3rd Ave side of the house.\nI\'ll meet you there! At the tall white gate in front of my blue studio door.',
+            location: 'Queen Anne Studio, Seattle',
+            fee: '250',
+            guests: '2',
+            notes: '',
+            bannerImage: '/images/header-flowers.jpg'
+        };
+
+        // Available banner images
+        const bannerImages = [
+            { src: '/images/header-flowers.jpg', label: 'Flowers' },
+            { src: '/images/hero.jpg', label: 'Hero' },
+            { src: '/images/cake-01.jpg', label: 'Cake 1' },
+            { src: '/images/cake-02.jpg', label: 'Cake 2' },
+            { src: '/images/cake-03.jpg', label: 'Cake 3' },
+            { src: '/images/cake-04.jpg', label: 'Cake 4' },
+            { src: '/images/cake-05.jpg', label: 'Cake 5' },
+            { src: '/images/cake-06.jpg', label: 'Cake 6' },
+            { src: '/images/cake-07.jpg', label: 'Cake 7' },
+            { src: '/images/cake-08.jpg', label: 'Cake 8' },
+            { src: '/images/cake-09.jpg', label: 'Cake 9' },
+            { src: '/images/cake-10.jpg', label: 'Cake 10' },
+        ];
+
+        let selectedBanner = tastingDefaults.bannerImage;
+
+        function getTastingTemplate() {
+            const saved = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
+            return {
+                description: saved.description || tastingDefaults.description,
+                arrival: saved.arrival || tastingDefaults.arrival,
+                location: saved.location || tastingDefaults.location,
+                fee: saved.fee || tastingDefaults.fee,
+                guests: saved.guests || tastingDefaults.guests,
+                notes: saved.notes || tastingDefaults.notes,
+                bannerImage: saved.bannerImage || tastingDefaults.bannerImage
+            };
+        }
+
+        function renderBannerPicker(currentBanner) {
+            const container = document.getElementById('bannerPicker');
+            container.innerHTML = bannerImages.map(img => {
+                const isSelected = img.src === currentBanner;
+                return `<div onclick="selectBanner('${img.src}')" style="width: 70px; height: 45px; background: url('${img.src}') center / cover no-repeat; cursor: pointer; border: 2px solid ${isSelected ? 'var(--accent-gold)' : 'transparent'}; opacity: ${isSelected ? '1' : '0.6'}; transition: all 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${isSelected ? '1' : '0.6'}'"></div>`;
+            }).join('');
+        }
+
+        function selectBanner(src) {
+            selectedBanner = src;
+            renderBannerPicker(src);
+            document.getElementById('tastingPreviewBanner').style.backgroundImage = `url('${src}')`;
+        }
+
+        function openTastingModal() {
+            const tpl = getTastingTemplate();
+            document.getElementById('tastingTplDescription').value = tpl.description;
+            document.getElementById('tastingTplArrival').value = tpl.arrival;
+            document.getElementById('tastingTplLocation').value = tpl.location;
+            document.getElementById('tastingTplFee').value = tpl.fee;
+            document.getElementById('tastingTplGuests').value = tpl.guests;
+            document.getElementById('tastingTplNotes').value = tpl.notes;
+            selectedBanner = tpl.bannerImage;
+            renderBannerPicker(selectedBanner);
+            document.getElementById('tastingPreviewBanner').style.backgroundImage = `url('${selectedBanner}')`;
+            updateTastingPreview();
+
+            const overlay = document.getElementById('tastingModal');
+            const modal = overlay.querySelector('.modal');
+            modal.style.left = '50%';
+            modal.style.top = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+            overlay.style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        function closeTastingModal() {
+            document.getElementById('tastingModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        function updateTastingPreview() {
+            const desc = document.getElementById('tastingTplDescription').value;
+            const arrival = document.getElementById('tastingTplArrival').value;
+            const location = document.getElementById('tastingTplLocation').value;
+            const fee = parseFloat(document.getElementById('tastingTplFee').value) || 0;
+
+            document.getElementById('tastingPreviewDesc').textContent = desc;
+            document.getElementById('tastingPreviewArrival').textContent = arrival;
+            document.getElementById('tastingPreviewLocation').textContent = location;
+            document.getElementById('tastingPreviewFee').textContent = fee.toFixed(0);
+
+            const subtotal = fee;
+            const processing = Math.round(fee * 0.034 * 100) / 100;
+            const total = subtotal + processing;
+            document.getElementById('tastingPreviewSubtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('tastingPreviewProcessing').textContent = processing.toFixed(2);
+            document.getElementById('tastingPreviewTotal').textContent = total.toFixed(2);
+        }
+
+        function saveTastingTemplate() {
+            const existing = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || '{}');
+            const currentVersion = (existing.version || 0) + 1;
+            const tpl = {
+                description: document.getElementById('tastingTplDescription').value,
+                arrival: document.getElementById('tastingTplArrival').value,
+                location: document.getElementById('tastingTplLocation').value,
+                fee: document.getElementById('tastingTplFee').value,
+                guests: document.getElementById('tastingTplGuests').value,
+                notes: document.getElementById('tastingTplNotes').value,
+                bannerImage: selectedBanner,
+                version: currentVersion
+            };
+            localStorage.setItem('kgc_tasting_defaults', JSON.stringify(tpl));
+            closeTastingModal();
+            updateTastingCustomBadge();
+        }
+
+        function resetTastingTemplate() {
+            if (!confirm('Reset tasting proposal to factory defaults?')) return;
+            localStorage.removeItem('kgc_tasting_defaults');
+            const tpl = tastingDefaults;
+            document.getElementById('tastingTplDescription').value = tpl.description;
+            document.getElementById('tastingTplArrival').value = tpl.arrival;
+            document.getElementById('tastingTplLocation').value = tpl.location;
+            document.getElementById('tastingTplFee').value = tpl.fee;
+            document.getElementById('tastingTplGuests').value = tpl.guests;
+            document.getElementById('tastingTplNotes').value = tpl.notes;
+            selectedBanner = tpl.bannerImage;
+            renderBannerPicker(selectedBanner);
+            document.getElementById('tastingPreviewBanner').style.backgroundImage = `url('${selectedBanner}')`;
+            updateTastingPreview();
+            updateTastingCustomBadge();
+        }
+
+        function updateTastingCustomBadge() {
+            const saved = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || 'null');
+            const badge = document.getElementById('tastingCustomBadge');
+            if (!saved) {
+                badge.innerHTML = '<span style="color:var(--text-muted);">Original Default</span>';
+            } else {
+                const v = saved.version || 1;
+                badge.textContent = 'Version ' + v;
+            }
+        }
+
+        updateTastingCustomBadge();
+        makeDraggable(document.querySelector('#tastingModal .modal'));
     </script>
 </body>
 </html>

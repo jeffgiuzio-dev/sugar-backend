@@ -459,6 +459,38 @@
             font-size: 0.85rem;
         }
 
+        .design-narrative .narrative-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .ai-polish-btn {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #b5956a, #d4b896);
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-polish-btn:hover {
+            background: linear-gradient(135deg, #a0825c, #c4a880);
+            transform: translateY(-1px);
+        }
+
+        .ai-polish-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Sketch Gallery */
         .sketch-gallery {
             display: flex;
@@ -1526,8 +1558,11 @@
                     </div>
                     <input type="file" id="sketchInputBase" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'base')" multiple>
                     <div class="design-narrative">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-input" id="baseNarrative" rows="3" placeholder="Describe the base cake design..." oninput="updatePreview()"></textarea>
+                        <div class="narrative-header">
+                            <label class="form-label" style="margin-bottom:0">Description</label>
+                            <button class="ai-polish-btn" onclick="polishNarrative('baseNarrative', this)">Polish with AI</button>
+                        </div>
+                        <textarea class="form-input" id="baseNarrative" rows="3" placeholder="Type rough notes about the cake design, then click 'Polish with AI'..." oninput="updatePreview()"></textarea>
                     </div>
                 </div>
 
@@ -1547,8 +1582,11 @@
                     </div>
                     <input type="file" id="sketchInputOption1" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'option1')" multiple>
                     <div class="design-narrative">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-input" id="option1Narrative" rows="3" placeholder="Describe option 1..." oninput="updatePreview()"></textarea>
+                        <div class="narrative-header">
+                            <label class="form-label" style="margin-bottom:0">Description</label>
+                            <button class="ai-polish-btn" onclick="polishNarrative('option1Narrative', this)">Polish with AI</button>
+                        </div>
+                        <textarea class="form-input" id="option1Narrative" rows="3" placeholder="Type rough notes about option 2, then click 'Polish with AI'..." oninput="updatePreview()"></textarea>
                     </div>
                 </div>
 
@@ -1568,8 +1606,11 @@
                     </div>
                     <input type="file" id="sketchInputOption2" accept="image/*" style="display:none" onchange="handleSketchUpload(this, 'option2')" multiple>
                     <div class="design-narrative">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-input" id="option2Narrative" rows="3" placeholder="Describe option 2..." oninput="updatePreview()"></textarea>
+                        <div class="narrative-header">
+                            <label class="form-label" style="margin-bottom:0">Description</label>
+                            <button class="ai-polish-btn" onclick="polishNarrative('option2Narrative', this)">Polish with AI</button>
+                        </div>
+                        <textarea class="form-input" id="option2Narrative" rows="3" placeholder="Type rough notes about option 3, then click 'Polish with AI'..." oninput="updatePreview()"></textarea>
                     </div>
                 </div>
             </div>
@@ -1811,6 +1852,43 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                 console.log('Proposal builder: Loaded', clients.length, 'clients from API');
             } catch (error) {
                 console.log('Proposal builder: Using localStorage fallback:', error.message);
+            }
+        }
+
+        // AI Narrative Polish
+        async function polishNarrative(textareaId, btn) {
+            const textarea = document.getElementById(textareaId);
+            const notes = textarea.value.trim();
+            if (!notes) {
+                alert('Type some rough notes first, then click Polish with AI.');
+                return;
+            }
+
+            const eventType = document.getElementById('eventType')?.value || 'Wedding';
+            const originalText = btn.textContent;
+            btn.textContent = 'Polishing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/ai/generate-narrative`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes, eventType })
+                });
+
+                const data = await response.json();
+                if (data.success && data.narrative) {
+                    textarea.value = data.narrative;
+                    updatePreview();
+                } else {
+                    alert(data.error || 'Failed to generate narrative.');
+                }
+            } catch (err) {
+                console.error('AI polish error:', err);
+                alert('Could not reach the AI service. Check your connection.');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         }
 
@@ -2839,6 +2917,39 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
             window.location.href = '/admin/';
         }
 
+        // ============================================
+        // EMAIL PREVIEW + SEND FLOW
+        // ============================================
+
+        function buildBrandedEmailHtml(bodyText, clientData, welcomeLink) {
+            const paragraphs = bodyText.split('\n\n').map(p =>
+                '<p style="margin:0 0 16px 0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.7; color:#333333;">' +
+                p.replace(/\n/g, '<br>') + '</p>'
+            ).join('');
+
+            const processedBody = paragraphs
+                .replace(/\[PROPOSAL LINK\]/g, '')
+                .replace(/\{proposalLink\}/g, '');
+
+            return '<div style="background-color:#f5f3f0; padding:30px 20px;">' +
+                '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff;">' +
+                '<tr><td style="height:4px; background-color:#b5956a;"></td></tr>' +
+                '<tr><td align="center" style="padding:30px 40px 10px;">' +
+                '<img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" width="140" style="display:block;">' +
+                '</td></tr>' +
+                '<tr><td style="padding:20px 40px 10px;">' + processedBody + '</td></tr>' +
+                '<tr><td align="center" style="padding:10px 40px 30px;">' +
+                '<table role="presentation" cellpadding="0" cellspacing="0">' +
+                '<tr><td style="background-color:#b5956a; border-radius:4px; padding:14px 32px;">' +
+                '<a href="' + welcomeLink + '" style="color:#ffffff; text-decoration:none; font-family:Arial,Helvetica,sans-serif; font-size:13px; letter-spacing:1.5px; font-weight:500; text-transform:uppercase;">VIEW YOUR PROPOSAL</a>' +
+                '</td></tr></table></td></tr>' +
+                '<tr><td style="padding:0 40px;"><hr style="border:none; border-top:1px solid #eeeeee; margin:0;"></td></tr>' +
+                '<tr><td align="center" style="padding:24px 40px 30px;">' +
+                '<p style="margin:0; font-family:Georgia,serif; font-size:13px; color:#999999; line-height:1.6;">' +
+                'Kenna Giuzio Cake<br>(206) 472-5401 &nbsp;|&nbsp; kenna@kennagiuziocake.com<br>Queen Anne, Seattle</p>' +
+                '</td></tr></table></div>';
+        }
+
         function sendProposal() {
             const email = document.getElementById('clientEmail').value;
             if (!email) {
@@ -2846,23 +2957,251 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
                 return;
             }
 
-            // Save the draft first
+            // Save draft first
             saveProposalSilent();
+            openEmailPreview();
+        }
 
-            // Update client status to "proposal"
-            const clientId = new URLSearchParams(window.location.search).get('clientId');
-            if (clientId) {
+        function openEmailPreview() {
+            const clientIdVal = new URLSearchParams(window.location.search).get('clientId');
+            const clientName = document.getElementById('clientName').value || '';
+            const clientEmail = document.getElementById('clientEmail').value || '';
+            const eventType = document.getElementById('eventType').value || 'Wedding';
+            const eventDate = document.getElementById('eventDate').dataset?.value || '';
+
+            // Generate proposal number
+            const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+            const existingNumber = drafts[clientIdVal]?.proposalNumber;
+            const proposalNumber = existingNumber || (new Date().getFullYear() + '-' + String(Date.now()).slice(-4));
+
+            // Build welcome link
+            const welcomeParams = new URLSearchParams({ clientId: clientIdVal });
+            const baseUrl = window.location.origin;
+            const welcomeLink = baseUrl + '/welcome-proposal.html?' + welcomeParams.toString();
+
+            // Load template
+            const customTemplates = JSON.parse(localStorage.getItem('kgc_email_templates') || '{}');
+            const defaultTemplate = {
+                subject: 'Your Custom Proposal is Ready!',
+                body: 'Hi {firstName},\n\nIt was wonderful meeting you at your tasting! I\'ve put together a custom proposal for your {eventType}.\n\nYou can view your proposal here:\n[PROPOSAL LINK]\n\nThe proposal includes:\n- Design details based on our conversation\n- Itemized pricing\n- Timeline and delivery information\n\nTo secure your date, a 50% deposit is required. Once received, your {eventDate} date will be officially booked!\n\nPlease let me know if you have any questions or would like to make any adjustments.\n\nExcited to create this for you!\n\nWarmly,\nKenna'
+            };
+            const template = customTemplates['proposal-delivery']
+                ? { ...defaultTemplate, ...customTemplates['proposal-delivery'] }
+                : defaultTemplate;
+
+            // Replace placeholders
+            const firstName = clientName.split(' ')[0] || 'there';
+            const eventDateFormatted = eventDate ? new Date(eventDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'your upcoming event';
+
+            const subject = template.subject
+                .replace(/\{firstName\}/g, firstName)
+                .replace(/\{eventType\}/g, eventType)
+                .replace(/\{eventDate\}/g, eventDateFormatted);
+
+            const body = template.body
+                .replace(/\{firstName\}/g, firstName)
+                .replace(/\{eventType\}/g, eventType)
+                .replace(/\{eventDate\}/g, eventDateFormatted);
+
+            // Check for saved edits
+            const hasEdits = window._emailData && window._emailData.clientId === clientIdVal && window._emailData.editedBody;
+            const finalSubject = hasEdits ? window._emailData.editedSubject : subject;
+            const finalBody = hasEdits ? window._emailData.editedBody : body;
+
+            // Store data for send
+            window._emailData = {
+                to: clientEmail,
+                welcomeLink: welcomeLink,
+                clientId: clientIdVal,
+                clientName: clientName,
+                clientEmail: clientEmail,
+                eventType: eventType,
+                eventDate: eventDate,
+                proposalNumber: proposalNumber,
+                editedSubject: hasEdits ? window._emailData.editedSubject : null,
+                editedBody: hasEdits ? window._emailData.editedBody : null
+            };
+
+            // Populate modal
+            document.getElementById('emailTo').value = clientEmail;
+            document.getElementById('emailSubject').value = finalSubject;
+            document.getElementById('emailBodyText').value = finalBody;
+
+            // Build HTML preview
+            const htmlEmail = buildBrandedEmailHtml(finalBody, { name: clientName }, welcomeLink);
+            document.getElementById('emailPreviewFrame').innerHTML = htmlEmail;
+
+            // Reset state
+            document.getElementById('emailSendStatus').textContent = '';
+            document.getElementById('emailSendBtn').disabled = false;
+            document.getElementById('emailSendBtn').textContent = 'Send Email';
+            document.getElementById('emailSendBtn').style.background = '#b5956a';
+            document.getElementById('emailBodyEditor').style.display = 'none';
+
+            // Show modal
+            document.getElementById('emailModalOverlay').style.display = 'flex';
+        }
+
+        async function sendProposalEmail() {
+            const data = window._emailData;
+            if (!data) return;
+
+            const btn = document.getElementById('emailSendBtn');
+            const status = document.getElementById('emailSendStatus');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            status.textContent = '';
+
+            try {
+                // Update client status to "proposal"
                 const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-                const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+                const clientIndex = clients.findIndex(c => String(c.id) === String(data.clientId));
                 if (clientIndex !== -1 && clients[clientIndex].status !== 'Signed' && clients[clientIndex].status !== 'booked') {
                     clients[clientIndex].status = 'proposal';
                     clients[clientIndex].proposalSentAt = new Date().toISOString();
                     localStorage.setItem('kgc_clients', JSON.stringify(clients));
                 }
-            }
 
-            // Open the client view in a new tab (same as preview but simulates what client sees)
-            previewProposal();
+                // Save proposal to backend API
+                try {
+                    const proposalDrafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                    const draft = proposalDrafts[data.clientId];
+                    if (draft) {
+                        await fetch(`${API_BASE_URL}/api/proposals`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                client_id: data.clientId,
+                                proposal_number: data.proposalNumber,
+                                status: 'sent',
+                                data: draft
+                            })
+                        });
+                    }
+                } catch (apiErr) {
+                    console.log('API proposal save failed:', apiErr.message);
+                }
+
+                // Save invoice record
+                const invoiceNumber = 'PI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+                const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                invoices.push({
+                    id: invoiceNumber,
+                    type: 'proposal',
+                    clientId: data.clientId,
+                    clientName: data.clientName,
+                    clientEmail: data.clientEmail,
+                    status: 'sent',
+                    sentAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    eventType: data.eventType,
+                    eventDate: data.eventDate
+                });
+                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+
+                // Send the email
+                const finalSubject = document.getElementById('emailSubject').value;
+                const finalBody = document.getElementById('emailBodyText').value;
+                const finalHtml = buildBrandedEmailHtml(finalBody, { name: data.clientName }, data.welcomeLink);
+
+                const response = await fetch(`${API_BASE_URL}/api/gmail/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: data.to,
+                        subject: finalSubject,
+                        message: finalBody,
+                        html: finalHtml,
+                        client_id: data.clientId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    status.style.color = '#5a6b52';
+                    status.textContent = 'Sent successfully!';
+                    btn.textContent = 'Sent';
+                    btn.style.background = '#5a6b52';
+
+                    // Log to communications
+                    const comms = JSON.parse(localStorage.getItem('kgc_communications') || '[]');
+                    comms.push({
+                        id: Date.now().toString(),
+                        type: 'email',
+                        category: 'proposal',
+                        clientId: data.clientId,
+                        clientName: data.clientName,
+                        clientEmail: data.to,
+                        subject: finalSubject,
+                        message: finalBody,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('kgc_communications', JSON.stringify(comms));
+
+                    // Save proposal email to client's files
+                    const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + data.clientId) || '{}');
+                    portalData.files = portalData.files || [];
+                    portalData.files = portalData.files.filter(f => f.category !== 'proposal-email');
+                    portalData.files.push({
+                        name: 'Proposal Email - ' + data.proposalNumber,
+                        type: 'text/html',
+                        data: data.welcomeLink,
+                        category: 'proposal-email',
+                        uploadedAt: new Date().toISOString()
+                    });
+                    localStorage.setItem('kgc_portal_' + data.clientId, JSON.stringify(portalData));
+
+                    // Also update client status on API
+                    try {
+                        await fetch(`${API_BASE_URL}/api/clients/${data.clientId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'proposal' })
+                        });
+                    } catch (e) { console.log('API client status update failed:', e.message); }
+
+                    window._emailData = null;
+
+                    setTimeout(() => {
+                        closeEmailModal();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Send failed');
+                }
+            } catch (err) {
+                status.style.color = '#dc3545';
+                status.textContent = 'Failed: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Retry Send';
+                btn.style.background = '#b5956a';
+            }
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModalOverlay').style.display = 'none';
+        }
+
+        function toggleBodyEditor() {
+            const editor = document.getElementById('emailBodyEditor');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateEmailPreview() {
+            const body = document.getElementById('emailBodyText').value;
+            const data = window._emailData;
+            if (!data) return;
+
+            // Save edited body for persistence
+            data.editedSubject = document.getElementById('emailSubject').value;
+            data.editedBody = body;
+
+            // Rebuild HTML preview
+            const htmlEmail = buildBrandedEmailHtml(body, { name: data.clientName }, data.welcomeLink);
+            document.getElementById('emailPreviewFrame').innerHTML = htmlEmail;
+
+            // Close editor
+            document.getElementById('emailBodyEditor').style.display = 'none';
         }
 
         function previewProposal() {
@@ -4144,6 +4483,52 @@ By accepting this proposal, you agree to these terms and conditions.</textarea>
     </script>
 
     <!-- Calendar Popup -->
+    <!-- Email Preview Modal -->
+    <div id="emailModalOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:#fff; width:720px; max-width:95vw; max-height:90vh; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 4px 30px rgba(0,0,0,0.2);">
+
+            <!-- Modal Header -->
+            <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; margin:0;">Send Proposal</h2>
+                <button onclick="closeEmailModal()" style="background:none; border:none; font-size:1.5rem; color:#999; cursor:pointer; padding:0; line-height:1;">&times;</button>
+            </div>
+
+            <!-- To / Subject fields -->
+            <div style="padding:16px 24px; border-bottom:1px solid #eee;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">TO</label>
+                    <input type="email" id="emailTo" readonly style="flex:1; padding:8px 12px; border:1px solid #eee; background:#fafafa; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; color:#333; border-radius:4px;">
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">SUBJECT</label>
+                    <input type="text" id="emailSubject" style="flex:1; padding:8px 12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; color:#333; border-radius:4px;">
+                </div>
+            </div>
+
+            <!-- Email Preview -->
+            <div style="flex:1; overflow-y:auto; padding:24px; background:#f0eeeb; min-height:300px; max-height:50vh;">
+                <div id="emailPreviewFrame" style="background:#fff; max-width:600px; margin:0 auto; box-shadow:0 1px 8px rgba(0,0,0,0.08); border-radius:2px;"></div>
+            </div>
+
+            <!-- Body editor (toggled) -->
+            <div id="emailBodyEditor" style="display:none; padding:16px 24px; border-top:1px solid #eee; background:#fafafa;">
+                <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999;">EDIT EMAIL BODY</label>
+                <textarea id="emailBodyText" style="width:100%; min-height:180px; padding:12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; margin-top:8px; resize:vertical; border-radius:4px; box-sizing:border-box;"></textarea>
+                <button onclick="updateEmailPreview()" style="margin-top:8px; padding:6px 16px; background:#b5956a; color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer;">Update Preview</button>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#fafafa;">
+                <button onclick="toggleBodyEditor()" style="padding:6px 16px; background:none; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#666; cursor:pointer;">Edit Body</button>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <span id="emailSendStatus" style="font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;"></span>
+                    <button onclick="closeEmailModal()" style="padding:8px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; color:#666; cursor:pointer;">Cancel</button>
+                    <button onclick="sendProposalEmail()" id="emailSendBtn" style="padding:8px 24px; background:#b5956a; color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; min-width:120px;">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="calendar-popup-overlay" id="calendarPopup">
         <div class="calendar-popup">
             <div class="calendar-popup-header">

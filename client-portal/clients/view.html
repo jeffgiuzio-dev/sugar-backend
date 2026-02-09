@@ -2349,41 +2349,70 @@
     <!-- API Client -->
     <!-- Reply Email Modal -->
     <div class="modal-overlay" id="replyEmailModal" onclick="if(event.target===this) closeReplyModal()" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
-        <div id="composeModalInner" style="background:#fff; width:600px; height:70vh; min-width:400px; min-height:300px; border-radius:8px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.15); display:flex; flex-direction:column; position:absolute; resize:both;">
+        <div id="composeModalInner" style="background:#fff; width:720px; height:80vh; min-width:400px; min-height:300px; border-radius:8px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.15); display:flex; flex-direction:column; position:absolute; resize:both;">
             <div id="composeModalHeader" style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; cursor:move; user-select:none; flex-shrink:0;">
                 <h2 id="composeModalTitle" style="font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; color:#1a1a1a;">Compose Email</h2>
                 <button onclick="closeReplyModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:#999;">&times;</button>
             </div>
-            <div style="padding:24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; overscroll-behavior:contain;">
-                <div style="margin-bottom:16px; flex-shrink:0;">
-                    <label style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; display:block; margin-bottom:6px;">To</label>
-                    <div id="replyTo" style="padding:10px 12px; background:#f9f7f4; border-radius:4px; color:#333;"></div>
+
+            <!-- To / Subject fields -->
+            <div style="padding:16px 24px; border-bottom:1px solid #eee; flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">TO</label>
+                    <div id="replyTo" style="flex:1; padding:8px 12px; background:#fafafa; border:1px solid #eee; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.85rem; color:#333;"></div>
                 </div>
-                <div style="margin-bottom:16px; flex-shrink:0;">
-                    <label style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; display:block; margin-bottom:6px;">Subject</label>
-                    <input type="text" id="replySubject" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem;">
-                </div>
-                <!-- Message area with optional side panel for tasting dates -->
-                <div id="messageAreaWrapper" style="flex:1; display:flex; gap:16px; min-height:0;">
-                    <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
-                        <label style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; display:block; margin-bottom:6px; flex-shrink:0;">Message</label>
-                        <textarea id="replyMessage" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; resize:none; flex:1; min-height:150px;" placeholder="Type your message..."></textarea>
-                    </div>
-                    <!-- Date slots side panel for tasting options template -->
-                    <div id="tastingDateSlots" style="display:none; width:180px; flex-shrink:0; padding:12px; background:#faf8f5; border-radius:6px; border:1px solid #e8e0d5;">
-                        <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#b5956a; margin-bottom:10px; font-weight:500;">Tasting Dates</div>
-                        <div id="dateSlotsList" style="display:flex; flex-direction:column; gap:6px;"></div>
-                        <button onclick="addTastingDateSlot()" style="margin-top:8px; width:100%; padding:6px 8px; background:transparent; border:1px dashed #cbb896; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.65rem; color:#b5956a;">+ Add Option</button>
-                    </div>
-                </div>
-                <div id="originalMessageSection" style="padding-top:12px; border-top:1px solid #eee; margin-top:16px; flex-shrink:0;">
-                    <div style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; margin-bottom:8px;">Original Message</div>
-                    <div id="replyOriginal" style="padding:12px; background:#f9f7f4; border-radius:4px; font-size:0.85rem; color:#666; max-height:120px; overflow-y:auto; white-space:pre-wrap;"></div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999; min-width:55px;">SUBJECT</label>
+                    <input type="text" id="replySubject" style="flex:1; padding:8px 12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; color:#333; border-radius:4px;">
                 </div>
             </div>
-            <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#faf8f5; flex-shrink:0;">
-                <button onclick="closeReplyModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif;">Cancel</button>
-                <button id="composeSendBtn" onclick="sendReplyEmail()" style="padding:10px 20px; background:#b5956a; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif;">Send</button>
+
+            <!-- Content area: flex row to allow sidebar alongside either mode -->
+            <div id="composeContentArea" style="flex:1; display:flex; min-height:0; overflow:hidden;">
+
+                <!-- Plain text compose (for replies / non-branded) -->
+                <div id="plainTextCompose" style="padding:24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; overscroll-behavior:contain;">
+                    <div id="messageAreaWrapper" style="flex:1; display:flex; gap:16px; min-height:0;">
+                        <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                            <label style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; display:block; margin-bottom:6px; flex-shrink:0;">Message</label>
+                            <textarea id="replyMessage" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; resize:none; flex:1; min-height:150px;" placeholder="Type your message..."></textarea>
+                        </div>
+                    </div>
+                    <div id="originalMessageSection" style="padding-top:12px; border-top:1px solid #eee; margin-top:16px; flex-shrink:0;">
+                        <div style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#999; margin-bottom:8px;">Original Message</div>
+                        <div id="replyOriginal" style="padding:12px; background:#f9f7f4; border-radius:4px; font-size:0.85rem; color:#666; max-height:120px; overflow-y:auto; white-space:pre-wrap;"></div>
+                    </div>
+                </div>
+
+                <!-- Branded HTML preview (for template emails) -->
+                <div id="brandedPreviewSection" style="display:none; flex:1; overflow-y:auto; padding:24px; background:#f0eeeb; min-height:300px;">
+                    <div id="brandedPreviewFrame" style="background:#fff; max-width:600px; margin:0 auto; box-shadow:0 1px 8px rgba(0,0,0,0.08); border-radius:2px;"></div>
+                </div>
+
+                <!-- Date slots side panel for tasting options template (shared, sits alongside either mode) -->
+                <div id="tastingDateSlots" style="display:none; width:180px; flex-shrink:0; padding:12px; background:#faf8f5; border-right:1px solid #e8e0d5; border-left:1px solid #e8e0d5; overflow-y:auto;">
+                    <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#b5956a; margin-bottom:10px; font-weight:500;">Tasting Dates</div>
+                    <div id="dateSlotsList" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    <button onclick="addTastingDateSlot()" style="margin-top:8px; width:100%; padding:6px 8px; background:transparent; border:1px dashed #cbb896; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.65rem; color:#b5956a;">+ Add Option</button>
+                </div>
+
+            </div>
+
+            <!-- Body editor for branded mode (toggled) -->
+            <div id="brandedBodyEditor" style="display:none; padding:16px 24px; border-top:1px solid #eee; background:#fafafa; flex-shrink:0;">
+                <label style="font-family:'Montserrat',sans-serif; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:#999;">EDIT EMAIL BODY</label>
+                <textarea id="brandedBodyText" style="width:100%; min-height:180px; padding:12px; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:300; margin-top:8px; resize:vertical; border-radius:4px; box-sizing:border-box;"></textarea>
+                <button onclick="updateBrandedPreview()" style="margin-top:8px; padding:6px 16px; background:#b5956a; color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer;">Update Preview</button>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#faf8f5; flex-shrink:0;">
+                <button id="editBodyToggleBtn" onclick="toggleBrandedBodyEditor()" style="display:none; padding:6px 16px; background:none; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#666; cursor:pointer;">Edit Body</button>
+                <div style="display:flex; gap:12px; align-items:center; margin-left:auto;">
+                    <span id="composeSendStatus" style="font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;"></span>
+                    <button onclick="closeReplyModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif;">Cancel</button>
+                    <button id="composeSendBtn" onclick="sendReplyEmail()" style="padding:10px 20px; background:#b5956a; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif;">Send</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2595,15 +2624,13 @@ Kenna`
                 subject: 'Tasting Options for Your {eventType}',
                 body: `Hi {firstName},
 
-I'd love to schedule your tasting consultation! Here are a few dates and times that work for me:
+I'd love to schedule your tasting consultation! Here is a date and time that works for me:
 
-OPTION 1: [Click to select date/time]
-OPTION 2: [Click to select date/time]
-OPTION 3: [Click to select date/time]
+[Click to select date/time]
 
 Tastings typically last about an hour. We'll sample flavors, discuss your design vision, and I'll answer any questions you have.
 
-Please let me know which option works best for you, or if none of these work, share a few times that fit your schedule and I'll do my best to accommodate.
+Please let me know if this works for you, or if you'd prefer a different time, share a few times that fit your schedule and I'll do my best to accommodate.
 
 Looking forward to meeting you!
 
@@ -2832,6 +2859,7 @@ Kenna`
                 const clients = await getClients();
                 localStorage.setItem('kgc_clients', JSON.stringify(clients));
                 loadClient(); // Reload with API data
+                loadTeam();   // Re-render team in case client data changed
                 console.log('Client view: Loaded', clients.length, 'clients from API');
             } catch (error) {
                 console.log('Client view: Using localStorage fallback:', error.message);
@@ -3125,8 +3153,10 @@ Kenna`
             let finalDueDate = null;
             if (eventDate) {
                 const ed = new Date(eventDate + 'T00:00:00');
-                ed.setDate(ed.getDate() - 14); // 2 weeks before event
-                finalDueDate = ed.toISOString();
+                if (!isNaN(ed.getTime())) {
+                    ed.setDate(ed.getDate() - 14); // 2 weeks before event
+                    finalDueDate = ed.toISOString();
+                }
             }
 
             container.innerHTML = items.map(item => {
@@ -4008,6 +4038,23 @@ Kenna`
         const API_URL = 'https://sugar-backend-production.up.railway.app';
         let apiCommunications = []; // Cache for API communications
 
+        // Auto-sync emails from Gmail in background (quiet, no UI)
+        async function autoSyncEmails() {
+            try {
+                const response = await fetch(`${API_URL}/api/gmail/sync`, { method: 'POST' });
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.matched > 0) {
+                        console.log(`Auto-sync: ${result.matched} new emails matched to clients`);
+                        await loadCommunicationsFromAPI();
+                    }
+                }
+            } catch (err) {
+                // Silent fail — auto-sync is best-effort
+                console.log('Auto-sync skipped:', err.message);
+            }
+        }
+
         // Load communications from API
         async function loadCommunicationsFromAPI() {
             try {
@@ -4094,7 +4141,8 @@ Kenna`
                 text: '🗨',
                 call: '☏',
                 note: '○',
-                inquiry: '☺'
+                inquiry: '☺',
+                inquiry_received: '☺'
             };
 
             // Show collapsed or expanded
@@ -4104,12 +4152,8 @@ Kenna`
             const itemsHtml = displayLog.map((entry, idx) => {
                 let icon = icons[entry.type] || '•';
 
-                // Website inquiry gets smiley icon
-                if (entry.channel === 'website' || (entry.title && entry.title.includes('Inquiry'))) {
-                    icon = icons.inquiry;
-                }
-                // Keep envelope for email (direction shown in text)
-                else if (entry.type === 'email') {
+                // Email type always gets envelope icon
+                if (entry.type === 'email') {
                     icon = '✉';
                 }
 
@@ -4135,7 +4179,7 @@ Kenna`
                     const prefix = entry.direction === 'inbound' ? `<strong>Reply:</strong> ${clientName} — ` : `<strong>To:</strong> ${clientName} — `;
                     displayText = prefix + (entry.title || 'Email');
                     if (oneLiner) displayText += ' — ' + oneLiner;
-                } else if (entry.channel === 'website' || (entry.title && entry.title.includes('Inquiry'))) {
+                } else if (entry.channel === 'website' || entry.type === 'inquiry_received') {
                     // Website inquiry - show "Inquiry:" label with message
                     displayText = '<strong>Inquiry:</strong> ' + (oneLiner || entry.title || 'New inquiry');
                 } else {
@@ -4217,6 +4261,52 @@ Kenna`
 
         // Quick Communication from Event Portal
         // Send email via Gmail API
+        // Build branded HTML email matching Kenna's aesthetic
+        function buildBrandedEmailHtml(bodyText) {
+            const paragraphs = bodyText.split('\n\n').map(p =>
+                '<p style="margin:0 0 16px 0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.7; color:#333333;">' +
+                p.replace(/\n/g, '<br>') + '</p>'
+            ).join('');
+
+            return '<div style="background-color:#f5f3f0; padding:30px 20px;">' +
+                '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff;">' +
+                '<!-- Gold accent bar -->' +
+                '<tr><td style="height:4px; background-color:#b5956a;"></td></tr>' +
+                '<!-- Logo -->' +
+                '<tr><td align="center" style="padding:30px 40px 10px;">' +
+                '<img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" width="140" style="display:block;">' +
+                '</td></tr>' +
+                '<!-- Body -->' +
+                '<tr><td style="padding:20px 40px 10px;">' +
+                paragraphs +
+                '</td></tr>' +
+                '<!-- Divider -->' +
+                '<tr><td style="padding:0 40px;"><hr style="border:none; border-top:1px solid #eeeeee; margin:0;"></td></tr>' +
+                '<!-- Footer -->' +
+                '<tr><td align="center" style="padding:24px 40px 30px;">' +
+                '<p style="margin:0; font-family:Georgia,serif; font-size:13px; color:#999999; line-height:1.6;">' +
+                'Kenna Giuzio Cake<br>' +
+                '(206) 472-5401 &nbsp;|&nbsp; kenna@kennagiuziocake.com<br>' +
+                'Queen Anne, Seattle' +
+                '</p>' +
+                '</td></tr>' +
+                '</table>' +
+                '</div>';
+        }
+
+        function toggleBrandedBodyEditor() {
+            const editor = document.getElementById('brandedBodyEditor');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateBrandedPreview() {
+            const bodyText = document.getElementById('brandedBodyText').value;
+            const html = buildBrandedEmailHtml(bodyText);
+            document.getElementById('brandedPreviewFrame').innerHTML = html;
+            // Also sync to replyMessage for send
+            document.getElementById('replyMessage').value = bodyText;
+        }
+
         async function sendEmailViaAPI(to, subject, message) {
             try {
                 const response = await fetch(`${API_URL}/api/gmail/send`, {
@@ -4250,7 +4340,7 @@ Kenna`
         let tastingDateSlots = [];
         let currentSlotIndex = -1;
 
-        function openReplyModal(originalSubject, originalMessage, prefilledBody) {
+        function openReplyModal(originalSubject, originalMessage, prefilledBody, branded) {
             const client = window.currentClient;
             if (!client || !client.email) {
                 showToast('No client email available', 'warning');
@@ -4265,25 +4355,49 @@ Kenna`
             currentReplyData = {
                 to: client.email,
                 subject: subject,
-                clientName: client.name
+                clientName: client.name,
+                branded: !!branded
             };
 
             // Update modal title and button
             document.getElementById('composeModalTitle').textContent = isCompose ? 'Compose Email' : 'Reply to Email';
-            document.getElementById('composeSendBtn').textContent = isCompose ? 'Send' : 'Send Reply';
+            document.getElementById('composeSendBtn').textContent = isCompose ? 'Send Email' : 'Send Reply';
 
-            // Populate modal
+            // Populate fields
             document.getElementById('replyTo').textContent = `${client.name} <${client.email}>`;
             document.getElementById('replySubject').value = subject;
             document.getElementById('replyMessage').value = prefilledBody || '';
 
-            // Hide/show original message section
-            const originalSection = document.getElementById('originalMessageSection');
-            if (isCompose) {
-                originalSection.style.display = 'none';
+            // Reset send status
+            document.getElementById('composeSendStatus').textContent = '';
+            document.getElementById('composeSendBtn').disabled = false;
+            document.getElementById('composeSendBtn').style.background = '#b5956a';
+
+            // Toggle between branded preview and plain text compose
+            if (branded) {
+                document.getElementById('plainTextCompose').style.display = 'none';
+                document.getElementById('brandedPreviewSection').style.display = 'block';
+                document.getElementById('editBodyToggleBtn').style.display = 'inline-block';
+                document.getElementById('brandedBodyEditor').style.display = 'none';
+                document.getElementById('brandedBodyText').value = prefilledBody || '';
+
+                // Build and show HTML preview
+                const html = buildBrandedEmailHtml(prefilledBody || '');
+                document.getElementById('brandedPreviewFrame').innerHTML = html;
             } else {
-                originalSection.style.display = 'block';
-                document.getElementById('replyOriginal').textContent = originalMessage || '(No original message)';
+                document.getElementById('plainTextCompose').style.display = 'flex';
+                document.getElementById('brandedPreviewSection').style.display = 'none';
+                document.getElementById('editBodyToggleBtn').style.display = 'none';
+                document.getElementById('brandedBodyEditor').style.display = 'none';
+
+                // Hide/show original message section
+                const originalSection = document.getElementById('originalMessageSection');
+                if (isCompose) {
+                    originalSection.style.display = 'none';
+                } else {
+                    originalSection.style.display = 'block';
+                    document.getElementById('replyOriginal').textContent = originalMessage || '(No original message)';
+                }
             }
 
             // Center modal position
@@ -4308,10 +4422,15 @@ Kenna`
             document.getElementById('tastingDateSlots').style.display = 'none';
             tastingDateSlots = [];
             currentSlotIndex = -1;
+            // Reset branded preview state
+            document.getElementById('brandedPreviewSection').style.display = 'none';
+            document.getElementById('brandedBodyEditor').style.display = 'none';
+            document.getElementById('editBodyToggleBtn').style.display = 'none';
+            document.getElementById('plainTextCompose').style.display = 'flex';
             // Reset modal to default size
             const modal = document.getElementById('composeModalInner');
-            modal.style.width = '600px';
-            modal.style.height = '70vh';
+            modal.style.width = '720px';
+            modal.style.height = '80vh';
         }
 
         // Make compose modal draggable with constraints
@@ -4375,36 +4494,84 @@ Kenna`
         async function sendReplyEmail() {
             if (!currentReplyData) return;
 
-            const message = document.getElementById('replyMessage').value.trim();
+            // Get message from the right source based on mode
+            const isBranded = currentReplyData.branded;
+            const message = isBranded
+                ? document.getElementById('brandedBodyText').value.trim()
+                : document.getElementById('replyMessage').value.trim();
+
             if (!message) {
                 showToast('Please enter a message', 'warning');
                 return;
             }
 
             const subject = document.getElementById('replySubject').value.trim();
+            const btn = document.getElementById('composeSendBtn');
+            const status = document.getElementById('composeSendStatus');
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
 
             try {
+                const payload = {
+                    to: currentReplyData.to,
+                    subject: subject,
+                    message: message,
+                    client_id: clientId
+                };
+
+                // Include branded HTML if in branded mode
+                if (isBranded) {
+                    payload.html = buildBrandedEmailHtml(message);
+                }
+
                 const response = await fetch(`${API_URL}/api/gmail/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: currentReplyData.to,
-                        subject: subject,
-                        message: message,
-                        client_id: clientId
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    closeReplyModal();
-                    loadCommunicationsFromAPI();
+                    status.style.color = '#5a6b52';
+                    status.textContent = 'Sent successfully!';
+                    btn.textContent = 'Sent';
+                    btn.style.background = '#5a6b52';
+
+                    // Log to localStorage for immediate display
+                    const logs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+                    const cid = String(clientId);
+                    if (!logs[cid]) logs[cid] = [];
+                    logs[cid].unshift({
+                        type: 'email',
+                        title: subject,
+                        message: message,
+                        timestamp: new Date().toISOString(),
+                        _localOnly: true
+                    });
+                    localStorage.setItem('kgc_comm_logs', JSON.stringify(logs));
+
+                    setTimeout(async () => {
+                        closeReplyModal();
+                        await loadCommunicationsFromAPI();
+                        // Remove _localOnly entries that now exist in API data
+                        const freshLogs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+                        if (freshLogs[cid]) {
+                            freshLogs[cid] = freshLogs[cid].filter(e => !e._localOnly || e.type !== 'email');
+                            localStorage.setItem('kgc_comm_logs', JSON.stringify(freshLogs));
+                        }
+                        renderCommLog();
+                    }, 1500);
                 } else {
                     throw new Error(result.error || 'Failed to send');
                 }
             } catch (err) {
-                showToast('Error sending reply: ' + err.message, 'error');
+                status.style.color = '#c44';
+                status.textContent = 'Error: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Retry Send';
+                btn.style.background = '#b5956a';
             }
         }
 
@@ -4612,17 +4779,14 @@ Kenna`
 
             closeTemplateModal();
 
-            // Open reply modal with template content
-            openReplyModal(subject, '', body);
+            // Open reply modal with branded HTML preview
+            openReplyModal(subject, '', body, true);
 
-            // If tasting-options template, show date picker UI
+            // If tasting-options template, also show date picker sidebar
             if (templateId === 'tasting-options') {
                 setTimeout(() => {
                     initTastingDateSlots();
                 }, 100);
-            } else {
-                // Hide date slots for other templates
-                document.getElementById('tastingDateSlots').style.display = 'none';
             }
         }
 
@@ -4632,19 +4796,12 @@ Kenna`
         let tastingCalendarSelectedDate = null;
 
         function initTastingDateSlots() {
-            // Show the date slots container
+            // Show the date slots sidebar
             document.getElementById('tastingDateSlots').style.display = 'block';
 
-            // Make compose modal larger for tasting options
-            const modal = document.getElementById('composeModalInner');
-            modal.style.width = '700px';
-            modal.style.height = '80vh';
-
-            // Initialize with 3 empty slots
+            // Initialize with 1 empty slot (Kenna can add more with the + button)
             tastingDateSlots = [
-                { date: null, time: null, label: 'OPTION 1' },
-                { date: null, time: null, label: 'OPTION 2' },
-                { date: null, time: null, label: 'OPTION 3' }
+                { date: null, time: null, label: 'DATE' }
             ];
 
             renderTastingDateSlots();
@@ -4671,7 +4828,7 @@ Kenna`
                 return `
                     <div style="position:relative;">
                         <div onclick="openTastingDatePicker(${index})" style="padding:8px 10px; background:${isSelected ? '#fff' : '#f5f5f5'}; border:1px solid ${isSelected ? '#b5956a' : '#e0d8cc'}; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; transition:all 0.2s;" onmouseover="this.style.borderColor='#b5956a';this.style.background='#fff'" onmouseout="this.style.borderColor='${isSelected ? '#b5956a' : '#e0d8cc'}';this.style.background='${isSelected ? '#fff' : '#f5f5f5'}'">
-                            <div style="font-size:0.6rem; text-transform:uppercase; letter-spacing:0.5px; color:#999; margin-bottom:2px;">${slot.label}</div>
+                            ${tastingDateSlots.length > 1 ? `<div style="font-size:0.6rem; text-transform:uppercase; letter-spacing:0.5px; color:#999; margin-bottom:2px;">${slot.label}</div>` : ''}
                             <div style="font-size:0.75rem; color:${isSelected ? '#333' : '#aaa'}; font-weight:${isSelected ? '500' : '400'};">${dateDisplay}</div>
                         </div>
                         ${tastingDateSlots.length > 1 ? `<button onclick="event.stopPropagation(); removeTastingDateSlot(${index})" style="position:absolute; top:4px; right:4px; width:14px; height:14px; padding:0; background:#fff; border:1px solid #ddd; border-radius:50%; cursor:pointer; color:#999; font-size:0.6rem; line-height:12px; text-align:center;" title="Remove">&times;</button>` : ''}
@@ -4912,21 +5069,60 @@ Kenna`
             endEl.value = option ? endStr : '';
         }
 
+        function relabelTastingSlots() {
+            if (tastingDateSlots.length === 1) {
+                tastingDateSlots[0].label = 'DATE';
+            } else {
+                tastingDateSlots.forEach((slot, i) => {
+                    slot.label = `Option ${i + 1}`;
+                });
+            }
+        }
+
         function addTastingDateSlot() {
-            const nextNum = tastingDateSlots.length + 1;
-            tastingDateSlots.push({ date: null, time: null, label: `OPTION ${nextNum}` });
+            tastingDateSlots.push({ date: null, time: null, label: '' });
+            relabelTastingSlots();
+            // When going from 1→2 options, also update the intro text in the email body
+            if (tastingDateSlots.length === 2) {
+                updateIntroTextForMultipleOptions();
+            }
             renderTastingDateSlots();
             updateEmailBodyWithDates();
         }
 
         function removeTastingDateSlot(index) {
             tastingDateSlots.splice(index, 1);
-            // Renumber labels
-            tastingDateSlots.forEach((slot, i) => {
-                slot.label = `OPTION ${i + 1}`;
-            });
+            relabelTastingSlots();
+            // When going from 2→1 option, update intro text back to singular
+            if (tastingDateSlots.length === 1) {
+                updateIntroTextForSingleOption();
+            }
             renderTastingDateSlots();
             updateEmailBodyWithDates();
+        }
+
+        function updateIntroTextForMultipleOptions() {
+            const singleIntro = /Here is a date and time that works for me:/;
+            const multiIntro = 'Here are a few dates and times that work for me:';
+            const singleOutro = /Please let me know if this works for you/;
+            const multiOutro = 'Please let me know which option works best for you';
+
+            [document.getElementById('replyMessage'), document.getElementById('brandedBodyText')].forEach(el => {
+                if (!el) return;
+                el.value = el.value.replace(singleIntro, multiIntro).replace(singleOutro, multiOutro);
+            });
+        }
+
+        function updateIntroTextForSingleOption() {
+            const multiIntro = /Here are a few dates and times that work for me:/;
+            const singleIntro = 'Here is a date and time that works for me:';
+            const multiOutro = /Please let me know which option works best for you/;
+            const singleOutro = 'Please let me know if this works for you';
+
+            [document.getElementById('replyMessage'), document.getElementById('brandedBodyText')].forEach(el => {
+                if (!el) return;
+                el.value = el.value.replace(multiIntro, singleIntro).replace(multiOutro, singleOutro);
+            });
         }
 
         function formatTastingDateTime(dateStr, timeStr) {
@@ -4949,22 +5145,42 @@ Kenna`
         }
 
         function updateEmailBodyWithDates() {
-            const textarea = document.getElementById('replyMessage');
-            const body = textarea.value;
-
-            // Build the new options section
-            const optionsText = tastingDateSlots.map(slot => {
-                const dateDisplay = slot.date && slot.time
+            // Build the new options section — different format for 1 vs multiple
+            let optionsText;
+            if (tastingDateSlots.length === 1) {
+                const slot = tastingDateSlots[0];
+                optionsText = slot.date && slot.time
                     ? formatTastingDateTime(slot.date, slot.time)
                     : '[Click to select date/time]';
-                return `${slot.label}: ${dateDisplay}`;
-            }).join('\n');
+            } else {
+                optionsText = tastingDateSlots.map(slot => {
+                    const dateDisplay = slot.date && slot.time
+                        ? formatTastingDateTime(slot.date, slot.time)
+                        : '[Click to select date/time]';
+                    return `${slot.label}: ${dateDisplay}`;
+                }).join('\n');
+            }
 
-            // Replace the options section in the email body
-            const optionsRegex = /OPTION 1:.*?(?=\n\nTastings typically)/s;
+            // Match either single date line or "Option 1:" multi-line block before "Tastings typically"
+            const optionsRegex = /(?:Option \d+:.*?\n)*(?:Option \d+:.*?|(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),.*?|\[Click to select date\/time\])(?=\n\nTastings typically)/si;
 
+            // Update plain text textarea
+            const textarea = document.getElementById('replyMessage');
+            const body = textarea.value;
             if (optionsRegex.test(body)) {
                 textarea.value = body.replace(optionsRegex, optionsText);
+            }
+
+            // Also update branded body text + preview if in branded mode
+            if (currentReplyData && currentReplyData.branded) {
+                const brandedTextarea = document.getElementById('brandedBodyText');
+                const brandedBody = brandedTextarea.value;
+                if (optionsRegex.test(brandedBody)) {
+                    brandedTextarea.value = brandedBody.replace(optionsRegex, optionsText);
+                }
+                // Rebuild branded preview
+                const html = buildBrandedEmailHtml(brandedTextarea.value);
+                document.getElementById('brandedPreviewFrame').innerHTML = html;
             }
         }
 
@@ -4989,7 +5205,7 @@ Kenna`
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:#f5f0e8; border:1px solid #d4c4a8; border-left:3px solid #b5956a; cursor:pointer; transition:background 0.2s;" onclick="editPrimaryContact()" onmouseover="this.style.background='#efe5d5'" onmouseout="this.style.background='#f5f0e8'">
                         <div>
                             <div style="font-weight:400;">${client.name}</div>
-                            <div style="font-size:0.8rem; color:#b5956a;">Primary Contact</div>
+                            <div style="font-size:0.8rem; color:#b5956a;">Primary Contact${portalData.primaryRole ? ' — ' + portalData.primaryRole : ''}</div>
                             <div style="font-size:0.8rem; color:#666; margin-top:4px;">
                                 ${client.email ? `<span style="color:#666;">${client.email}</span>` : ''}
                                 ${client.email && client.phone ? ' &bull; ' : ''}
@@ -5216,9 +5432,11 @@ Kenna`
             const currentClient = window.currentClient;
 
             // Create team member entry for current primary
+            // Use their stored primaryRole, or 'Client' as default
+            const oldPrimaryRole = portalData.primaryRole || 'Client';
             const oldPrimaryAsTeam = {
                 id: Date.now(),
-                role: 'Previous Primary',
+                role: oldPrimaryRole,
                 name: currentClient.name,
                 phone: currentClient.phone,
                 email: currentClient.email,
@@ -5226,6 +5444,9 @@ Kenna`
                 instagram: currentClient.instagram || '',
                 website: currentClient.website || ''
             };
+
+            // Store the new primary's role before promoting them
+            portalData.primaryRole = newPrimary.role || '';
 
             // Update client record with new primary's info
             const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
@@ -5373,6 +5594,47 @@ Kenna`
 
         // Load from API in background
         loadClientsFromAPI();
+
+        // Sync portal data from DB (picks up Stripe payment updates)
+        async function syncPortalDataFromDB() {
+            try {
+                const resp = await fetch('https://sugar-backend-production.up.railway.app/api/portal/' + clientId);
+                const dbData = resp.ok ? await resp.json() : {};
+                if (dbData && (dbData.tasting_paid || dbData.deposit_paid || dbData.final_paid)) {
+                    const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
+                    let changed = false;
+
+                    if (dbData.tasting_paid && !portalData.tastingPaid) {
+                        portalData.tastingPaid = true;
+                        portalData.tastingPaidDate = dbData.tasting_paid_date || new Date().toISOString();
+                        changed = true;
+                    }
+                    if (dbData.deposit_paid && !portalData.depositPaid) {
+                        portalData.depositPaid = true;
+                        portalData.depositPaidDate = dbData.deposit_paid_date || new Date().toISOString();
+                        changed = true;
+                    }
+                    if (dbData.final_paid && !portalData.finalPaid) {
+                        portalData.finalPaid = true;
+                        portalData.finalPaidDate = dbData.final_paid_date || new Date().toISOString();
+                        changed = true;
+                    }
+
+                    if (changed) {
+                        localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
+                        loadAccounting();
+                        updateProgressTracker();
+                        console.log('Portal data synced from DB — payment status updated');
+                    }
+                }
+            } catch (err) {
+                console.log('Portal data sync skipped:', err.message);
+            }
+        }
+        syncPortalDataFromDB();
+
+        // Auto-sync Gmail emails quietly on page load
+        autoSyncEmails();
 
         // Collapse all sections except Event Details by default
         function setDefaultCollapsedState() {

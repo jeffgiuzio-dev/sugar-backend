@@ -1985,7 +1985,7 @@
             eventDate.setDate(randNum(1, 28));
 
             document.getElementById('inquiryName').value = rand(firstNames) + ' & ' + rand(firstNames) + ' ' + rand(lastNames);
-            document.getElementById('inquiryEmail').value = rand(firstNames).toLowerCase() + '@email.com';
+            document.getElementById('inquiryEmail').value = 'jeff.giuzio@gmail.com';
             document.getElementById('inquiryPhone').value = `(206) ${randNum(200,999)}-${randNum(1000,9999)}`;
             document.getElementById('inquiryEventDate').value = eventDate.toISOString().split('T')[0];
             document.getElementById('inquiryGuestCount').value = randNum(50, 250);
@@ -2109,6 +2109,13 @@
                 const clients = getClientsLocal();
                 clients.unshift(camelClient);
                 saveClientsLocal(clients);
+
+                // Log "Inquiry received" to comm log
+                const logs = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+                const cid = String(camelClient.id);
+                if (!logs[cid]) logs[cid] = [];
+                logs[cid].unshift({ type: 'inquiry_received', title: 'Inquiry received', timestamp: new Date().toISOString() });
+                localStorage.setItem('kgc_comm_logs', JSON.stringify(logs));
             } catch (error) {
                 console.log('API unavailable, saving to localStorage only');
                 // Fallback to localStorage only
@@ -2129,6 +2136,13 @@
                 const clients = getClientsLocal();
                 clients.unshift(localInquiry);
                 saveClientsLocal(clients);
+
+                // Log "Inquiry received" to comm log (localStorage fallback)
+                const logs2 = JSON.parse(localStorage.getItem('kgc_comm_logs') || '{}');
+                const cid2 = String(localInquiry.id);
+                if (!logs2[cid2]) logs2[cid2] = [];
+                logs2[cid2].unshift({ type: 'inquiry_received', title: 'Inquiry received', timestamp: new Date().toISOString() });
+                localStorage.setItem('kgc_comm_logs', JSON.stringify(logs2));
             }
 
             closeInquiryModal();

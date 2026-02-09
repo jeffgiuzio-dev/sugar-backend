@@ -1460,11 +1460,23 @@
             }
         });
 
-        // Initialize
-        loadCommunications();
+        // Initialize — load clients first so comms can map client names
+        (async () => {
+            await loadClientsFromAPI();
+            await loadCommunications();
 
-        // Load clients from API in background
-        loadClientsFromAPI();
+            // Auto-sync Gmail on page load (quiet)
+            try {
+                const resp = await fetch(`${API_URL}/api/gmail/sync`, { method: 'POST' });
+                if (resp.ok) {
+                    const r = await resp.json();
+                    if (r.matched > 0) {
+                        loadCommunications();
+                        showToast(`${r.matched} new emails synced`, 'success');
+                    }
+                }
+            } catch (e) { /* silent */ }
+        })();
 
         // Make compose modal draggable with constraints
         (function() {

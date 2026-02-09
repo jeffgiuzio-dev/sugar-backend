@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
     <script>
         // Run immediately before any rendering - check if we need fade
         if (window.location.search.includes('fade=true')) {
@@ -350,14 +351,14 @@
 
         .payment-options {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
         }
 
         .payment-option {
             background: #fff;
-            border: 1px solid #ddd;
-            padding: 28px 24px;
+            border: 1px solid #e8e0d5;
+            padding: 16px 16px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
@@ -369,28 +370,30 @@
 
         .payment-option.selected {
             border-color: #b5956a;
-            background: #fffaf5;
+            background: #fdf9f4;
         }
 
         .payment-option-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
+            font-size: 1.2rem;
+            margin-bottom: 6px;
         }
 
         .payment-option-title {
+            font-size: 0.85rem;
             font-weight: 400;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .payment-option-desc {
-            font-size: 0.75rem;
-            color: #999;
+            font-size: 0.65rem;
+            color: #b5956a;
+            letter-spacing: 0.3px;
         }
 
         .payment-option-fee {
-            margin-top: 8px;
-            font-size: 0.7rem;
-            color: #b5956a;
+            margin-top: 4px;
+            font-size: 0.6rem;
+            color: #999;
         }
 
         /* Zelle Info */
@@ -756,6 +759,7 @@
                 <div class="bill-to-label">Bill To</div>
                 <div class="bill-to-name" id="clientName">Elizabeth Seelinger</div>
                 <div class="bill-to-email" id="clientEmail">eseelinger@gmail.com</div>
+                <div class="bill-to-email" id="clientAddress"></div>
             </div>
             <div>
                 <div class="bill-to-label">Event Details</div>
@@ -810,32 +814,63 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             <h2 class="payment-title">Select Payment Method</h2>
             <div class="payment-options">
                 <div class="payment-option selected" data-method="card" onclick="selectPayment('card')">
-                    <div class="payment-option-icon">💳</div>
                     <div class="payment-option-title">Credit Card</div>
                     <div class="payment-option-desc">Visa, Mastercard, Amex</div>
                     <div class="payment-option-fee">+3.4% processing fee</div>
                 </div>
                 <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
-                    <div class="payment-option-icon">🏦</div>
                     <div class="payment-option-title">Zelle</div>
                     <div class="payment-option-desc">Direct bank transfer</div>
+                    <div class="payment-option-fee">No fee</div>
+                </div>
+                <div class="payment-option" data-method="check" onclick="selectPayment('check')">
+                    <div class="payment-option-title">Check</div>
+                    <div class="payment-option-desc">Mail a check</div>
                     <div class="payment-option-fee">No fee</div>
                 </div>
             </div>
 
             <div class="zelle-info" id="zelleInfo">
-                <p>Send payment via Zelle to:</p>
+                <p><strong>Zelle:</strong> Send payment to:</p>
                 <div class="zelle-email">kgiuzio@gmail.com</div>
                 <p>Amount:</p>
                 <div class="zelle-amount">$250.00</div>
-                <p style="margin-top: 16px; font-size: 0.75rem;">
-                    Please include your name and "Tasting" in the memo.<br>
-                    Your date will be confirmed once payment is received.
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #999;">
+                    Your date will be confirmed once payment is verified.
                 </p>
+            </div>
+
+            <div class="zelle-info" id="checkInfo">
+                <p><strong>Make payable and mail to:</strong><br>
+                <strong>Kenna Giuzio Cake</strong><br>
+                <strong>302 W Howe St</strong><br>
+                <strong>Seattle, WA 98119</strong></p>
+                <p>Amount:</p>
+                <div class="zelle-amount">$250.00</div>
+                <p style="margin-top: 12px; font-size: 0.85rem; color: #666;">
+                    Please include your name and "Tasting" in the memo.
+                </p>
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #999;">
+                    Your date will be confirmed once payment is verified.
+                </p>
+            </div>
+
+            <!-- Embedded Card Form (Stripe Payment Element) -->
+            <div id="cardFormContainer" style="margin-top: 24px; display: none;">
+                <div style="background: #fff; border: 1px solid #e8e0d5; padding: 24px; border-radius: 4px; min-height: 60px;">
+                    <div id="payment-element-loading" style="text-align: center; color: #999; font-size: 0.8rem; padding: 16px 0;">Loading payment form...</div>
+                    <div id="payment-element"></div>
+                </div>
+                <div id="card-errors" style="color: #df1b41; font-size: 0.8rem; margin-top: 8px; min-height: 20px;"></div>
             </div>
 
             <button class="pay-button" id="payButton" onclick="processPayment()">
                 Pay $258.50 with Card
+            </button>
+
+            <!-- Sandbox test button (remove before go-live) -->
+            <button id="testPayBtn" onclick="testPay()" style="display:none; width:100%; margin-top:12px; padding:14px 24px; background:#e8e0d5; color:#666; border:1px dashed #ccc; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer; letter-spacing:1px;">
+                SANDBOX: TEST PAY (4242)
             </button>
         </div>
 
@@ -868,6 +903,8 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
     </div>
 
     <script>
+        // Banner image is set via CSS on .hero-banner
+
         // Handle fade from black if coming from welcome page
         if (window.location.search.includes('fade=true')) {
             // Remove the hide style and add fade-in
@@ -889,6 +926,162 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
 
         let selectedPayment = 'card';
 
+        // Stripe embedded payment state
+        let stripeInstance = null;
+        let stripeElements = null;
+        let paymentIntentClientSecret = null;
+        let paymentElementMounted = false;
+
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        // Initialize Stripe with publishable key from backend
+        async function initStripe() {
+            const loadingEl = document.getElementById('payment-element-loading');
+            try {
+                if (typeof Stripe === 'undefined') {
+                    document.getElementById('card-errors').textContent = 'Payment system failed to load. Please refresh the page.';
+                    loadingEl.style.display = 'none';
+                    return;
+                }
+                const resp = await fetch(`${API_URL}/api/stripe/status`);
+                const data = await resp.json();
+                if (data.configured && data.publishableKey) {
+                    stripeInstance = Stripe(data.publishableKey);
+                    // Show sandbox test button if using test keys
+                    if (data.publishableKey.startsWith('pk_test_')) {
+                        document.getElementById('testPayBtn').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('card-errors').textContent = 'Payment system is not configured.';
+                    loadingEl.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Failed to init Stripe:', err);
+                document.getElementById('card-errors').textContent = 'Failed to connect to payment system.';
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        // Create PaymentIntent and mount the Payment Element
+        async function createPaymentIntent() {
+            const loadingEl = document.getElementById('payment-element-loading');
+            if (!stripeInstance) {
+                document.getElementById('card-errors').textContent = 'Stripe failed to initialize. Please refresh.';
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
+            }
+            if (paymentIntentClientSecret) return;
+
+            const clientId = params.get('clientId');
+            const clientName = document.getElementById('clientName').textContent;
+            const clientEmail = document.getElementById('clientEmail').textContent;
+            const invoiceId = params.get('invoiceId');
+            const feeText = document.querySelector('.line-item-price').textContent;
+            const baseAmount = parseFloat(feeText.replace('$', '')) || 250;
+            const processingFee = baseAmount * 0.034;
+            const totalAmount = baseAmount + processingFee;
+
+            try {
+                const response = await fetch(`${API_URL}/api/payments/create-payment-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        invoice_id: invoiceId,
+                        invoice_type: 'tasting',
+                        client_id: clientId,
+                        client_name: clientName,
+                        client_email: clientEmail,
+                        amount: totalAmount.toFixed(2),
+                        description: 'Tasting Party - Kenna Giuzio Cake'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success && data.clientSecret) {
+                    paymentIntentClientSecret = data.clientSecret;
+                    mountPaymentElement();
+                } else {
+                    console.error('PaymentIntent failed:', data);
+                    document.getElementById('card-errors').textContent = 'Failed to initialize payment. Please refresh.';
+                    document.getElementById('payment-element-loading').style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Failed to create PaymentIntent:', err);
+                document.getElementById('card-errors').textContent = 'Failed to connect to payment server.';
+                document.getElementById('payment-element-loading').style.display = 'none';
+            }
+        }
+
+        // Mount the Stripe Payment Element with Kenna's branding
+        function mountPaymentElement() {
+            if (paymentElementMounted || !stripeInstance || !paymentIntentClientSecret) return;
+
+            const appearance = {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#b5956a',
+                    colorBackground: '#faf8f5',
+                    fontFamily: 'Montserrat, sans-serif',
+                    borderRadius: '4px',
+                    colorText: '#1a1a1a',
+                    colorTextSecondary: '#666',
+                    colorDanger: '#df1b41'
+                },
+                rules: {
+                    '.Input': {
+                        border: '1px solid #e8e0d5',
+                        boxShadow: 'none'
+                    },
+                    '.Input:focus': {
+                        border: '1px solid #b5956a',
+                        boxShadow: '0 0 0 1px #b5956a'
+                    },
+                    '.Label': {
+                        color: '#666',
+                        fontSize: '0.8rem',
+                        fontWeight: '400',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }
+                }
+            };
+
+            stripeElements = stripeInstance.elements({
+                clientSecret: paymentIntentClientSecret,
+                appearance: appearance,
+                fonts: [{
+                    cssSrc: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500'
+                }]
+            });
+
+            const paymentElement = stripeElements.create('payment', {
+                layout: 'tabs',
+                wallets: {
+                    link: 'never'
+                }
+            });
+            paymentElement.on('ready', () => {
+                document.getElementById('payment-element-loading').style.display = 'none';
+            });
+            paymentElement.on('loaderror', (event) => {
+                document.getElementById('card-errors').textContent = 'Card form failed to load: ' + (event.error ? event.error.message : 'unknown error');
+                document.getElementById('payment-element-loading').style.display = 'none';
+            });
+            paymentElement.mount('#payment-element');
+            paymentElementMounted = true;
+
+            // Fallback: if element doesn't load in 15 seconds, show help message
+            setTimeout(() => {
+                const loadEl = document.getElementById('payment-element-loading');
+                if (loadEl && loadEl.style.display !== 'none') {
+                    loadEl.innerHTML = 'Card form is taking longer than expected.<br><span style="font-size:0.75rem;">Try disabling ad blockers or refreshing the page.</span>';
+                }
+            }, 15000);
+
+            // Show the card form
+            document.getElementById('cardFormContainer').style.display = 'block';
+        }
+
         function selectPayment(method) {
             selectedPayment = method;
 
@@ -898,50 +1091,123 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             });
             document.querySelector(`[data-method="${method}"]`).classList.add('selected');
 
-            // Show/hide Zelle info
+            // Show/hide info sections and card form
             const zelleInfo = document.getElementById('zelleInfo');
+            const checkInfo = document.getElementById('checkInfo');
+            const cardForm = document.getElementById('cardFormContainer');
             const payButton = document.getElementById('payButton');
             const feeRow = document.getElementById('processingFeeRow');
-            const totalAmount = document.getElementById('totalAmount');
+            const totalAmountEl = document.getElementById('totalAmount');
+
+            // Hide all method-specific info first
+            zelleInfo.classList.remove('visible');
+            checkInfo.classList.remove('visible');
+            cardForm.style.display = 'none';
 
             if (method === 'zelle') {
                 zelleInfo.classList.add('visible');
-                payButton.textContent = 'I\'ve Sent Payment via Zelle';
+                payButton.textContent = 'I\'ve Sent Payment';
                 payButton.style.background = '#8b7355';
                 feeRow.style.display = 'none';
-                totalAmount.textContent = '$250.00';
+                totalAmountEl.textContent = '$250.00';
+            } else if (method === 'check') {
+                checkInfo.classList.add('visible');
+                payButton.textContent = 'I\'ve Sent a Check';
+                payButton.style.background = '#8b7355';
+                feeRow.style.display = 'none';
+                totalAmountEl.textContent = '$250.00';
             } else {
-                zelleInfo.classList.remove('visible');
-                payButton.textContent = 'Pay $258.50 with Card';
+                if (paymentElementMounted) cardForm.style.display = 'block';
                 payButton.style.background = '#b5956a';
                 feeRow.style.display = 'flex';
-                totalAmount.textContent = '$258.50';
+                // Recalculate total
+                const feeText = document.querySelector('.line-item-price').textContent;
+                const baseAmount = parseFloat(feeText.replace('$', '')) || 250;
+                const total = baseAmount + (baseAmount * 0.034);
+                totalAmountEl.textContent = '$' + total.toFixed(2);
+                payButton.textContent = 'Pay $' + total.toFixed(2);
+                // Create PaymentIntent if not yet created
+                if (!paymentIntentClientSecret) createPaymentIntent();
             }
         }
 
-        const API_URL = 'https://sugar-backend-production.up.railway.app';
+        async function testPay() {
+            if (!paymentIntentClientSecret) {
+                alert('Payment not ready yet. Wait a moment.');
+                return;
+            }
+            const btn = document.getElementById('testPayBtn');
+            btn.textContent = 'Processing test payment...';
+            btn.disabled = true;
+            try {
+                // Extract PaymentIntent ID from client secret (pi_xxx_secret_yyy → pi_xxx)
+                const piId = paymentIntentClientSecret.split('_secret_')[0];
+                const resp = await fetch(`${API_URL}/api/payments/test-confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentIntentId: piId })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = `/invoices/payment-success.html?payment_intent=${piId}`;
+                } else {
+                    alert('Test payment failed: ' + (data.error || 'Unknown error'));
+                    btn.textContent = 'SANDBOX: TEST PAY (4242)';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Test payment error: ' + err.message);
+                btn.textContent = 'SANDBOX: TEST PAY (4242)';
+                btn.disabled = false;
+            }
+        }
 
         async function processPayment() {
             const clientId = params.get('clientId');
-            const clientName = document.getElementById('clientName').textContent;
-            const clientEmail = document.getElementById('clientEmail').textContent;
-            const invoiceId = params.get('invoiceId');
-
-            // Get the fee amount (base amount without processing fee)
             const feeText = document.querySelector('.line-item-price').textContent;
             const baseAmount = parseFloat(feeText.replace('$', '')) || 250;
 
             if (selectedPayment === 'card') {
-                // Calculate total with processing fee
-                const processingFee = baseAmount * 0.034;
-                const totalAmount = baseAmount + processingFee;
+                if (!stripeInstance || !stripeElements || !paymentIntentClientSecret) {
+                    alert('Payment form is still loading. Please wait a moment and try again.');
+                    return;
+                }
 
                 const payButton = document.getElementById('payButton');
                 payButton.textContent = 'Processing...';
                 payButton.disabled = true;
+                document.getElementById('card-errors').textContent = '';
+
+                const frontendUrl = window.location.origin || 'https://portal.kennagiuziocake.com';
+
+                const { error } = await stripeInstance.confirmPayment({
+                    elements: stripeElements,
+                    confirmParams: {
+                        return_url: `${frontendUrl}/invoices/payment-success.html`
+                    }
+                });
+
+                // If we get here, there was an error (success redirects automatically)
+                if (error) {
+                    document.getElementById('card-errors').textContent = error.message;
+                    const total = baseAmount + (baseAmount * 0.034);
+                    payButton.textContent = 'Pay $' + total.toFixed(2);
+                    payButton.disabled = false;
+                }
+            } else {
+                // Zelle or Check — client claims they sent payment (pending verification by Kenna)
+                const methodLabel = selectedPayment === 'check' ? 'check' : 'Zelle';
+
+                const payButton = document.getElementById('payButton');
+                payButton.textContent = 'Submitting...';
+                payButton.disabled = true;
 
                 try {
-                    const response = await fetch(`${API_URL}/api/payments/create-checkout`, {
+                    const clientName = document.getElementById('clientName').textContent;
+                    const clientEmail = document.getElementById('clientEmail').textContent;
+                    const invoiceId = params.get('invoiceId');
+
+                    const resp = await fetch(`${API_URL}/api/payments/offline-claimed`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -950,42 +1216,26 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
                             client_id: clientId,
                             client_name: clientName,
                             client_email: clientEmail,
-                            amount: totalAmount.toFixed(2),
-                            description: 'Tasting Party - Kenna Giuzio Cake'
+                            amount: baseAmount.toFixed(2),
+                            payment_method: selectedPayment
                         })
                     });
+                    const data = await resp.json();
 
-                    const data = await response.json();
-
-                    if (data.success && data.url) {
-                        // Redirect to Stripe Checkout
-                        window.location.href = data.url;
+                    if (data.success) {
+                        // Redirect to branded success page with pending flag
+                        window.location.href = `/invoices/payment-success.html?pending=true&amount=${baseAmount.toFixed(2)}&method=${selectedPayment}`;
                     } else {
-                        throw new Error(data.error || 'Failed to create checkout session');
+                        alert('There was an issue recording your payment. Please contact kenna@kennagiuziocake.com');
+                        payButton.textContent = 'I\'ve Sent Payment';
+                        payButton.disabled = false;
                     }
                 } catch (err) {
-                    console.error('Payment error:', err);
-                    alert('Unable to process payment. Please try again or contact kenna@kennagiuziocake.com');
-                    payButton.textContent = 'Pay $' + totalAmount.toFixed(2) + ' with Card';
+                    console.error('Zelle claim error:', err);
+                    alert('There was a connection issue. Please contact kenna@kennagiuziocake.com to confirm your payment.');
+                    payButton.textContent = 'I\'ve Sent Payment';
                     payButton.disabled = false;
                 }
-            } else {
-                // Zelle confirmation
-                if (!confirm('Please confirm you have sent $' + baseAmount.toFixed(2) + ' via Zelle to kgiuzio@gmail.com.\n\nClick OK to confirm your payment has been sent.')) {
-                    return;
-                }
-
-                // Mark tasting as paid (Zelle - manual confirmation)
-                markTastingPaid(clientId);
-
-                // Show success
-                alert('Payment confirmed! Thank you.\n\nYour tasting date is now confirmed.');
-
-                // Update button to show paid
-                const payButton = document.getElementById('payButton');
-                payButton.textContent = '✓ Paid';
-                payButton.style.background = '#8b7355';
-                payButton.disabled = true;
             }
         }
 
@@ -1039,6 +1289,7 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
 
             document.getElementById('clientName').textContent = data.clientName || data.client_name || '';
             document.getElementById('clientEmail').textContent = data.clientEmail || data.client_email || '';
+            document.getElementById('clientAddress').textContent = data.clientAddress || data.client_address || data.address || '';
             document.getElementById('invoiceNumber').textContent = invoice.invoice_number || invoice.invoiceNumber || data.invoiceNumber || 'TI-2026-001';
 
             const createdDate = invoice.created_at || invoice.createdAt || data.createdAt;
@@ -1078,6 +1329,37 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             if (invoice.status === 'paid') {
                 document.getElementById('paymentSection').style.display = 'none';
                 document.getElementById('paidBadge').classList.add('visible');
+
+                // In admin view, show payment details in totals
+                if (params.get('from') === 'finances') {
+                    const method = invoice.payment_method || data.paymentMethod || 'card';
+                    const paidDate = invoice.paid_at || data.paidAt;
+
+                    // If paid via Zelle, hide processing fee and show base amount as total
+                    if (method === 'zelle') {
+                        document.getElementById('processingFeeRow').style.display = 'none';
+                        document.getElementById('totalAmount').textContent = '$' + fee.toFixed(2);
+                    }
+
+                    // Add paid info row after total
+                    const totalsTable = document.querySelector('.totals-table');
+                    const paidRow = document.createElement('div');
+                    paidRow.className = 'totals-row';
+                    paidRow.style.cssText = 'color:#5a6b52; font-size:0.85rem; margin-top:8px; padding-top:8px; border-top:1px solid #e8ede5;';
+                    const methodLabel = method === 'zelle' ? 'Zelle' : 'Card';
+                    const dateLabel = paidDate ? new Date(paidDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                    paidRow.innerHTML = `<span>Paid via ${methodLabel}</span><span>${dateLabel}</span>`;
+                    totalsTable.appendChild(paidRow);
+                }
+            }
+
+            // In admin view, if NOT paid, show a sent status badge
+            if (invoice.status !== 'paid' && params.get('from') === 'finances') {
+                const badge = document.getElementById('paidBadge');
+                badge.textContent = '◷ Sent';
+                badge.style.background = '#f5eee3';
+                badge.style.color = '#8b7355';
+                badge.classList.add('visible');
             }
 
             return true;
@@ -1090,6 +1372,9 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             }
             if (params.get('email')) {
                 document.getElementById('clientEmail').textContent = params.get('email');
+            }
+            if (params.get('address')) {
+                document.getElementById('clientAddress').textContent = params.get('address');
             }
             if (params.get('eventType')) {
                 document.getElementById('eventType').textContent = params.get('eventType');
@@ -1143,6 +1428,8 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             if (params.get('from') === 'finances') {
                 document.body.classList.add('admin-view');
                 document.getElementById('backToFinances').classList.add('visible');
+                // Admin view = locked invoice — hide payment section entirely
+                document.getElementById('paymentSection').style.display = 'none';
             }
 
             // If we have an invoiceId, try to load the invoice data
@@ -1189,8 +1476,65 @@ I'll meet you there! At the tall white gate in front of my blue studio door.</p>
             });
         }
 
+        // Sync tasting date from invoice to client record (so confirmation email can use it)
+        async function syncTastingDateToClient() {
+            const clientId = params.get('clientId');
+            if (!clientId) return;
+
+            const tastingDateEl = document.getElementById('tastingDate');
+            const tastingTimeEl = document.getElementById('tastingTime');
+            const tastingDate = tastingDateEl ? tastingDateEl.textContent.trim() : '';
+            const tastingTime = tastingTimeEl ? tastingTimeEl.textContent.trim() : '';
+
+            // Only sync if we have a real tasting date (not the default placeholder)
+            if (!tastingDate || tastingDate === '-' || tastingDate === 'Friday, February 6, 2026') return;
+
+            try {
+                // Fetch current client to preserve existing fields
+                const resp = await fetch(`${API_URL}/api/clients/${clientId}`);
+                if (!resp.ok) return;
+                const client = await resp.json();
+
+                // Only update if tasting_date is currently empty
+                if (client.tasting_date) return;
+
+                await fetch(`${API_URL}/api/clients/${clientId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: client.name,
+                        email: client.email,
+                        phone: client.phone || '',
+                        address: client.address || '',
+                        event_type: client.event_type || '',
+                        event_date: client.event_date || '',
+                        venue: client.venue || '',
+                        guest_count: client.guest_count || '',
+                        tasting_date: tastingDate,
+                        tasting_time: tastingTime || '',
+                        source: client.source || ''
+                    })
+                });
+                console.log('Synced tasting date to client record:', tastingDate);
+            } catch (err) {
+                console.error('Failed to sync tasting date:', err);
+            }
+        }
+
         // Run initialization
-        initializePage();
+        (async () => {
+            await initializePage();
+            // Sync tasting date to client record for confirmation email
+            await syncTastingDateToClient();
+            // Initialize Stripe embedded payment if payment section is visible (not paid, not admin view)
+            const paySection = document.getElementById('paymentSection');
+            if (paySection && paySection.style.display !== 'none') {
+                // Show card form container immediately with loading state
+                document.getElementById('cardFormContainer').style.display = 'block';
+                await initStripe();
+                await createPaymentIntent();
+            }
+        })();
     </script>
 </body>
 </html>

@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Proposal - Kenna Giuzio Cake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            background: #f5f5f5;
+            padding: 40px 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        body.visible { opacity: 1; }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        .loading.hide { display: none; }
+
+        .proposal-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            display: none;
+        }
+        .proposal-container.visible { display: block; }
+
+        .proposal-hero {
+            height: 160px;
+            background: url('/images/header-flowers.jpg') 30% center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding-left: 25px;
+        }
+        .proposal-hero img { width: 150px; }
+
+        .proposal-header {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .proposal-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+        .proposal-header p { font-size: 0.85rem; color: #999; }
+
+        .proposal-client {
+            padding: 24px 30px;
+            background: #fafafa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-size: 0.9rem;
+        }
+        .proposal-label {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        /* Vision / Design sections */
+        .vision-header {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 300;
+            text-align: center;
+            color: #1a1a1a;
+            padding: 30px 0 20px;
+            letter-spacing: 1px;
+        }
+
+        .design-section {
+            margin-bottom: 30px;
+            padding: 24px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .design-section:hover { border-color: #e5ddd0; background: #fafafa; }
+        .design-section.selected { background: #fdf9f3; border-color: #b5956a; }
+
+        .design-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        .design-price {
+            font-size: 0.9rem;
+            color: #b5956a;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .design-narrative {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 16px;
+            line-height: 1.7;
+            text-align: center;
+            font-style: italic;
+        }
+        .design-images {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .design-images img {
+            max-width: 100%;
+            max-height: 320px;
+            border: 1px solid #eee;
+            margin: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .design-images img:hover { opacity: 0.9; }
+
+        .design-select-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px 20px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .design-select-box:hover { border-color: #b5956a; background: #fdf9f3; }
+        .design-select-box input[type="radio"] { display: none; }
+        .design-select-box input[type="radio"]:checked + span { color: #b5956a; font-weight: 500; }
+        .design-section.selected .design-select-box {
+            background: #b5956a;
+            border-color: #b5956a;
+            color: #fff;
+        }
+        .design-section.selected .design-select-box input[type="radio"]:checked + span { color: #fff; }
+
+        /* Line items & totals */
+        .line-items { padding: 24px 30px; border-top: 1px solid #eee; }
+        .line-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+        .line-item-desc {
+            font-size: 0.8rem;
+            color: #999;
+            padding-bottom: 10px;
+            font-style: italic;
+        }
+
+        .totals { padding: 24px 30px; border-top: 2px solid #1a1a1a; }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+        .total-row.grand {
+            font-weight: 400;
+            font-size: 1.2rem;
+            padding-top: 16px;
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .total-row.grand span:last-child {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+        }
+        .deposit-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed #ddd;
+        }
+        .deposit-section .total-row { color: #b5956a; font-weight: 400; }
+
+        /* Terms */
+        .terms {
+            padding: 30px;
+            background: #fafafa;
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.9;
+            white-space: pre-line;
+        }
+        .terms h4 {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        /* Signature */
+        .signature-section {
+            padding: 24px 30px;
+            border-top: 1px solid #eee;
+            background: #fdf9f3;
+        }
+        .signature-section h4 {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #b5956a;
+            margin-bottom: 16px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .signature-agreement { margin-bottom: 16px; }
+        .signature-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
+        }
+        .signature-checkbox input { margin-top: 3px; cursor: pointer; }
+        .signature-box { margin-bottom: 12px; }
+        .signature-box label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .signature-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            font-family: 'Mr De Haviland', cursive;
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            background: #fff;
+            text-align: center;
+        }
+        .signature-input:disabled { background: #f5f5f5; color: #999; }
+        .signature-input:focus { outline: none; border-color: #b5956a; }
+        .signature-date {
+            font-size: 0.75rem;
+            color: #999;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .sign-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sign-btn:hover:not(:disabled) { background: #a38559; }
+        .sign-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Locked/signed state */
+        .proposal-locked {
+            padding: 30px;
+            text-align: center;
+            background: #e8f5e9;
+            border-top: 1px solid #c8e6c9;
+            display: none;
+        }
+        .proposal-locked .locked-icon {
+            width: 50px;
+            height: 50px;
+            background: #4caf50;
+            color: #fff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+        .proposal-locked h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+        .proposal-locked p { font-size: 0.85rem; color: #666; }
+        .proposal-locked .signed-date { font-size: 0.75rem; color: #999; margin-top: 4px; }
+
+        .deposit-link-section {
+            text-align: center;
+            padding: 24px 30px;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+        .deposit-link-section p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        .deposit-link {
+            display: inline-block;
+            padding: 14px 48px;
+            background: #b5956a;
+            color: #fff;
+            text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+        }
+        .deposit-link:hover { background: #a38559; }
+
+        /* Booked banner */
+        .booked-banner {
+            background: #d4edda;
+            color: #155724;
+            text-align: center;
+            padding: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        /* Footer */
+        .proposal-footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid #eee;
+        }
+        .proposal-footer img { width: 120px; height: auto; margin-bottom: 10px; }
+        .proposal-footer p { font-size: 0.7rem; color: #999; }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .lightbox.active { display: flex; }
+        .lightbox canvas {
+            max-width: 90%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        .lightbox-download {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #b5956a;
+            color: #fff;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .lightbox-download:hover { background: #a38559; }
+        .lightbox-hint {
+            color: #999;
+            font-size: 0.75rem;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .proposal-client { grid-template-columns: 1fr; gap: 12px; }
+            .design-section { padding: 16px; }
+        }
+
+        @media print {
+            body { padding: 0; background: #fff; }
+            .proposal-container { box-shadow: none; }
+            .signature-section { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <p>Loading your proposal...</p>
+    </div>
+
+    <div class="proposal-container" id="proposalContainer">
+        <div class="booked-banner" id="bookedBanner">DEPOSIT PAID - DATE RESERVED</div>
+
+        <div class="proposal-hero">
+            <img src="/images/logo-white.png" alt="Kenna Giuzio Cake" onerror="this.src='/images/logo.png'">
+        </div>
+
+        <div class="proposal-header">
+            <h2 id="proposalTitle">Custom Cake Proposal</h2>
+            <p id="proposalNumber"></p>
+        </div>
+
+        <div class="proposal-client">
+            <div>
+                <div class="proposal-label">Prepared For</div>
+                <div id="clientName"></div>
+            </div>
+            <div>
+                <div class="proposal-label">Event</div>
+                <div id="eventInfo"></div>
+            </div>
+            <div>
+                <div class="proposal-label">Date</div>
+                <div id="eventDate"></div>
+            </div>
+            <div>
+                <div class="proposal-label">Venue</div>
+                <div id="venue"></div>
+            </div>
+        </div>
+
+        <!-- Design Options -->
+        <div style="padding: 0 24px 30px;">
+            <div class="vision-header">Your Design Vision</div>
+            <div id="designSections"></div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="line-items" id="lineItems"></div>
+
+        <!-- Totals -->
+        <div class="totals" id="totals"></div>
+
+        <!-- Terms -->
+        <div class="terms" id="termsSection"></div>
+
+        <!-- Signature -->
+        <div class="signature-section" id="signatureSection">
+            <h4>Accept & Sign</h4>
+            <div class="signature-agreement">
+                <label class="signature-checkbox">
+                    <input type="checkbox" id="agreeTerms">
+                    <span>I have reviewed the proposal and agree to the terms and conditions above.</span>
+                </label>
+            </div>
+            <div class="signature-box">
+                <label>Your Signature</label>
+                <input type="text" class="signature-input" id="clientSignature" placeholder="Type your full name" disabled>
+            </div>
+            <div class="signature-date" id="signatureDate"></div>
+            <button class="sign-btn" id="signBtn" disabled onclick="signProposal()">Sign Proposal</button>
+        </div>
+
+        <!-- Locked state (shown after signing) -->
+        <div class="proposal-locked" id="proposalLocked">
+            <div class="locked-icon">&#10003;</div>
+            <h4>Proposal Signed</h4>
+            <p>Signed by <span id="signedByName"></span></p>
+            <p class="signed-date" id="signedOnDate"></p>
+        </div>
+
+        <!-- Deposit link (shown after signing) -->
+        <div class="deposit-link-section" id="depositLinkSection">
+            <p>To secure your date, please submit your deposit:</p>
+            <a href="#" class="deposit-link" id="depositInvoiceLink" target="_blank">View Deposit Invoice</a>
+        </div>
+
+        <div class="proposal-footer">
+            <img src="/images/logo.png" alt="Kenna Giuzio Cake">
+            <p>kenna@kennagiuziocake.com | (206) 472-5401</p>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <canvas id="lightboxCanvas"></canvas>
+        <a class="lightbox-download" id="lightboxDownload" href="" download="cake-sketch.jpg">Download Sketch</a>
+        <div class="lightbox-hint">Click outside image or press ESC to close</div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('clientId');
+        const fadeIn = params.get('fade') === 'true';
+
+        let proposalData = null;
+        let currentSelection = 'base';
+        let prices = {};
+        let additionalServicesTotal = 0;
+        let tastingCredit = 0;
+        let paymentMethod = 'card';
+
+        function formatMoney(num) {
+            return '$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            const d = new Date(dateStr + 'T00:00:00');
+            if (isNaN(d)) return dateStr;
+            return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        async function loadProposal() {
+            if (!clientId) {
+                document.getElementById('loading').innerHTML = '<p>No proposal found. Please use the link from your email.</p>';
+                return;
+            }
+
+            try {
+                // Try API first
+                const response = await fetch(`${API_BASE_URL}/api/proposals?client_id=${clientId}`);
+                const proposals = await response.json();
+
+                if (proposals.length > 0) {
+                    const proposal = proposals[0];
+                    proposalData = typeof proposal.data === 'string' ? JSON.parse(proposal.data) : (proposal.data || {});
+                    proposalData._id = proposal.id;
+                    proposalData._status = proposal.status;
+                    proposalData._signedAt = proposal.signed_at;
+                    proposalData._signature = proposal.signature;
+                    proposalData._proposalNumber = proposal.proposal_number;
+                } else {
+                    // Fallback to localStorage
+                    const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                    if (drafts[clientId]) {
+                        proposalData = drafts[clientId];
+                    }
+                }
+
+                if (!proposalData) {
+                    document.getElementById('loading').innerHTML = '<p>Proposal not found. It may still be in preparation.</p>';
+                    return;
+                }
+
+                // Also get client data for latest info
+                try {
+                    const clientResp = await fetch(`${API_BASE_URL}/api/clients/${clientId}`);
+                    if (clientResp.ok) {
+                        const client = await clientResp.json();
+                        if (!proposalData.clientName) proposalData.clientName = client.name;
+                        if (!proposalData.clientEmail) proposalData.clientEmail = client.email;
+                        if (!proposalData.eventType) proposalData.eventType = client.event_type;
+                        if (!proposalData.eventDate) proposalData.eventDate = client.event_date;
+                        if (!proposalData.venue) proposalData.venue = client.venue;
+                        proposalData._clientStatus = client.status;
+                    }
+                } catch (e) {
+                    console.log('Could not fetch client details:', e.message);
+                }
+
+                renderProposal();
+            } catch (err) {
+                console.error('Error loading proposal:', err);
+                // Final fallback to localStorage
+                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                if (drafts[clientId]) {
+                    proposalData = drafts[clientId];
+                    renderProposal();
+                } else {
+                    document.getElementById('loading').innerHTML = '<p>Unable to load proposal. Please try again later.</p>';
+                }
+            }
+        }
+
+        function renderProposal() {
+            document.getElementById('loading').classList.add('hide');
+            document.getElementById('proposalContainer').classList.add('visible');
+
+            const d = proposalData;
+
+            // Header
+            document.getElementById('proposalTitle').textContent = `${d.eventType || 'Custom Cake'} Proposal`;
+            if (d._proposalNumber || d.proposalNumber) {
+                document.getElementById('proposalNumber').textContent = 'Proposal #P-' + (d._proposalNumber || d.proposalNumber);
+            }
+
+            // Client info
+            document.getElementById('clientName').textContent = d.clientName || '';
+            document.getElementById('eventInfo').textContent = d.eventType || '';
+            document.getElementById('eventDate').textContent = formatDate(d.eventDate);
+            document.getElementById('venue').textContent = d.venue || '';
+
+            // Prices
+            prices = {
+                base: parseFloat(d.basePrice) || 0,
+                option1: parseFloat(d.option1Price) || 0,
+                option2: parseFloat(d.option2Price) || 0
+            };
+            tastingCredit = parseFloat(d.tastingCredit) || 0;
+            paymentMethod = d.paymentMethod || 'card';
+
+            // Design sections
+            renderDesigns(d);
+
+            // Line items
+            renderLineItems(d);
+
+            // Totals
+            recalculateTotals(currentSelection);
+
+            // Terms
+            if (d.terms) {
+                document.getElementById('termsSection').innerHTML = `<h4>Terms & Conditions</h4>${d.terms}`;
+            }
+
+            // Check if already signed
+            if (d._status === 'signed' || d._signedAt) {
+                showSignedState(d);
+            }
+
+            // Check if booked
+            if (d._clientStatus === 'booked') {
+                document.getElementById('bookedBanner').style.display = 'block';
+                document.getElementById('signatureSection').style.display = 'none';
+                const depLink = document.getElementById('depositLinkSection');
+                depLink.style.display = 'block';
+                depLink.querySelector('p').textContent = 'Your deposit has been received:';
+                document.getElementById('depositInvoiceLink').textContent = 'View Paid Invoice';
+            }
+
+            // Reveal page
+            if (fadeIn) {
+                setTimeout(() => document.body.classList.add('visible'), 300);
+            } else {
+                document.body.classList.add('visible');
+            }
+        }
+
+        function renderDesigns(d) {
+            const container = document.getElementById('designSections');
+            const designs = [];
+
+            // Always show base
+            if (prices.base > 0 || d.baseNarrative) {
+                designs.push({
+                    key: 'base',
+                    title: 'Display Cake',
+                    price: prices.base,
+                    narrative: d.baseNarrative || '',
+                    sketches: d.designs?.base || d.baseDesigns || []
+                });
+            }
+
+            // Option 1
+            if (prices.option1 > 0 || d.option1Narrative) {
+                designs.push({
+                    key: 'option1',
+                    title: 'Display Cake Option 2',
+                    price: prices.option1,
+                    narrative: d.option1Narrative || '',
+                    sketches: d.designs?.option1 || d.option1Designs || []
+                });
+            }
+
+            // Option 2
+            if (prices.option2 > 0 || d.option2Narrative) {
+                designs.push({
+                    key: 'option2',
+                    title: 'Display Cake Option 3',
+                    price: prices.option2,
+                    narrative: d.option2Narrative || '',
+                    sketches: d.designs?.option2 || d.option2Designs || []
+                });
+            }
+
+            // If only one design, auto-select it and don't show radio buttons
+            const showRadios = designs.length > 1;
+
+            container.innerHTML = designs.map((design, i) => {
+                const isSelected = design.key === currentSelection || (!showRadios && i === 0);
+                if (!showRadios && i === 0) currentSelection = design.key;
+
+                let sketchHtml = '';
+                if (design.sketches && design.sketches.length > 0) {
+                    sketchHtml = `<div class="design-images">${design.sketches.map(src =>
+                        `<img src="${src}" alt="${design.title}" onclick="showWithWatermark(this.src, '${design.title}')">`
+                    ).join('')}</div>`;
+                }
+
+                let radioHtml = '';
+                if (showRadios) {
+                    radioHtml = `
+                        <label class="design-select-box" onclick="selectDesign('${design.key}')">
+                            <input type="radio" name="designChoice" value="${design.key}" ${isSelected ? 'checked' : ''}>
+                            <span>Select This Design</span>
+                        </label>
+                    `;
+                }
+
+                return `
+                    <div class="design-section ${isSelected ? 'selected' : ''}" data-design="${design.key}" onclick="selectDesign('${design.key}')">
+                        <div class="design-title">${design.title}</div>
+                        <div class="design-price">${formatMoney(design.price)}</div>
+                        ${sketchHtml}
+                        ${design.narrative ? `<div class="design-narrative">${design.narrative}</div>` : ''}
+                        ${radioHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderLineItems(d) {
+            const container = document.getElementById('lineItems');
+            const items = d.items || d.lineItems || [];
+
+            if (items.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            additionalServicesTotal = 0;
+            let html = '';
+
+            items.forEach(item => {
+                let itemTotal = 0;
+                if (item.type === 'fixed' || item.type === 'cakeWithDesc' || item.type === 'otherWithDesc') {
+                    itemTotal = parseFloat(item.price) || 0;
+                } else {
+                    const qty = parseFloat(item.qty) || 0;
+                    const rate = parseFloat(item.rate) || 0;
+                    itemTotal = qty * rate;
+                }
+                additionalServicesTotal += itemTotal;
+
+                html += `
+                    <div class="line-item">
+                        <span>${item.name || 'Service'}</span>
+                        <span>${formatMoney(itemTotal)}</span>
+                    </div>
+                    ${item.desc ? `<div class="line-item-desc">${item.desc}</div>` : ''}
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectDesign(design) {
+            if (proposalData._status === 'signed' || proposalData._clientStatus === 'booked') return;
+
+            currentSelection = design;
+
+            document.querySelectorAll('.design-section').forEach(section => {
+                section.classList.remove('selected');
+                if (section.dataset.design === design) {
+                    section.classList.add('selected');
+                }
+            });
+
+            document.querySelectorAll('.design-select-box input[type="radio"]').forEach(radio => {
+                radio.checked = (radio.value === design);
+            });
+
+            recalculateTotals(design);
+        }
+
+        function recalculateTotals(design) {
+            currentSelection = design;
+            const selectedPrice = prices[design] || 0;
+            const subtotal = additionalServicesTotal + selectedPrice;
+            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+            const serviceFee = subtotal * serviceFeeRate;
+            const total = Math.max(0, subtotal + serviceFee - tastingCredit);
+            const deposit = total / 2;
+
+            let cakeName = 'Display Cake';
+            if (design === 'option1') cakeName = 'Display Cake Option 2';
+            else if (design === 'option2') cakeName = 'Display Cake Option 3';
+
+            // Build totals HTML
+            let html = `
+                <div class="total-row"><span>${cakeName}</span><span>${formatMoney(selectedPrice)}</span></div>
+            `;
+
+            if (additionalServicesTotal > 0) {
+                html += `<div class="total-row"><span>Additional Services</span><span>${formatMoney(additionalServicesTotal)}</span></div>`;
+            }
+
+            html += `<div class="total-row"><span>Subtotal</span><span id="subtotalAmount">${formatMoney(subtotal)}</span></div>`;
+
+            if (serviceFee > 0) {
+                html += `<div class="total-row"><span>Processing Fee (3.4%)</span><span id="serviceFee">${formatMoney(serviceFee)}</span></div>`;
+            }
+
+            if (tastingCredit > 0) {
+                html += `<div class="total-row"><span>Tasting Credit</span><span>-${formatMoney(tastingCredit)}</span></div>`;
+            }
+
+            html += `
+                <div class="total-row grand"><span>Total</span><span id="grandTotal">${formatMoney(total)}</span></div>
+                <div class="deposit-section">
+                    <div class="total-row"><span>50% Deposit Due</span><span id="depositAmount">${formatMoney(deposit)}</span></div>
+                    <div class="total-row"><span>Balance Due Before Event</span><span>${formatMoney(deposit)}</span></div>
+                </div>
+            `;
+
+            document.getElementById('totals').innerHTML = html;
+        }
+
+        // Signature
+        const agreeBox = document.getElementById('agreeTerms');
+        const sigInput = document.getElementById('clientSignature');
+        const signBtn = document.getElementById('signBtn');
+
+        agreeBox.addEventListener('change', function() {
+            if (this.checked) {
+                sigInput.disabled = false;
+                sigInput.focus();
+            } else {
+                sigInput.disabled = true;
+                sigInput.value = '';
+                signBtn.disabled = true;
+            }
+        });
+
+        sigInput.addEventListener('input', function() {
+            signBtn.disabled = !(agreeBox.checked && this.value.trim().length > 0);
+        });
+
+        async function signProposal() {
+            const signature = sigInput.value.trim();
+            if (!signature) return;
+
+            try {
+                // Save signature to API
+                if (proposalData._id) {
+                    await fetch(`${API_BASE_URL}/api/proposals/${proposalData._id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            status: 'signed',
+                            signed_at: new Date().toISOString(),
+                            signature: signature,
+                            data: {
+                                ...proposalData,
+                                selectedDesign: currentSelection
+                            }
+                        })
+                    });
+                }
+
+                // Update client status
+                try {
+                    await fetch(`${API_BASE_URL}/api/clients/${clientId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'Signed' })
+                    });
+                } catch (e) {
+                    console.log('Could not update client status:', e.message);
+                }
+
+                // Also save to localStorage for backward compat
+                const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
+                const selectedPrice = prices[currentSelection] || 0;
+                const subtotal = additionalServicesTotal + selectedPrice;
+                const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+                const serviceFee = subtotal * serviceFeeRate;
+                const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
+
+                signatures[clientId] = {
+                    signature,
+                    selectedDesign: currentSelection,
+                    selectedPrice,
+                    totalDue,
+                    additionalServicesTotal,
+                    tastingCredit,
+                    paymentMethod,
+                    prices,
+                    signedAt: new Date().toISOString()
+                };
+                localStorage.setItem('kgc_signatures', JSON.stringify(signatures));
+
+                // Show signed state
+                showSignedState({
+                    _signature: signature,
+                    _signedAt: new Date().toISOString()
+                });
+
+            } catch (err) {
+                console.error('Error signing proposal:', err);
+                alert('Error signing proposal. Please try again.');
+            }
+        }
+
+        function showSignedState(d) {
+            document.getElementById('signatureSection').style.display = 'none';
+            const locked = document.getElementById('proposalLocked');
+            locked.style.display = 'block';
+            document.getElementById('signedByName').textContent = d._signature || d.signature || '';
+            if (d._signedAt || d.signedAt) {
+                document.getElementById('signedOnDate').textContent = new Date(d._signedAt || d.signedAt).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                });
+            }
+
+            // Show deposit link
+            const selectedPrice = prices[currentSelection] || 0;
+            const subtotal = additionalServicesTotal + selectedPrice;
+            const serviceFeeRate = paymentMethod === 'card' ? 0.034 : 0;
+            const serviceFee = subtotal * serviceFeeRate;
+            const totalDue = Math.max(0, subtotal + serviceFee - tastingCredit);
+
+            const depositParams = new URLSearchParams({
+                clientId: clientId,
+                name: proposalData.clientName || '',
+                email: proposalData.clientEmail || '',
+                eventType: proposalData.eventType || '',
+                eventDate: proposalData.eventDate || '',
+                venue: proposalData.venue || '',
+                total: (totalDue + tastingCredit).toFixed(2),
+                tastingCredit: tastingCredit.toFixed(2)
+            });
+
+            const depositLink = document.getElementById('depositInvoiceLink');
+            depositLink.href = '/invoices/deposit-invoice.html?' + depositParams.toString();
+
+            document.getElementById('depositLinkSection').style.display = 'block';
+
+            // Disable design selection
+            document.querySelectorAll('.design-section').forEach(s => {
+                s.style.pointerEvents = 'none';
+                s.style.cursor = 'default';
+            });
+        }
+
+        // Lightbox
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        function showWithWatermark(imgSrc, title) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                const canvas = document.getElementById('lightboxCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                if (title) {
+                    const titleFontSize = Math.max(18, img.width / 40);
+                    ctx.font = 'italic ' + titleFontSize + 'px Cormorant Garamond, Georgia, serif';
+                    const titleWidth = ctx.measureText(title).width;
+                    ctx.fillStyle = 'rgba(60, 60, 60, 0.7)';
+                    ctx.fillText(title, (img.width - titleWidth) / 2, titleFontSize + 12);
+                }
+
+                const watermarkText = '\u00A9 Kenna Giuzio Cake. All Rights Reserved.';
+                const fontSize = Math.max(10, img.width / 100);
+                ctx.font = fontSize + 'px Arial, sans-serif';
+                const textWidth = ctx.measureText(watermarkText).width;
+                ctx.fillStyle = 'rgba(80, 80, 80, 0.6)';
+                ctx.fillText(watermarkText, img.width - textWidth - 8, img.height - 8);
+
+                document.getElementById('lightboxDownload').href = canvas.toDataURL('image/jpeg', 0.9);
+                document.getElementById('lightbox').classList.add('active');
+            };
+            img.src = imgSrc;
+        }
+
+        document.getElementById('lightbox').onclick = function(e) {
+            if (e.target === this) closeLightbox();
+        };
+        document.onkeydown = function(e) {
+            if (e.key === 'Escape') closeLightbox();
+        };
+
+        // Init
+        loadProposal();
+    </script>
+</body>
+</html>

@@ -214,14 +214,24 @@
         const params = new URLSearchParams(window.location.search);
         const clientId = params.get('clientId');
 
+        // Update button text for final-balance mode
+        if (params.get('dest') === 'final-balance') {
+            document.getElementById('enterButton').textContent = 'View Final Balance';
+        }
+
         // Determine destination URL
         function getDestinationUrl() {
             const forwardParams = new URLSearchParams();
             for (const [key, value] of params) {
-                forwardParams.set(key, value);
+                if (key !== 'dest') forwardParams.set(key, value);
             }
             forwardParams.set('fade', 'true');
-            return '/proposals/proposal-builder.html?' + forwardParams.toString();
+
+            // Handle final-balance destination
+            if (params.get('dest') === 'final-balance') {
+                return '/invoices/deposit-invoice.html?' + forwardParams.toString();
+            }
+            return '/proposals/proposal-view.html?' + forwardParams.toString();
         }
 
         // Navigate to destination with graceful fade

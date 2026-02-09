@@ -8,6 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mr+De+Haviland&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        // Run immediately before any rendering - check if we need fade
+        if (window.location.search.includes('fade=true')) {
+            document.write('<style id="fadeStyle">html{background:#000}body{opacity:0}</style>');
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -287,14 +294,14 @@
 
         .payment-options {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
         }
 
         .payment-option {
             background: #fff;
-            border: 1px solid #ddd;
-            padding: 28px 24px;
+            border: 1px solid #e8e0d5;
+            padding: 16px 16px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
@@ -306,27 +313,68 @@
 
         .payment-option.selected {
             border-color: #b5956a;
-            background: #fffaf5;
-        }
-
-        .payment-option-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
+            background: #fdf9f4;
         }
 
         .payment-option-title {
+            font-size: 0.85rem;
             font-weight: 400;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .payment-option-desc {
-            font-size: 0.75rem;
-            color: #999;
+            font-size: 0.65rem;
+            color: #b5956a;
+            letter-spacing: 0.3px;
         }
 
         .payment-option-fee {
-            margin-top: 8px;
-            font-size: 0.7rem;
+            margin-top: 4px;
+            font-size: 0.6rem;
+            color: #999;
+        }
+
+        /* Paid Badge */
+        .paid-badge {
+            display: none;
+            background: #e8ede5;
+            color: #5a6b52;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 12px;
+        }
+
+        .paid-badge.visible {
+            display: inline-block;
+        }
+
+        /* Back to Finances */
+        .back-to-finances {
+            display: none;
+            max-width: 650px;
+            margin: 0 auto 16px;
+        }
+
+        .back-to-finances.visible {
+            display: block;
+        }
+
+        .back-to-finances a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 8px 0;
+            transition: color 0.2s;
+        }
+
+        .back-to-finances a:hover {
             color: #b5956a;
         }
 
@@ -527,6 +575,11 @@
     </style>
 </head>
 <body>
+    <!-- Back to Finances Button -->
+    <div class="back-to-finances" id="backToFinances">
+        <a href="/admin/finances.html">← Back to Finances</a>
+    </div>
+
     <div class="invoice-container">
         <!-- Hero Banner -->
         <div class="hero-banner">
@@ -544,8 +597,9 @@
         <!-- Invoice Title -->
         <div class="invoice-title-section">
             <div>
-                <h1 class="invoice-title">Deposit Invoice</h1>
-                <p class="invoice-subtitle">50% to Reserve Your Date</p>
+                <h1 class="invoice-title" id="invoiceTitle">Deposit Invoice</h1>
+                <p class="invoice-subtitle" id="invoiceSubtitle">50% to Reserve Your Date</p>
+                <div class="paid-badge" id="paidBadge">✓ Paid</div>
             </div>
             <div class="invoice-meta">
                 <div class="invoice-meta-label">Invoice #</div>
@@ -620,36 +674,68 @@
         </div>
 
         <!-- Payment Options -->
-        <div class="payment-section">
+        <div class="payment-section" id="paymentSection">
             <h2 class="payment-title">Select Payment Method</h2>
             <div class="payment-options">
                 <div class="payment-option selected" data-method="card" onclick="selectPayment('card')">
-                    <div class="payment-option-icon">💳</div>
                     <div class="payment-option-title">Credit Card</div>
                     <div class="payment-option-desc">Visa, Mastercard, Amex</div>
                     <div class="payment-option-fee">+3.4% processing fee</div>
                 </div>
                 <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
-                    <div class="payment-option-icon">🏦</div>
                     <div class="payment-option-title">Zelle</div>
                     <div class="payment-option-desc">Direct bank transfer</div>
+                    <div class="payment-option-fee">No fee</div>
+                </div>
+                <div class="payment-option" data-method="check" onclick="selectPayment('check')">
+                    <div class="payment-option-title">Check</div>
+                    <div class="payment-option-desc">Mail a check</div>
                     <div class="payment-option-fee">No fee</div>
                 </div>
             </div>
 
             <div class="zelle-info" id="zelleInfo">
-                <p>Send payment via Zelle to:</p>
+                <p><strong>Zelle:</strong> Send payment to:</p>
                 <div class="zelle-email">kgiuzio@gmail.com</div>
                 <p>Amount:</p>
                 <div class="zelle-amount" id="zelleAmount">$0.00</div>
-                <p style="margin-top: 16px; font-size: 0.75rem;">
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #999;">
                     Please include your name and "Deposit" in the memo.<br>
-                    Your date will be officially reserved once payment is received.
+                    Your date will be officially reserved once payment is verified.
                 </p>
+            </div>
+
+            <div class="zelle-info" id="checkInfo">
+                <p><strong>Make payable and mail to:</strong><br>
+                <strong>Kenna Giuzio Cake</strong><br>
+                <strong>302 W Howe St</strong><br>
+                <strong>Seattle, WA 98119</strong></p>
+                <p>Amount:</p>
+                <div class="zelle-amount" id="checkAmount">$0.00</div>
+                <p style="margin-top: 12px; font-size: 0.85rem; color: #666;">
+                    Please include your name and "Deposit" in the memo.
+                </p>
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #999;">
+                    Your date will be confirmed once payment is verified.
+                </p>
+            </div>
+
+            <!-- Embedded Card Form (Stripe Payment Element) -->
+            <div id="cardFormContainer" style="margin-top: 24px; display: none;">
+                <div style="background: #fff; border: 1px solid #e8e0d5; padding: 24px; border-radius: 4px; min-height: 60px;">
+                    <div id="payment-element-loading" style="text-align: center; color: #999; font-size: 0.8rem; padding: 16px 0;">Loading payment form...</div>
+                    <div id="payment-element"></div>
+                </div>
+                <div id="card-errors" style="color: #df1b41; font-size: 0.8rem; margin-top: 8px; min-height: 20px;"></div>
             </div>
 
             <button class="pay-button" id="payButton" onclick="processPayment()">
                 Pay Deposit with Card
+            </button>
+
+            <!-- Sandbox test button -->
+            <button id="testPayBtn" onclick="testPay()" style="display:none; width:100%; margin-top:12px; padding:14px 24px; background:#e8e0d5; color:#666; border:1px dashed #ccc; border-radius:8px; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer; letter-spacing:1px;">
+                SANDBOX: TEST PAY (4242)
             </button>
         </div>
 
@@ -711,11 +797,183 @@
         // Start API loading in background
         loadClientsFromAPI();
 
+        // Handle fade from black if coming from welcome page
+        if (window.location.search.includes('fade=true')) {
+            setTimeout(() => {
+                const fadeStyle = document.getElementById('fadeStyle');
+                if (fadeStyle) fadeStyle.remove();
+                document.documentElement.style.cssText = 'background: #000; transition: background 3s ease-in-out;';
+                document.body.style.cssText = document.body.style.cssText + '; opacity: 0; transition: opacity 3s ease-in-out;';
+                document.body.offsetHeight;
+                document.documentElement.style.background = '#f5f5f5';
+                document.body.style.opacity = '1';
+            }, 500);
+        }
+
         let selectedPayment = 'card';
         let depositAmount = 0;
         let depositWithFee = 0;
         let clientId = null;
         let invoiceId = null;
+
+        // Stripe embedded payment state
+        let stripeInstance = null;
+        let stripeElements = null;
+        let paymentIntentClientSecret = null;
+        let paymentElementMounted = false;
+
+        // Mode detection
+        const params = new URLSearchParams(window.location.search);
+        const isFinalBalance = params.get('mode') === 'final-balance';
+        const invoiceType = isFinalBalance ? 'final' : 'deposit';
+        const invoicePrefix = isFinalBalance ? 'FB-' : 'DI-';
+
+        const API_URL = 'https://sugar-backend-production.up.railway.app';
+
+        // Initialize Stripe with publishable key from backend
+        async function initStripe() {
+            const loadingEl = document.getElementById('payment-element-loading');
+            try {
+                if (typeof Stripe === 'undefined') {
+                    document.getElementById('card-errors').textContent = 'Payment system failed to load. Please refresh the page.';
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    return;
+                }
+                const resp = await fetch(`${API_URL}/api/stripe/status`);
+                const data = await resp.json();
+                if (data.configured && data.publishableKey) {
+                    stripeInstance = Stripe(data.publishableKey);
+                    // Show sandbox test button if using test keys
+                    if (data.publishableKey.startsWith('pk_test_')) {
+                        document.getElementById('testPayBtn').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('card-errors').textContent = 'Payment system is not configured.';
+                    if (loadingEl) loadingEl.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Failed to init Stripe:', err);
+                document.getElementById('card-errors').textContent = 'Failed to connect to payment system.';
+                if (loadingEl) loadingEl.style.display = 'none';
+            }
+        }
+
+        // Create PaymentIntent and mount the Payment Element
+        async function createPaymentIntent() {
+            const loadingEl = document.getElementById('payment-element-loading');
+            if (!stripeInstance) {
+                document.getElementById('card-errors').textContent = 'Stripe failed to initialize. Please refresh.';
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
+            }
+            if (paymentIntentClientSecret) return;
+
+            const clientName = document.getElementById('clientName').textContent;
+            const clientEmail = document.getElementById('clientEmail').textContent;
+            const description = isFinalBalance
+                ? 'Final Balance - Kenna Giuzio Cake'
+                : 'Deposit (50%) - Kenna Giuzio Cake';
+
+            try {
+                const response = await fetch(`${API_URL}/api/payments/create-payment-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        invoice_id: invoiceId,
+                        invoice_type: invoiceType,
+                        client_id: clientId,
+                        client_name: clientName,
+                        client_email: clientEmail,
+                        amount: depositWithFee.toFixed(2),
+                        description: description
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success && data.clientSecret) {
+                    paymentIntentClientSecret = data.clientSecret;
+                    mountPaymentElement();
+                } else {
+                    console.error('PaymentIntent failed:', data);
+                    document.getElementById('card-errors').textContent = 'Failed to initialize payment. Please refresh.';
+                    if (loadingEl) loadingEl.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Failed to create PaymentIntent:', err);
+                document.getElementById('card-errors').textContent = 'Failed to connect to payment server.';
+                if (loadingEl) loadingEl.style.display = 'none';
+            }
+        }
+
+        // Mount the Stripe Payment Element with Kenna's branding
+        function mountPaymentElement() {
+            if (paymentElementMounted || !stripeInstance || !paymentIntentClientSecret) return;
+
+            const appearance = {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#b5956a',
+                    colorBackground: '#faf8f5',
+                    fontFamily: 'Montserrat, sans-serif',
+                    borderRadius: '4px',
+                    colorText: '#1a1a1a',
+                    colorTextSecondary: '#666',
+                    colorDanger: '#df1b41'
+                },
+                rules: {
+                    '.Input': {
+                        border: '1px solid #e8e0d5',
+                        boxShadow: 'none'
+                    },
+                    '.Input:focus': {
+                        border: '1px solid #b5956a',
+                        boxShadow: '0 0 0 1px #b5956a'
+                    },
+                    '.Label': {
+                        color: '#666',
+                        fontSize: '0.8rem',
+                        fontWeight: '400',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }
+                }
+            };
+
+            stripeElements = stripeInstance.elements({
+                clientSecret: paymentIntentClientSecret,
+                appearance: appearance,
+                fonts: [{
+                    cssSrc: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500'
+                }]
+            });
+
+            const paymentElement = stripeElements.create('payment', {
+                layout: 'tabs',
+                wallets: {
+                    link: 'never'
+                }
+            });
+            paymentElement.on('ready', () => {
+                document.getElementById('payment-element-loading').style.display = 'none';
+            });
+            paymentElement.on('loaderror', (event) => {
+                document.getElementById('card-errors').textContent = 'Card form failed to load: ' + (event.error ? event.error.message : 'unknown error');
+                document.getElementById('payment-element-loading').style.display = 'none';
+            });
+            paymentElement.mount('#payment-element');
+            paymentElementMounted = true;
+
+            // Fallback: if element doesn't load in 15 seconds, show help message
+            setTimeout(() => {
+                const loadEl = document.getElementById('payment-element-loading');
+                if (loadEl && loadEl.style.display !== 'none') {
+                    loadEl.innerHTML = 'Card form is taking longer than expected.<br><span style="font-size:0.75rem;">Try disabling ad blockers or refreshing the page.</span>';
+                }
+            }, 15000);
+
+            // Show the card form
+            document.getElementById('cardFormContainer').style.display = 'block';
+        }
 
         function selectPayment(method) {
             selectedPayment = method;
@@ -726,173 +984,140 @@
             });
             document.querySelector(`[data-method="${method}"]`).classList.add('selected');
 
-            // Show/hide Zelle info and update totals
+            // Show/hide info sections and card form
             const zelleInfo = document.getElementById('zelleInfo');
+            const checkInfo = document.getElementById('checkInfo');
+            const cardForm = document.getElementById('cardFormContainer');
             const payButton = document.getElementById('payButton');
             const feeRow = document.getElementById('processingFeeRow');
             const totalDue = document.getElementById('totalDue');
 
+            // Hide all method-specific info first
+            zelleInfo.classList.remove('visible');
+            checkInfo.classList.remove('visible');
+            cardForm.style.display = 'none';
+
             if (method === 'zelle') {
                 zelleInfo.classList.add('visible');
-                payButton.textContent = "I've Sent Payment via Zelle";
-                payButton.style.background = '#6b4fbb';
+                payButton.textContent = "I've Sent Payment";
+                payButton.style.background = '#8b7355';
+                feeRow.style.display = 'none';
+                totalDue.textContent = formatCurrency(depositAmount);
+            } else if (method === 'check') {
+                checkInfo.classList.add('visible');
+                payButton.textContent = "I've Sent a Check";
+                payButton.style.background = '#8b7355';
                 feeRow.style.display = 'none';
                 totalDue.textContent = formatCurrency(depositAmount);
             } else {
-                zelleInfo.classList.remove('visible');
+                if (paymentElementMounted) cardForm.style.display = 'block';
                 payButton.textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
                 payButton.style.background = '#b5956a';
                 feeRow.style.display = 'flex';
                 totalDue.textContent = formatCurrency(depositWithFee);
+                // Create PaymentIntent if not yet created
+                if (!paymentIntentClientSecret) createPaymentIntent();
             }
         }
 
-        const API_URL = 'https://sugar-backend-production.up.railway.app';
+        async function testPay() {
+            if (!paymentIntentClientSecret) {
+                alert('Payment not ready yet. Wait a moment.');
+                return;
+            }
+            const btn = document.getElementById('testPayBtn');
+            btn.textContent = 'Processing test payment...';
+            btn.disabled = true;
+            try {
+                const piId = paymentIntentClientSecret.split('_secret_')[0];
+                const resp = await fetch(`${API_URL}/api/payments/test-confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentIntentId: piId })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = `/invoices/payment-success.html?payment_intent=${piId}`;
+                } else {
+                    alert('Test payment failed: ' + (data.error || 'Unknown error'));
+                    btn.textContent = 'SANDBOX: TEST PAY (4242)';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Test payment error: ' + err.message);
+                btn.textContent = 'SANDBOX: TEST PAY (4242)';
+                btn.disabled = false;
+            }
+        }
 
         async function processPayment() {
             if (selectedPayment === 'card') {
-                const clientName = document.getElementById('clientName').textContent;
-                const clientEmail = document.getElementById('clientEmail').textContent;
+                if (!stripeInstance || !stripeElements || !paymentIntentClientSecret) {
+                    alert('Payment form is still loading. Please wait a moment and try again.');
+                    return;
+                }
 
                 const payButton = document.getElementById('payButton');
                 payButton.textContent = 'Processing...';
                 payButton.disabled = true;
+                document.getElementById('card-errors').textContent = '';
 
-                try {
-                    const response = await fetch(`${API_URL}/api/payments/create-checkout`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            invoice_id: invoiceId,
-                            invoice_type: 'deposit',
-                            client_id: clientId,
-                            client_name: clientName,
-                            client_email: clientEmail,
-                            amount: depositWithFee.toFixed(2),
-                            description: 'Deposit (50%) - Kenna Giuzio Cake'
-                        })
-                    });
+                const frontendUrl = window.location.origin || 'https://portal.kennagiuziocake.com';
 
-                    const data = await response.json();
-
-                    if (data.success && data.url) {
-                        // Redirect to Stripe Checkout
-                        window.location.href = data.url;
-                    } else {
-                        throw new Error(data.error || 'Failed to create checkout session');
+                const { error } = await stripeInstance.confirmPayment({
+                    elements: stripeElements,
+                    confirmParams: {
+                        return_url: `${frontendUrl}/invoices/payment-success.html`
                     }
-                } catch (err) {
-                    console.error('Payment error:', err);
-                    alert('Unable to process payment. Please try again or contact kenna@kennagiuziocake.com');
+                });
+
+                // If we get here, there was an error (success redirects automatically)
+                if (error) {
+                    document.getElementById('card-errors').textContent = error.message;
                     payButton.textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
                     payButton.disabled = false;
                 }
             } else {
-                // Zelle confirmation
-                if (confirm('Please confirm you have sent ' + formatCurrency(depositAmount) + ' via Zelle to kgiuzio@gmail.com.\n\nClick OK to confirm your payment has been sent.')) {
-                    completePayment('zelle');
+                // Zelle or Check — client claims they sent payment (pending verification by Kenna)
+                const payButton = document.getElementById('payButton');
+                payButton.textContent = 'Submitting...';
+                payButton.disabled = true;
+
+                try {
+                    const clientName = document.getElementById('clientName').textContent;
+                    const clientEmail = document.getElementById('clientEmail').textContent;
+                    const memoType = isFinalBalance ? 'Final Balance' : 'Deposit';
+
+                    const resp = await fetch(`${API_URL}/api/payments/offline-claimed`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            invoice_id: invoiceId,
+                            invoice_type: invoiceType,
+                            client_id: clientId,
+                            client_name: clientName,
+                            client_email: clientEmail,
+                            amount: depositAmount.toFixed(2),
+                            payment_method: selectedPayment
+                        })
+                    });
+                    const data = await resp.json();
+
+                    if (data.success) {
+                        // Redirect to branded success page with pending flag
+                        window.location.href = `/invoices/payment-success.html?pending=true&amount=${depositAmount.toFixed(2)}&method=${selectedPayment}`;
+                    } else {
+                        alert('There was an issue recording your payment. Please contact kenna@kennagiuziocake.com');
+                        payButton.textContent = "I've Sent Payment";
+                        payButton.disabled = false;
+                    }
+                } catch (err) {
+                    console.error('Offline claim error:', err);
+                    alert('There was a connection issue. Please contact kenna@kennagiuziocake.com to confirm your payment.');
+                    payButton.textContent = "I've Sent Payment";
+                    payButton.disabled = false;
                 }
             }
-        }
-
-        function completePayment(method) {
-            // Try to find client by ID, or by name if ID is 'new' or missing
-            let effectiveClientId = clientId;
-
-            if (!clientId || clientId === 'new' || clientId === 'null' || clientId === 'undefined') {
-                // Try to find client by name
-                const clientName = document.getElementById('clientName').textContent;
-                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-                const foundClient = clients.find(c => c.name === clientName);
-                if (foundClient) {
-                    effectiveClientId = String(foundClient.id);
-                    console.log('Found client by name:', clientName, '-> ID:', effectiveClientId);
-                } else {
-                    // For demo/testing, proceed anyway but warn
-                    console.warn('No client ID found, proceeding with demo payment');
-                    effectiveClientId = null;
-                }
-            }
-
-            // Use effectiveClientId for the rest of the function
-            clientId = effectiveClientId;
-
-            // Update invoice status to paid
-            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
-            const invIndex = invoices.findIndex(i => i.id === invoiceId || (i.type === 'deposit' && String(i.clientId) === String(clientId)));
-
-            if (invIndex >= 0) {
-                invoices[invIndex].status = 'paid';
-                invoices[invIndex].paidAt = new Date().toISOString();
-                invoices[invIndex].paymentMethod = method;
-            } else {
-                // Create invoice record if it doesn't exist
-                invoices.push({
-                    id: invoiceId || 'DI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4),
-                    type: 'deposit',
-                    clientId: clientId,
-                    clientName: document.getElementById('clientName').textContent,
-                    clientEmail: document.getElementById('clientEmail').textContent,
-                    amount: depositAmount,
-                    status: 'paid',
-                    sentAt: new Date().toISOString(),
-                    paidAt: new Date().toISOString(),
-                    paymentMethod: method
-                });
-            }
-            localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
-
-            // Update portal data - mark deposit as paid (if we have a client ID)
-            if (clientId) {
-                const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-                portalData.depositPaid = true;
-                portalData.depositPaidDate = new Date().toISOString();
-                portalData.depositAmount = depositAmount;
-                portalData.depositPaymentMethod = method;
-                localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-
-                // Update client status to BOOKED
-                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-                const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
-                if (clientIndex >= 0) {
-                    clients[clientIndex].status = 'booked';
-                    localStorage.setItem('kgc_clients', JSON.stringify(clients));
-                }
-            }
-
-            // Show success
-            showPaymentSuccess(method);
-        }
-
-        function showPaymentSuccess(method) {
-            // Replace payment section with success message
-            document.querySelector('.payment-section').innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 16px; color: #27ae60;">
-                        Payment ${method === 'zelle' ? 'Submitted' : 'Complete'}!
-                    </h2>
-                    <p style="color: #666; margin-bottom: 24px;">
-                        ${method === 'zelle'
-                            ? 'Thank you! Your date will be officially reserved once Kenna confirms receipt of your Zelle payment.'
-                            : 'Your date is now officially reserved! You will receive a confirmation email shortly.'}
-                    </p>
-                    <div style="background: #e8f5e9; padding: 20px; margin: 20px 0; text-align: center;">
-                        <p style="color: #2e7d32; margin: 0;">Final balance due 2 weeks before your event</p>
-                    </div>
-                    <p style="font-size: 0.85rem; color: #999;">
-                        Amount: ${formatCurrency(method === 'card' ? depositWithFee : depositAmount)}<br>
-                        Method: ${method === 'card' ? 'Credit Card' : 'Zelle'}
-                    </p>
-                </div>
-            `;
-
-            // Hide the terms section after payment - no longer needed
-            const termsSection = document.querySelector('.terms-section');
-            if (termsSection) termsSection.style.display = 'none';
-
-            // Also hide the totals section since it's redundant now
-            const totalsSection = document.querySelector('.totals-section');
-            if (totalsSection) totalsSection.style.display = 'none';
         }
 
         function formatCurrency(amount) {
@@ -910,194 +1135,329 @@
             }
         }
 
-        // Load data from URL params
-        const params = new URLSearchParams(window.location.search);
+        // Initialize the page
+        async function initializePage() {
+            // Get client ID
+            clientId = params.get('clientId');
+            invoiceId = params.get('invoiceId');
 
-        // Get client ID
-        clientId = params.get('clientId');
-        invoiceId = params.get('invoiceId');
-
-        // Try to get client data from URL params first
-        let clientNameVal = params.get('name');
-        let clientEmailVal = params.get('email');
-        let eventTypeVal = params.get('eventType');
-        let eventDateVal = params.get('eventDate');
-        let venueVal = params.get('venue');
-
-        // Client address
-        let clientAddressVal = '';
-
-        // If URL params are empty/default, try to load from localStorage
-        if (clientId && clientId !== 'new') {
-            try {
-                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-                const client = clients.find(c => String(c.id) === String(clientId));
-                if (client) {
-                    if (!clientNameVal || clientNameVal === 'Client') clientNameVal = client.name || clientNameVal;
-                    if (!clientEmailVal) clientEmailVal = client.email || clientEmailVal;
-                    if (!eventTypeVal) eventTypeVal = client.eventType || eventTypeVal;
-                    if (!eventDateVal) eventDateVal = client.eventDate || eventDateVal;
-                    if (!venueVal) venueVal = client.venue || venueVal;
-                    clientAddressVal = client.address || '';
-                    console.log('Loaded client from localStorage:', client.name);
-                }
-            } catch(e) { console.log('Could not load client:', e); }
-        }
-
-        // Apply client info
-        if (clientNameVal && clientNameVal !== 'Client') {
-            document.getElementById('clientName').textContent = clientNameVal;
-        }
-        if (clientEmailVal) {
-            document.getElementById('clientEmail').textContent = clientEmailVal;
-        }
-        if (clientAddressVal) {
-            document.getElementById('clientAddress').textContent = clientAddressVal;
-        }
-
-        // Event info
-        if (eventTypeVal) {
-            document.getElementById('eventType').textContent = eventTypeVal;
-        }
-        if (eventDateVal && eventDateVal !== 'undefined' && eventDateVal !== 'null') {
-            const formattedDate = formatDate(eventDateVal);
-            if (formattedDate && formattedDate !== 'Invalid Date' && formattedDate !== 'TBD') {
-                document.getElementById('eventDate').textContent = formattedDate;
+            // Admin locked view — from finances page
+            if (params.get('from') === 'finances') {
+                document.getElementById('backToFinances').classList.add('visible');
+                document.getElementById('paymentSection').style.display = 'none';
             }
-        }
-        if (venueVal) {
-            document.getElementById('venue').textContent = venueVal;
-        }
 
-        // Proposal number - read from draft if available
-        if (clientId && clientId !== 'new') {
-            try {
-                const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
-                const draft = drafts[clientId];
-                if (draft && draft.proposalNumber) {
-                    document.getElementById('proposalNumber').textContent = '#P-' + draft.proposalNumber;
-                }
-            } catch(e) {
-                console.log('Could not load proposal number:', e);
+            // Final balance mode — update titles and labels
+            if (isFinalBalance) {
+                document.getElementById('invoiceTitle').textContent = 'Final Balance';
+                document.getElementById('invoiceSubtitle').textContent = 'Final Balance Due';
+                document.title = 'Final Balance - Kenna Giuzio Cake';
             }
-        }
 
-        // Financial data
-        const proposalTotal = parseFloat(params.get('total')) || 2500;
-        const tastingCredit = parseFloat(params.get('tastingCredit')) || 250;
-        const adjustedTotal = proposalTotal - tastingCredit;
-        depositAmount = adjustedTotal / 2;
-        const processingFee = depositAmount * 0.034;
-        depositWithFee = depositAmount + processingFee;
-        const remainingBalance = adjustedTotal - depositAmount;
+            // Try to get client data from URL params first
+            let clientNameVal = params.get('name');
+            let clientEmailVal = params.get('email');
+            let eventTypeVal = params.get('eventType');
+            let eventDateVal = params.get('eventDate');
+            let venueVal = params.get('venue');
+            let clientAddressVal = '';
 
-        // Update summary
-        document.getElementById('proposalTotal').textContent = formatCurrency(proposalTotal);
-        document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
-        document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
-        document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+            // If URL params are empty/default, try to load from localStorage or API
+            if (clientId && clientId !== 'new') {
+                // Try API first
+                try {
+                    const resp = await fetch(`${API_URL}/api/clients/${clientId}`);
+                    if (resp.ok) {
+                        const client = await resp.json();
+                        if (!clientNameVal || clientNameVal === 'Client') clientNameVal = client.name || clientNameVal;
+                        if (!clientEmailVal) clientEmailVal = client.email || clientEmailVal;
+                        if (!eventTypeVal) eventTypeVal = client.event_type || eventTypeVal;
+                        if (!eventDateVal) eventDateVal = client.event_date || eventDateVal;
+                        if (!venueVal) venueVal = client.venue || venueVal;
+                        clientAddressVal = client.address || '';
+                        console.log('Loaded client from API:', client.name);
+                    }
+                } catch(e) {
+                    console.log('API fetch failed, trying localStorage');
+                }
 
-        // Update totals
-        document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
-        document.getElementById('processingFee').textContent = formatCurrency(processingFee);
-        document.getElementById('totalDue').textContent = formatCurrency(depositWithFee);
-        document.getElementById('remainingBalance').textContent = formatCurrency(remainingBalance);
+                // Fallback to localStorage
+                if (!clientNameVal || clientNameVal === 'Client') {
+                    try {
+                        const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                        const client = clients.find(c => String(c.id) === String(clientId));
+                        if (client) {
+                            if (!clientNameVal || clientNameVal === 'Client') clientNameVal = client.name || clientNameVal;
+                            if (!clientEmailVal) clientEmailVal = client.email || clientEmailVal;
+                            if (!eventTypeVal) eventTypeVal = client.eventType || eventTypeVal;
+                            if (!eventDateVal) eventDateVal = client.eventDate || eventDateVal;
+                            if (!venueVal) venueVal = client.venue || venueVal;
+                            clientAddressVal = client.address || '';
+                        }
+                    } catch(e) { console.log('Could not load client:', e); }
+                }
+            }
 
-        // Update Zelle amount
-        document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
+            // Apply client info
+            if (clientNameVal && clientNameVal !== 'Client') {
+                document.getElementById('clientName').textContent = clientNameVal;
+            }
+            if (clientEmailVal) {
+                document.getElementById('clientEmail').textContent = clientEmailVal;
+            }
+            if (clientAddressVal) {
+                document.getElementById('clientAddress').textContent = clientAddressVal;
+            }
 
-        // Update pay button
-        document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+            // Event info
+            if (eventTypeVal) {
+                document.getElementById('eventType').textContent = eventTypeVal;
+            }
+            if (eventDateVal && eventDateVal !== 'undefined' && eventDateVal !== 'null') {
+                const formattedDate = formatDate(eventDateVal);
+                if (formattedDate && formattedDate !== 'Invalid Date' && formattedDate !== 'TBD') {
+                    document.getElementById('eventDate').textContent = formattedDate;
+                }
+            }
+            if (venueVal) {
+                document.getElementById('venue').textContent = venueVal;
+            }
 
-        // Line items from proposal
-        const lineItemsList = document.getElementById('lineItemsList');
-        const lineItems = params.get('items');
+            // Proposal number - read from draft if available
+            if (clientId && clientId !== 'new') {
+                try {
+                    const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                    const draft = drafts[clientId];
+                    if (draft && draft.proposalNumber) {
+                        document.getElementById('proposalNumber').textContent = '#P-' + draft.proposalNumber;
+                    }
+                } catch(e) {
+                    console.log('Could not load proposal number:', e);
+                }
+            }
 
-        if (lineItems) {
-            try {
-                const items = JSON.parse(decodeURIComponent(lineItems));
-                items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'line-item';
-                    div.innerHTML = `
-                        <div>
-                            <div class="line-item-name">${item.name}</div>
-                            ${item.desc ? `<div class="line-item-desc">${item.desc}</div>` : ''}
+            // Financial data
+            const proposalTotal = parseFloat(params.get('total')) || 2500;
+            const tastingCredit = parseFloat(params.get('tastingCredit')) || 250;
+            const adjustedTotal = proposalTotal - tastingCredit;
+
+            if (isFinalBalance) {
+                // Final balance mode: total minus deposit already paid
+                const depositPaid = parseFloat(params.get('depositPaid')) || 0;
+                depositAmount = adjustedTotal - depositPaid;
+                const processingFee = depositAmount * 0.034;
+                depositWithFee = depositAmount + processingFee;
+
+                // Update summary box for final balance
+                document.querySelector('.summary-row.highlight .label').textContent = 'Balance Due';
+                document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+
+                // Add deposit paid row to summary
+                const highlightRow = document.querySelector('.summary-row.highlight');
+                const depositPaidRow = document.createElement('div');
+                depositPaidRow.className = 'summary-row';
+                depositPaidRow.innerHTML = `
+                    <span class="label">Less: Deposit Paid</span>
+                    <span class="amount">-${formatCurrency(depositPaid)}</span>
+                `;
+                highlightRow.parentNode.insertBefore(depositPaidRow, highlightRow);
+
+                // Update totals section
+                document.querySelector('.totals-row.subtotal span:first-child').textContent = 'Balance Due';
+                document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
+                document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+                document.getElementById('totalDue').textContent = formatCurrency(depositWithFee);
+
+                // Hide remaining balance row (this IS the remaining balance)
+                const remainingRow = document.querySelector('.totals-row.balance');
+                if (remainingRow) remainingRow.style.display = 'none';
+
+                // Update deposit row label
+                document.querySelector('.totals-row.deposit span:first-child').textContent = 'Total Due';
+            } else {
+                // Normal deposit mode
+                depositAmount = adjustedTotal / 2;
+                const processingFee = depositAmount * 0.034;
+                depositWithFee = depositAmount + processingFee;
+                const remainingBalance = adjustedTotal - depositAmount;
+
+                // Update totals
+                document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
+                document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+                document.getElementById('totalDue').textContent = formatCurrency(depositWithFee);
+                document.getElementById('remainingBalance').textContent = formatCurrency(remainingBalance);
+            }
+
+            // Update summary (common fields)
+            document.getElementById('proposalTotal').textContent = formatCurrency(proposalTotal);
+            document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
+            document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
+            if (!isFinalBalance) {
+                document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+            }
+
+            // Update Zelle and Check amounts
+            document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
+            document.getElementById('checkAmount').textContent = formatCurrency(depositAmount);
+
+            // Update pay button
+            document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+
+            // Line items from proposal
+            const lineItemsList = document.getElementById('lineItemsList');
+            const lineItems = params.get('items');
+
+            if (lineItems) {
+                try {
+                    const items = JSON.parse(decodeURIComponent(lineItems));
+                    items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'line-item';
+                        div.innerHTML = `
+                            <div>
+                                <div class="line-item-name">${item.name}</div>
+                                ${item.desc ? `<div class="line-item-desc">${item.desc}</div>` : ''}
+                            </div>
+                            <div class="line-item-price">${formatCurrency(item.price)}</div>
+                        `;
+                        lineItemsList.appendChild(div);
+                    });
+                } catch (e) {
+                    lineItemsList.innerHTML = `
+                        <div class="line-item">
+                            <div>
+                                <div class="line-item-name">Custom Cake</div>
+                                <div class="line-item-desc">As specified in your proposal</div>
+                            </div>
+                            <div class="line-item-price">${formatCurrency(proposalTotal)}</div>
                         </div>
-                        <div class="line-item-price">${formatCurrency(item.price)}</div>
                     `;
-                    lineItemsList.appendChild(div);
-                });
-            } catch (e) {
-                // Default line items if parsing fails
+                }
+            } else {
                 lineItemsList.innerHTML = `
                     <div class="line-item">
                         <div>
-                            <div class="line-item-name">Custom Cake</div>
-                            <div class="line-item-desc">As specified in your proposal</div>
+                            <div class="line-item-name">Custom Cake Package</div>
+                            <div class="line-item-desc">As specified in your signed proposal</div>
                         </div>
                         <div class="line-item-price">${formatCurrency(proposalTotal)}</div>
                     </div>
                 `;
             }
-        } else {
-            // Default line item
-            lineItemsList.innerHTML = `
-                <div class="line-item">
-                    <div>
-                        <div class="line-item-name">Custom Cake Package</div>
-                        <div class="line-item-desc">As specified in your signed proposal</div>
-                    </div>
-                    <div class="line-item-price">${formatCurrency(proposalTotal)}</div>
-                </div>
-            `;
-        }
 
-        // Generate invoice number
-        if (!invoiceId) {
-            invoiceId = 'DI-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
-        }
-        document.getElementById('invoiceNumber').textContent = invoiceId;
+            // Generate invoice number
+            if (!invoiceId) {
+                invoiceId = invoicePrefix + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+            }
+            document.getElementById('invoiceNumber').textContent = invoiceId;
 
-        // Set today's date
-        document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'long', day: 'numeric', year: 'numeric'
-        });
+            // Set today's date
+            document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
 
-        // Save invoice record if client ID exists and invoice not already saved
-        if (clientId) {
-            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
-            const existingInv = invoices.find(i => i.type === 'deposit' && String(i.clientId) === String(clientId));
+            // Check for existing invoice / paid status
+            if (clientId) {
+                // Try API first
+                let invoiceFound = false;
+                if (invoiceId) {
+                    try {
+                        const resp = await fetch(`${API_URL}/api/invoices/${invoiceId}`);
+                        if (resp.ok) {
+                            const invoice = await resp.json();
+                            if (invoice.status === 'paid') {
+                                showPaidState(invoice);
+                                invoiceFound = true;
+                            }
+                        }
+                    } catch(e) { console.log('Could not check invoice from API'); }
+                }
 
-            if (!existingInv) {
-                // Create new deposit invoice record
-                invoices.push({
-                    id: invoiceId,
-                    type: 'deposit',
-                    clientId: clientId,
-                    clientName: document.getElementById('clientName').textContent,
-                    clientEmail: document.getElementById('clientEmail').textContent,
-                    eventType: params.get('eventType') || 'Wedding',
-                    eventDate: params.get('eventDate'),
-                    venue: params.get('venue'),
-                    proposalTotal: proposalTotal,
-                    tastingCredit: tastingCredit,
-                    amount: depositAmount,
-                    status: 'sent',
-                    sentAt: new Date().toISOString()
-                });
-                localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
-            } else {
-                // Use existing invoice ID
-                invoiceId = existingInv.id;
-                document.getElementById('invoiceNumber').textContent = invoiceId;
+                if (!invoiceFound) {
+                    // Check localStorage
+                    const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                    const existingInv = invoices.find(i =>
+                        i.type === invoiceType && String(i.clientId) === String(clientId)
+                    );
 
-                // Check if already paid
-                if (existingInv.status === 'paid') {
-                    showPaymentSuccess(existingInv.paymentMethod || 'card');
+                    if (existingInv) {
+                        invoiceId = existingInv.id;
+                        document.getElementById('invoiceNumber').textContent = invoiceId;
+
+                        if (existingInv.status === 'paid') {
+                            showPaidState(existingInv);
+                        }
+                    } else {
+                        // Save new invoice record
+                        invoices.push({
+                            id: invoiceId,
+                            type: invoiceType,
+                            clientId: clientId,
+                            clientName: document.getElementById('clientName').textContent,
+                            clientEmail: document.getElementById('clientEmail').textContent,
+                            eventType: params.get('eventType') || 'Wedding',
+                            eventDate: params.get('eventDate'),
+                            venue: params.get('venue'),
+                            proposalTotal: proposalTotal,
+                            tastingCredit: tastingCredit,
+                            amount: depositAmount,
+                            status: 'sent',
+                            sentAt: new Date().toISOString()
+                        });
+                        localStorage.setItem('kgc_invoices', JSON.stringify(invoices));
+                    }
                 }
             }
         }
+
+        // Show paid state (hide payment, show badge)
+        function showPaidState(invoice) {
+            document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('paidBadge').classList.add('visible');
+
+            // In admin view, show payment details
+            if (params.get('from') === 'finances') {
+                const method = invoice.payment_method || invoice.paymentMethod || 'card';
+                const paidDate = invoice.paid_at || invoice.paidAt;
+
+                // If paid via Zelle/Check, hide processing fee and show base amount
+                if (method === 'zelle' || method === 'check') {
+                    document.getElementById('processingFeeRow').style.display = 'none';
+                    document.getElementById('totalDue').textContent = formatCurrency(depositAmount);
+                }
+
+                // Add paid info row after total
+                const totalsTable = document.querySelector('.totals-table');
+                const paidRow = document.createElement('div');
+                paidRow.className = 'totals-row';
+                paidRow.style.cssText = 'color:#5a6b52; font-size:0.85rem; margin-top:8px; padding-top:8px; border-top:1px solid #e8ede5;';
+                const methodLabel = method === 'zelle' ? 'Zelle' : method === 'check' ? 'Check' : 'Card';
+                const dateLabel = paidDate ? new Date(paidDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                paidRow.innerHTML = `<span>Paid via ${methodLabel}</span><span>${dateLabel}</span>`;
+                totalsTable.appendChild(paidRow);
+            }
+
+            // In admin view, if NOT paid show sent badge
+            if (invoice.status !== 'paid' && params.get('from') === 'finances') {
+                const badge = document.getElementById('paidBadge');
+                badge.textContent = '◷ Sent';
+                badge.style.background = '#f5eee3';
+                badge.style.color = '#8b7355';
+                badge.classList.add('visible');
+            }
+        }
+
+        // Run initialization
+        (async () => {
+            await initializePage();
+            // Initialize Stripe if payment section is visible
+            const paySection = document.getElementById('paymentSection');
+            if (paySection && paySection.style.display !== 'none') {
+                document.getElementById('cardFormContainer').style.display = 'block';
+                await initStripe();
+                await createPaymentIntent();
+            }
+        })();
     </script>
 </body>
 </html>
