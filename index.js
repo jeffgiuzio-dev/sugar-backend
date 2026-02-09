@@ -980,6 +980,55 @@ app.get('/api/test/reminder-status', async (req, res) => {
   }
 });
 
+// Test: fire deposit reminder for a specific client (sandbox only)
+app.post('/api/test/deposit-reminder', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const { clientId } = req.body;
+    if (!clientId) return res.status(400).json({ error: 'clientId required' });
+
+    // Get the proposal and client
+    const proposalResult = await pool.query('SELECT * FROM proposals WHERE client_id = $1 AND status = $2 LIMIT 1', [clientId, 'signed']);
+    if (proposalResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No signed proposal found for this client' });
+    }
+    const clientResult = await pool.query('SELECT * FROM clients WHERE id = $1', [clientId]);
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    const proposal = proposalResult.rows[0];
+    const client = clientResult.rows[0];
+
+    // Clear any previous reminder for this client so we can re-test
+    await pool.query("DELETE FROM reminders_sent WHERE client_id = $1 AND type = 'deposit-reminder'", [clientId]);
+
+    const sent = await sendDepositReminder(proposal, client);
+    res.json({ success: sent, message: sent ? `Deposit reminder sent to ${client.email}` : 'Failed to send' });
+  } catch (err) {
+    console.error('Test deposit-reminder error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Test: run the deposit reminder check (same as hourly cron, sandbox only)
+app.post('/api/test/check-deposit-reminders', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    await checkDepositReminders();
+    res.json({ success: true, message: 'Deposit reminder check completed' });
+  } catch (err) {
+    console.error('Test check-deposit-reminders error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Client claims they sent an offline payment (Zelle, cash, check)
 // Does NOT mark as paid — sets to pending_verification for Kenna to confirm
 app.post('/api/payments/offline-claimed', async (req, res) => {
@@ -1212,6 +1261,204 @@ function buildBookingConfirmationPlain({ firstName, amountFormatted, paymentDate
 
   return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\nDear ${firstName},\n\nThank you for your deposit! Your date is now officially reserved and I couldn't be more excited to create something beautiful for your ${(eventType || 'celebration').toLowerCase()}.\n\nI'll be in touch as we get closer to your event with updates on your design. If you have any questions or inspiration along the way, don't hesitate to reach out!\n\nWith excitement,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
+
+// ===== Deposit Reminder (Auto-Send 24h After Signing) =====
+
+const defaultDepositReminderTemplate = {
+  subject: 'Kenna Giuzio Cake - A Gentle Reminder About Your {eventType}',
+  body: `Hi {firstName},
+
+Thank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your {eventType}.
+
+I wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of {eventDate} stays available for you. As a reminder, your date is officially reserved once the deposit is received.
+
+You can complete your deposit here:
+[DEPOSIT LINK]
+
+If you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out. I'm always happy to help.
+
+Warmly,
+Kenna`
+};
+
+async function getDepositReminderTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      const custom = result.rows[0].value;
+      if (custom && custom['deposit-reminder']) {
+        return { ...defaultDepositReminderTemplate, ...custom['deposit-reminder'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom template:', e.message);
+  }
+  return defaultDepositReminderTemplate;
+}
+
+function buildDepositReminderHTML({ firstName, eventType, eventDate, depositUrl }) {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Title -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:normal; color:#1a1a1a; margin:0;">A Gentle Reminder</h1>
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <!-- Message -->
+  <tr><td style="padding:20px 40px 10px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your ${eventType || 'celebration'}.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of ${eventDate || 'your upcoming event'} stays available for you. As a reminder, your date is officially reserved once the deposit is received.</p>
+  </td></tr>
+  <!-- CTA Button -->
+  <tr><td align="center" style="padding:10px 40px 30px;">
+    <a href="${depositUrl}" style="display:inline-block; padding:14px 40px; background:#b5956a; color:#ffffff; text-decoration:none; font-size:14px; font-weight:500; letter-spacing:1px; border-radius:4px;">Complete Your Deposit</a>
+  </td></tr>
+  <!-- Closing -->
+  <tr><td style="padding:0 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out. I'm always happy to help.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function buildDepositReminderPlain({ firstName, eventType, eventDate, depositUrl }) {
+  return `Hi ${firstName},\n\nThank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your ${eventType || 'celebration'}.\n\nI wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of ${eventDate || 'your upcoming event'} stays available for you. As a reminder, your date is officially reserved once the deposit is received.\n\nComplete your deposit here: ${depositUrl}\n\nIf you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+}
+
+async function sendDepositReminder(proposal, client) {
+  try {
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) {
+      console.log('Deposit reminder: No Gmail token configured');
+      return false;
+    }
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+    const firstName = getFirstName(client.name);
+    const eventType = client.event_type || 'celebration';
+    const eventDate = client.event_date
+      ? new Date(client.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : 'your upcoming event';
+    const depositUrl = `https://portal.kennagiuziocake.com/invoices/deposit-invoice.html?clientId=${client.id}`;
+
+    const emailData = { firstName, eventType, eventDate, depositUrl };
+
+    // Load custom template subject if available
+    const template = await getDepositReminderTemplate();
+    const subject = template.subject
+      .replace(/\{firstName\}/g, firstName)
+      .replace(/\{eventType\}/g, eventType)
+      .replace(/\{eventDate\}/g, eventDate);
+
+    const htmlBody = buildDepositReminderHTML(emailData);
+    const plainText = buildDepositReminderPlain(emailData);
+
+    // Send to client
+    const clientEmailLines = [
+      `To: ${client.email}`,
+      `From: Kenna Giuzio Cake <${kennaEmail}>`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/alternative; boundary="boundary123"',
+      '',
+      '--boundary123',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      plainText,
+      '--boundary123',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      htmlBody,
+      '--boundary123--'
+    ];
+
+    const encodedClient = Buffer.from(clientEmailLines.join('\r\n'))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedClient } });
+    console.log(`Deposit reminder sent to ${client.email} for client ${client.name}`);
+
+    // Notify Kenna
+    const kennaNotifyLines = [
+      `To: ${kennaEmail}`,
+      `From: ${kennaEmail}`,
+      `Subject: Auto-Reminder Sent: Deposit reminder to ${client.name}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      `An automatic deposit reminder was just sent to ${client.name} (${client.email}).\n\nThey signed their proposal ${Math.round((Date.now() - new Date(proposal.signed_at).getTime()) / 3600000)} hours ago but haven't paid their deposit yet.\n\nDeposit link: ${depositUrl}\nView client: https://portal.kennagiuziocake.com/clients/view.html?id=${client.id}`
+    ];
+
+    const encodedKenna = Buffer.from(kennaNotifyLines.join('\r\n'))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedKenna } });
+
+    // Record in reminders_sent
+    await pool.query('INSERT INTO reminders_sent (client_id, type) VALUES ($1, $2)', [client.id, 'deposit-reminder']);
+
+    return true;
+  } catch (err) {
+    console.error('Failed to send deposit reminder:', err.message);
+    return false;
+  }
+}
+
+async function checkDepositReminders() {
+  try {
+    // Find proposals signed 24+ hours ago where no deposit payment exists and reminder not yet sent
+    const result = await pool.query(`
+      SELECT p.*, c.name, c.email, c.event_type, c.event_date, c.venue
+      FROM proposals p
+      JOIN clients c ON p.client_id = c.id
+      WHERE p.status = 'signed'
+        AND p.signed_at < NOW() - INTERVAL '24 hours'
+        AND c.email IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM revenue r WHERE r.client_id = p.client_id AND r.type = 'deposit'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM reminders_sent rs WHERE rs.client_id = p.client_id AND rs.type = 'deposit-reminder'
+        )
+    `);
+
+    if (result.rows.length === 0) return;
+
+    console.log(`Deposit reminder check: ${result.rows.length} client(s) need reminder`);
+
+    for (const row of result.rows) {
+      const client = { id: row.client_id, name: row.name, email: row.email, event_type: row.event_type, event_date: row.event_date, venue: row.venue };
+      await sendDepositReminder(row, client);
+    }
+  } catch (err) {
+    console.error('Deposit reminder check failed:', err.message);
+  }
+}
+
+// Run deposit reminder check every hour
+setInterval(checkDepositReminders, 60 * 60 * 1000);
+// Also run once on startup (after 30 seconds to let DB initialize)
+setTimeout(checkDepositReminders, 30000);
 
 // Create "Event Prep" multi-day calendar event starting 1 week before event
 async function createEventPrepCalendarEvent(clientId) {
