@@ -2370,6 +2370,17 @@ app.put('/api/events/:id', async (req, res) => {
   }
 });
 
+// Bulk delete all calendar events (used by data wipe)
+app.delete('/api/events', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM calendar_events RETURNING *');
+    res.json({ message: `Deleted ${result.rows.length} calendar events`, count: result.rows.length });
+  } catch (err) {
+    console.error('Error deleting all events:', err);
+    res.status(500).json({ error: 'Failed to delete events' });
+  }
+});
+
 app.delete('/api/events/:id', async (req, res) => {
   try {
     const result = await pool.query('DELETE FROM calendar_events WHERE id = $1 RETURNING *', [req.params.id]);
