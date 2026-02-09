@@ -1029,6 +1029,37 @@ app.post('/api/test/check-deposit-reminders', async (req, res) => {
   }
 });
 
+// Test: Fire inquiry response for a specific client
+app.post('/api/test/inquiry-response', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const { clientId } = req.body;
+    if (!clientId) return res.status(400).json({ error: 'clientId required' });
+
+    const clientResult = await pool.query('SELECT * FROM clients WHERE id = $1', [clientId]);
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    const client = clientResult.rows[0];
+    if (!client.email) {
+      return res.status(400).json({ error: 'Client has no email address' });
+    }
+
+    // Clear any previous inquiry-response record so we can re-test
+    await pool.query("DELETE FROM reminders_sent WHERE client_id = $1 AND type = 'inquiry-response'", [clientId]);
+
+    const sent = await sendInquiryResponse(client);
+    res.json({ success: sent, message: sent ? `Inquiry response sent to ${client.email}` : 'Failed to send' });
+  } catch (err) {
+    console.error('Test inquiry-response error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Client claims they sent an offline payment (Zelle, cash, check)
 // Does NOT mark as paid — sets to pending_verification for Kenna to confirm
 app.post('/api/payments/offline-claimed', async (req, res) => {
@@ -1459,6 +1490,193 @@ async function checkDepositReminders() {
 setInterval(checkDepositReminders, 60 * 60 * 1000);
 // Also run once on startup (after 30 seconds to let DB initialize)
 setTimeout(checkDepositReminders, 30000);
+
+// ===== Inquiry Response (Auto-Send on New Inquiry) =====
+
+const defaultInquiryResponseTemplate = {
+  subject: 'Kenna Giuzio Cake - Thank You for Your Inquiry',
+  body: `Hi {firstName},
+
+Thank you so much for reaching out about your {eventType}! I'm excited to hear about your vision for {eventDate}.
+
+Here's how my process works:
+
+1. TASTING CONSULTATION
+Tastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.
+
+2. CUSTOM PROPOSAL
+After our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.
+
+3. BOOKING
+A 50% deposit locks in your date. The remaining balance is due two weeks before your event.
+
+I work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!
+
+Warmly,
+Kenna`
+};
+
+async function getInquiryResponseTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      const custom = result.rows[0].value;
+      if (custom && custom['inquiry-response']) {
+        return { ...defaultInquiryResponseTemplate, ...custom['inquiry-response'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom inquiry response template:', e.message);
+  }
+  return defaultInquiryResponseTemplate;
+}
+
+function buildInquiryResponseHTML({ firstName, eventType, eventDate }) {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <!-- Banner -->
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <!-- Logo -->
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>
+  <!-- Title -->
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:normal; color:#1a1a1a; margin:0;">Thank You for Reaching Out</h1>
+  </td></tr>
+  <!-- Divider -->
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
+  <!-- Message -->
+  <tr><td style="padding:20px 40px 10px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you so much for reaching out about your ${eventType}! I'm excited to hear about your vision${eventDate !== 'your upcoming event' ? ' for ' + eventDate : ''}.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 6px;">Here's how my process works:</p>
+  </td></tr>
+  <!-- Steps -->
+  <tr><td style="padding:0 40px 10px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:10px 0;">
+        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">1. TASTING CONSULTATION</p>
+        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">Tastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.</p>
+      </td></tr>
+      <tr><td style="padding:10px 0;">
+        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">2. CUSTOM PROPOSAL</p>
+        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">After our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.</p>
+      </td></tr>
+      <tr><td style="padding:10px 0;">
+        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">3. BOOKING</p>
+        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">A 50% deposit locks in your date. The remaining balance is due two weeks before your event.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <!-- Closing -->
+  <tr><td style="padding:10px 40px 30px;">
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  </td></tr>
+  <!-- Footer -->
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function buildInquiryResponsePlain({ firstName, eventType, eventDate }) {
+  return `Hi ${firstName},\n\nThank you so much for reaching out about your ${eventType}! I'm excited to hear about your vision${eventDate !== 'your upcoming event' ? ' for ' + eventDate : ''}.\n\nHere's how my process works:\n\n1. TASTING CONSULTATION\nTastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.\n\n2. CUSTOM PROPOSAL\nAfter our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.\n\n3. BOOKING\nA 50% deposit locks in your date. The remaining balance is due two weeks before your event.\n\nI work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+}
+
+async function sendInquiryResponse(client) {
+  try {
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) {
+      console.log('Inquiry response: No Gmail token configured');
+      return false;
+    }
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+    const firstName = getFirstName(client.name);
+    const eventType = client.event_type || 'celebration';
+    const eventDate = client.event_date
+      ? new Date(client.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : 'your upcoming event';
+
+    const emailData = { firstName, eventType, eventDate };
+
+    // Load custom template subject if available
+    const template = await getInquiryResponseTemplate();
+    const subject = template.subject
+      .replace(/\{firstName\}/g, firstName)
+      .replace(/\{eventType\}/g, eventType)
+      .replace(/\{eventDate\}/g, eventDate);
+
+    const htmlBody = buildInquiryResponseHTML(emailData);
+    const plainText = buildInquiryResponsePlain(emailData);
+
+    // Send to client
+    const clientEmailLines = [
+      `To: ${client.email}`,
+      `From: Kenna Giuzio Cake <${kennaEmail}>`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/alternative; boundary="boundary123"',
+      '',
+      '--boundary123',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      plainText,
+      '--boundary123',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      htmlBody,
+      '--boundary123--'
+    ];
+
+    const encodedClient = Buffer.from(clientEmailLines.join('\r\n'))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedClient } });
+    console.log(`Inquiry response sent to ${client.email} for client ${client.name}`);
+
+    // Notify Kenna
+    const kennaNotifyLines = [
+      `To: ${kennaEmail}`,
+      `From: ${kennaEmail}`,
+      `Subject: Auto-Response Sent: Inquiry response to ${client.name}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      `An automatic inquiry response was just sent to ${client.name} (${client.email}).\n\nThis is the standard inquiry response with your process overview and pricing.\n\nView client: https://portal.kennagiuziocake.com/clients/view.html?id=${client.id}`
+    ];
+
+    const encodedKenna = Buffer.from(kennaNotifyLines.join('\r\n'))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedKenna } });
+
+    // Record in reminders_sent to prevent duplicates
+    await pool.query('INSERT INTO reminders_sent (client_id, type) VALUES ($1, $2)', [client.id, 'inquiry-response']);
+
+    // Log to communications
+    await pool.query(
+      `INSERT INTO communications (client_id, type, direction, subject, message, channel)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [client.id, 'email', 'outbound', subject, 'Auto-sent inquiry response with process overview', 'email']
+    );
+
+    return true;
+  } catch (err) {
+    console.error('Failed to send inquiry response:', err.message);
+    return false;
+  }
+}
 
 // Create "Event Prep" multi-day calendar event starting 1 week before event
 async function createEventPrepCalendarEvent(clientId) {
@@ -2163,6 +2381,13 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
       console.error('Failed to send inquiry SMS:', smsErr.message);
     }
 
+    // Auto-send inquiry response to client
+    try {
+      await sendInquiryResponse(newClient);
+    } catch (autoErr) {
+      console.error('Failed to auto-send inquiry response:', autoErr.message);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Inquiry received',
@@ -2213,7 +2438,19 @@ app.post('/api/clients', async (req, res) => {
       [name, nullIfEmpty(email), nullIfEmpty(phone), status || 'inquiry', nullIfEmpty(event_date), nullIfEmpty(event_type), nullIfEmpty(guest_count), nullIfEmpty(venue), nullIfEmpty(source), nullIfEmpty(notes), nullIfEmpty(address),
        nullIfEmpty(tasting_date), nullIfEmpty(tasting_time), nullIfEmpty(tasting_end_time), nullIfEmpty(tasting_guests), nullIfEmpty(event_time), nullIfEmpty(event_end_time), archived || false, nullIfEmpty(instagram), nullIfEmpty(linkedin), nullIfEmpty(website), nullIfEmpty(company)]
     );
-    res.status(201).json(result.rows[0]);
+
+    const newClient = result.rows[0];
+
+    // Auto-send inquiry response if status is inquiry and email exists
+    if ((newClient.status === 'inquiry') && newClient.email) {
+      try {
+        await sendInquiryResponse(newClient);
+      } catch (autoErr) {
+        console.error('Failed to auto-send inquiry response:', autoErr.message);
+      }
+    }
+
+    res.status(201).json(newClient);
   } catch (err) {
     console.error('Error creating client:', err);
     res.status(500).json({ error: 'Failed to create client' });
