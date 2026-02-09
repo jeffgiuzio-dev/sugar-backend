@@ -1531,7 +1531,24 @@ async function getInquiryResponseTemplate() {
   return defaultInquiryResponseTemplate;
 }
 
-function buildInquiryResponseHTML({ firstName, eventType, eventDate }) {
+// Convert template body text to branded HTML email
+function buildInquiryResponseHTML(bodyText) {
+  // Convert plain text paragraphs to HTML paragraphs
+  const paragraphs = bodyText.split(/\n\n+/).map(p => {
+    // Check if line looks like a numbered header (e.g. "1. TASTING CONSULTATION")
+    const lines = p.split('\n');
+    const htmlLines = lines.map(line => {
+      if (/^\d+\.\s+[A-Z]/.test(line.trim())) {
+        return `<p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:8px 0 4px;">${line.trim()}</p>`;
+      }
+      return line;
+    });
+    const joined = htmlLines.join('<br>');
+    // If it's just a styled header, return as-is
+    if (joined.startsWith('<p style="font-size:13px')) return joined;
+    return `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${joined}</p>`;
+  }).join('\n    ');
+
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
@@ -1551,33 +1568,8 @@ function buildInquiryResponseHTML({ firstName, eventType, eventDate }) {
   <!-- Divider -->
   <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
   <!-- Message -->
-  <tr><td style="padding:20px 40px 10px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you so much for reaching out about your ${eventType}! I'm excited to hear about your vision${eventDate !== 'your upcoming event' ? ' for ' + eventDate : ''}.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 6px;">Here's how my process works:</p>
-  </td></tr>
-  <!-- Steps -->
-  <tr><td style="padding:0 40px 10px;">
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:10px 0;">
-        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">1. TASTING CONSULTATION</p>
-        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">Tastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.</p>
-      </td></tr>
-      <tr><td style="padding:10px 0;">
-        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">2. CUSTOM PROPOSAL</p>
-        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">After our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.</p>
-      </td></tr>
-      <tr><td style="padding:10px 0;">
-        <p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:0 0 4px;">3. BOOKING</p>
-        <p style="font-size:14px; color:#444; line-height:1.7; margin:0;">A 50% deposit locks in your date. The remaining balance is due two weeks before your event.</p>
-      </td></tr>
-    </table>
-  </td></tr>
-  <!-- Closing -->
-  <tr><td style="padding:10px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
+  <tr><td style="padding:20px 40px 30px;">
+    ${paragraphs}
   </td></tr>
   <!-- Footer -->
   <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
@@ -1589,8 +1581,8 @@ function buildInquiryResponseHTML({ firstName, eventType, eventDate }) {
 </body></html>`;
 }
 
-function buildInquiryResponsePlain({ firstName, eventType, eventDate }) {
-  return `Hi ${firstName},\n\nThank you so much for reaching out about your ${eventType}! I'm excited to hear about your vision${eventDate !== 'your upcoming event' ? ' for ' + eventDate : ''}.\n\nHere's how my process works:\n\n1. TASTING CONSULTATION\nTastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.\n\n2. CUSTOM PROPOSAL\nAfter our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.\n\n3. BOOKING\nA 50% deposit locks in your date. The remaining balance is due two weeks before your event.\n\nI work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+function buildInquiryResponsePlain(bodyText) {
+  return bodyText + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
 }
 
 async function sendInquiryResponse(client) {
@@ -1609,17 +1601,20 @@ async function sendInquiryResponse(client) {
       ? new Date(client.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
       : 'your upcoming event';
 
-    const emailData = { firstName, eventType, eventDate };
-
-    // Load custom template subject if available
+    // Load custom template (subject + body) and replace placeholders
     const template = await getInquiryResponseTemplate();
     const subject = template.subject
       .replace(/\{firstName\}/g, firstName)
       .replace(/\{eventType\}/g, eventType)
       .replace(/\{eventDate\}/g, eventDate);
 
-    const htmlBody = buildInquiryResponseHTML(emailData);
-    const plainText = buildInquiryResponsePlain(emailData);
+    const bodyText = template.body
+      .replace(/\{firstName\}/g, firstName)
+      .replace(/\{eventType\}/g, eventType)
+      .replace(/\{eventDate\}/g, eventDate);
+
+    const htmlBody = buildInquiryResponseHTML(bodyText);
+    const plainText = buildInquiryResponsePlain(bodyText);
 
     // Send to client
     const clientEmailLines = [
