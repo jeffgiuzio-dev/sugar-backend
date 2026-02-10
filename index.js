@@ -1150,6 +1150,13 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
             JSON.stringify({ payment_method: method, client_name: client_name, client_email: client_email })
           ]);
         }
+        // Clean up any other 'sent' invoices of the same type for this client (e.g. auto-created by reminder)
+        if (client_id && invoice_type) {
+          await pool.query(
+            `UPDATE invoices SET status = 'pending_verification', updated_at = NOW() WHERE client_id = $1 AND type = $2 AND status = 'sent' AND invoice_number != $3`,
+            [client_id, invoice_type, invoice_id]
+          );
+        }
       }
     } catch (dbErr) {
       console.error('Offline claim: Failed to update/create invoice:', dbErr.message);
