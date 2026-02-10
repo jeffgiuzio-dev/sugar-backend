@@ -841,7 +841,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
         const amountCents = pi.amount;
         const firstName = getFirstName(clientName);
         const amountFormatted = '$' + (amountCents / 100).toFixed(2);
-        const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
 
         oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
         const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
@@ -881,7 +881,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
         const emailLines = [
           `To: ${clientEmail}`,
           `From: ${kennaEmail}`,
-          `Subject: Kenna Giuzio Cake - Tasting Confirmed`,
+          `Subject: Kenna Giuzio Cake - Tasting Paid & Confirmed`,
           'MIME-Version: 1.0',
           `Content-Type: multipart/alternative; boundary="${boundary}"`,
           '',
@@ -1155,7 +1155,7 @@ function formatTime(timeStr) {
 // --- Default templates (fallback if nothing in DB) ---
 
 const defaultTastingConfirmationTemplate = {
-  subject: 'Kenna Giuzio Cake - Tasting Confirmed - {tastingDate}',
+  subject: 'Kenna Giuzio Cake - Tasting Paid & Confirmed - {tastingDate}',
   body: `Dear {firstName},
 
 Thank you for your payment of {amount}. Your tasting is confirmed!
@@ -1311,10 +1311,11 @@ function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
 
   // Payment receipt header (with amount) OR simple title header (no amount)
   let headerSection = '';
+  const titleFontSize = options.titleSmall ? '16px' : '24px';
   if (options.amountFormatted) {
     headerSection = `
   <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">${options.title || ''}</h1>
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:${titleFontSize}; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">${options.title || ''}</h1>
     <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${options.amountFormatted}</div>
     <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${options.paymentDate || ''}</p>
     ${options.methodNote || ''}
@@ -1384,7 +1385,8 @@ function buildTastingConfirmationHTML(emailData, template) {
     .replace(/\{tastingTime\}/g, tastingTime || '');
 
   return buildBrandedPaymentEmailHTML(bodyText, {
-    title: 'Tasting Confirmed',
+    title: 'Tasting Paid & Confirmed',
+    titleSmall: true,
     amountFormatted,
     paymentDate,
     methodNote,
@@ -1404,7 +1406,7 @@ function buildTastingConfirmationPlain(emailData, template) {
     .replace(/\{tastingDate\}/g, tastingDate || 'To be confirmed')
     .replace(/\{tastingTime\}/g, tastingTime || '');
 
-  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  return `Tasting Paid & Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
 // --- Booking Confirmation builders (template-aware) ---
@@ -1881,7 +1883,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
     const amountCents = Math.round(parseFloat(amount) * 100);
     const amountFormatted = '$' + parseFloat(amount).toFixed(2);
     const firstName = getFirstName(client_name);
-    const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
     const methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
 
     // Now mark invoice as paid
@@ -2204,7 +2206,7 @@ app.post('/api/payments/webhook', async (req, res) => {
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
           const amountFormatted = '$' + (amountCents / 100).toFixed(2);
           const firstName = getFirstName(clientName);
-          const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
 
           let subject, plainText, htmlBody;
 
