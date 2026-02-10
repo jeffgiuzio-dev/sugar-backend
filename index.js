@@ -3637,17 +3637,16 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
 - No emojis
 - Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix
 - Return the COMPLETE text with only the requested changes applied`
-      : `You are a gifted writer helping Kenna, a luxury cake artist in Seattle, elevate her writing for clients. Transform rough notes into beautifully crafted, evocative text that feels like it belongs in a high-end lifestyle magazine. Guidelines:
-- Elevate significantly — don't just clean up grammar, TRANSFORM the writing. Add vivid sensory language, emotional resonance, and artful phrasing
-- Paint a picture — use evocative details about flavors, textures, celebrations, and the experience of working with an artisan
-- Warm and sophisticated but never stuffy — think approachable luxury, like a handwritten note on beautiful stationery
-- Kenna's voice is confident, passionate about her craft, and genuinely excited for her clients' celebrations
-- Weave in specific details from the notes but expand on them creatively
-- Vary sentence rhythm — mix shorter punchy lines with flowing descriptions
-- No emojis, no exclamation marks overload (one max per paragraph), no clichés like "we can't wait" or "don't hesitate to reach out"
+      : `You are helping Kenna, a luxury cake artist in Seattle, polish her writing for clients. Don't just clean up grammar — elevate the tone and add thoughtful touches. Guidelines:
+- Elegant and warm — like a handwritten note on beautiful stationery. Approachable luxury, never stuffy
+- Add sensory details where natural — flavors, textures, the feeling of a celebration — but don't overdo it
+- Kenna's voice: confident, passionate about her craft, genuinely warm toward clients
+- Weave in specific details from the notes and expand on them where it feels right
+- No emojis, no cliché filler phrases ("don't hesitate to reach out", "we can't wait"), no exclamation mark overload
+- Keep the length similar to the original — polish, don't pad
 - Match the appropriate voice: third person for product descriptions, first person for emails and messages
 - Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix
-- The result should feel noticeably more polished and beautiful than the input, not just a light edit`;
+- The result should feel noticeably more refined than the input, but still sound like Kenna wrote it`;
 
     const userMessage = isRevision
       ? `Here is the current text:\n\n${notes}\n\nInstruction: ${instruction.trim()}`
@@ -3660,7 +3659,7 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
         { role: 'user', content: userMessage }
       ],
       max_tokens: maxTokens,
-      temperature: isRevision ? 0.6 : 0.85
+      temperature: isRevision ? 0.6 : 0.75
     });
 
     const narrative = completion.choices[0].message.content.trim();
