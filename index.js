@@ -1217,18 +1217,21 @@ function formatTime(timeStr) {
 
 // ===== Image fetcher for PDFs (works on Railway where local files don't exist) =====
 
-const https = require('https');
+// Cache fetched images in memory so we don't re-download every PDF
+const _imageCache = {};
 
-function fetchImageBuffer(url) {
-  return new Promise((resolve) => {
-    https.get(url, (res) => {
-      if (res.statusCode !== 200) { resolve(null); return; }
-      const chunks = [];
-      res.on('data', chunk => chunks.push(chunk));
-      res.on('end', () => resolve(Buffer.concat(chunks)));
-      res.on('error', () => resolve(null));
-    }).on('error', () => resolve(null));
-  });
+async function fetchImageBuffer(url) {
+  if (_imageCache[url]) return _imageCache[url];
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const buf = Buffer.from(await resp.arrayBuffer());
+    _imageCache[url] = buf;
+    return buf;
+  } catch (e) {
+    console.error('Failed to fetch image:', url, e.message);
+    return null;
+  }
 }
 
 async function loadImage(localPaths, remoteUrl) {
@@ -1238,7 +1241,7 @@ async function loadImage(localPaths, remoteUrl) {
   if (localPath) return localPath;
   // Fall back to fetching from public URL
   if (remoteUrl) {
-    try { return await fetchImageBuffer(remoteUrl); } catch { return null; }
+    return await fetchImageBuffer(remoteUrl);
   }
   return null;
 }
@@ -1424,7 +1427,13 @@ async function generateReceiptPDF(receiptData) {
 // ===== Signed Proposal PDF Generator =====
 
 async function generateProposalPDF(proposal) {
-  // Pre-fetch logo before entering sync PDF generation
+  // Pre-fetch images before entering sync PDF generation
+  const bannerImg = await loadImage([
+    path.join(__dirname, 'client-portal', 'images', 'header-flowers.jpg'),
+    path.join(__dirname, '..', 'images', 'header-flowers.jpg'),
+    path.join(__dirname, 'images', 'header-flowers.jpg')
+  ], 'https://portal.kennagiuziocake.com/images/header-flowers.jpg');
+
   const logoImg = await loadImage([
     path.join(__dirname, 'client-portal', 'images', 'logo.png'),
     path.join(__dirname, '..', 'images', 'logo.png'),
@@ -1444,24 +1453,35 @@ async function generateProposalPDF(proposal) {
     const pageWidth = 612 - 100; // letter width minus margins
     const data = typeof proposal.data === 'string' ? JSON.parse(proposal.data) : proposal.data;
 
-    // Logo
-    if (logoImg) {
-      try { doc.image(logoImg, (612 - 140) / 2, 40, { width: 140 }); } catch (e) { /* skip */ }
+    // Banner image (full width, top of page)
+    const bannerHeight = 120;
+    if (bannerImg) {
+      try {
+        doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
+        doc.save();
+        doc.rect(0, 0, 612, bannerHeight).fill('rgba(255,255,255,0.15)');
+        doc.restore();
+      } catch (e) { /* skip banner */ }
     }
 
-    doc.y = 110;
+    // Logo (centered on banner)
+    if (logoImg) {
+      try { doc.image(logoImg, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
+    }
 
-    // Title
+    // Title (below banner)
+    const titleY = bannerHeight + 15;
     doc.font('Times-Roman').fontSize(20).fillColor(gold)
-      .text('SIGNED PROPOSAL', 50, 110, { align: 'center', width: pageWidth });
+      .text('SIGNED PROPOSAL', 50, titleY, { align: 'center', width: pageWidth });
     doc.font('Helvetica').fontSize(10).fillColor(lightText)
-      .text(`Proposal #${data.proposalNumber || proposal.proposal_number || ''}`, 50, 138, { align: 'center', width: pageWidth });
+      .text(`Proposal #${data.proposalNumber || proposal.proposal_number || ''}`, 50, titleY + 28, { align: 'center', width: pageWidth });
 
     // Gold divider
-    doc.moveTo(50, 158).lineTo(562, 158).strokeColor(gold).lineWidth(1.5).stroke();
+    const divY = titleY + 48;
+    doc.moveTo(50, divY).lineTo(562, divY).strokeColor(gold).lineWidth(1.5).stroke();
 
     // Client & Event info
-    let y = 172;
+    let y = divY + 14;
     doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('CLIENT', 50, y);
     y += 14;
     doc.font('Helvetica').fontSize(11).fillColor(darkText).text(data.clientName || '', 50, y);
@@ -1471,7 +1491,7 @@ async function generateProposalPDF(proposal) {
     if (data.clientAddress) { doc.fontSize(9).fillColor(lightText).text(data.clientAddress, 50, y, { width: 250 }); y = doc.y + 4; }
 
     // Event details (right column)
-    let ey = 172;
+    let ey = divY + 14;
     doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('EVENT', 340, ey);
     ey += 14;
     doc.font('Helvetica').fontSize(10).fillColor(darkText);
