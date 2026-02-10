@@ -1129,13 +1129,25 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
     // Set invoice status to pending_verification (NOT paid) and store payment method
     try {
       if (invoice_id) {
-        const updateResult = await pool.query(`
+        // Try matching by invoice_number first, then by id (numeric)
+        let updateResult = await pool.query(`
           UPDATE invoices SET status = 'pending_verification',
           data = COALESCE(data, '{}'::jsonb) || $2::jsonb,
           updated_at = NOW()
           WHERE invoice_number = $1
           RETURNING id
         `, [invoice_id, JSON.stringify({ payment_method: method })]);
+
+        // If no match by invoice_number, try by id (for lock-deposit where invoiceId is the DB id)
+        if (updateResult.rowCount === 0 && !isNaN(invoice_id)) {
+          updateResult = await pool.query(`
+            UPDATE invoices SET status = 'pending_verification',
+            data = COALESCE(data, '{}'::jsonb) || $2::jsonb,
+            updated_at = NOW()
+            WHERE id = $1
+            RETURNING id
+          `, [parseInt(invoice_id), JSON.stringify({ payment_method: method })]);
+        }
 
         // If invoice didn't exist in DB yet (created on client browser only), insert it
         if (updateResult.rowCount === 0) {
