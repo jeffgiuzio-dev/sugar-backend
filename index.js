@@ -339,7 +339,7 @@ app.post('/api/gmail/send', async (req, res) => {
       const boundary = 'boundary_' + Date.now().toString(36);
       const emailLines = [
         `To: ${to}`,
-        `From: ${kennaEmail}`,
+        `From: Kenna Giuzio Cake <${kennaEmail}>`,
         `Subject: ${subject || ''}`,
         'MIME-Version: 1.0',
         `Content-Type: multipart/alternative; boundary="${boundary}"`,
@@ -362,7 +362,7 @@ app.post('/api/gmail/send', async (req, res) => {
     } else {
       const emailLines = [
         `To: ${to}`,
-        `From: ${kennaEmail}`,
+        `From: Kenna Giuzio Cake <${kennaEmail}>`,
         `Subject: ${subject || ''}`,
         'Content-Type: text/plain; charset=utf-8',
         '',
@@ -504,7 +504,7 @@ ${clientId ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.htm
 
         const emailLines = [
           `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
+          `From: Kenna Giuzio Cake <${kennaEmail}>`,
           `Subject: Text from ${clientName}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
@@ -607,7 +607,7 @@ ${clientId ? `View in Sugar: https://portal.kennagiuziocake.com/clients/view.htm
 
         const emailLines = [
           `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
+          `From: Kenna Giuzio Cake <${kennaEmail}>`,
           `Subject: Voicemail from ${clientName}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
@@ -899,7 +899,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
         } else {
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
-            `To: ${clientEmail}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            `To: ${clientEmail}`, `From: Kenna Giuzio Cake <${kennaEmail}>`, `Subject: ${subject}`,
             'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
             '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', '', plainText, '',
             `--${boundary}`, 'Content-Type: text/html; charset=utf-8', '', htmlBody, '', `--${boundary}--`
@@ -1184,7 +1184,7 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
 
         const emailLines = [
           `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
+          `From: Kenna Giuzio Cake <${kennaEmail}>`,
           `Subject: Action Required: Verify ${methodLabel} Payment of ${amountFormatted} from ${client_name || 'Client'}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
@@ -2234,7 +2234,7 @@ async function sendDepositReminder(proposal, client) {
     // Notify Kenna
     const kennaNotifyLines = [
       `To: ${kennaEmail}`,
-      `From: ${kennaEmail}`,
+      `From: Kenna Giuzio Cake <${kennaEmail}>`,
       `Subject: Auto-Reminder Sent: Deposit reminder to ${client.name}`,
       'Content-Type: text/plain; charset=utf-8',
       '',
@@ -2452,7 +2452,7 @@ async function sendInquiryResponse(client) {
     // Notify Kenna
     const kennaNotifyLines = [
       `To: ${kennaEmail}`,
-      `From: ${kennaEmail}`,
+      `From: Kenna Giuzio Cake <${kennaEmail}>`,
       `Subject: Auto-Response Sent: Inquiry response to ${client.name}`,
       'Content-Type: text/plain; charset=utf-8',
       '',
@@ -2780,7 +2780,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           } else {
             const boundary = 'boundary_' + Date.now().toString(36);
             const emailLines = [
-              `To: ${client_email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+              `To: ${client_email}`, `From: Kenna Giuzio Cake <${kennaEmail}>`, `Subject: ${subject}`,
               'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
               '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit',
               '', plainText, '', `--${boundary}`, 'Content-Type: text/html; charset=utf-8',
@@ -2921,7 +2921,7 @@ app.post('/api/payments/webhook', async (req, res) => {
 
         const emailLines = [
           `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
+          `From: Kenna Giuzio Cake <${kennaEmail}>`,
           `Subject: Payment Received: ${amountFormatted} from ${clientName || 'Client'}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
@@ -3119,7 +3119,7 @@ app.post('/api/payments/webhook', async (req, res) => {
           } else {
             const boundary = 'boundary_' + Date.now().toString(36);
             const emailLines = [
-              `To: ${clientEmail}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+              `To: ${clientEmail}`, `From: Kenna Giuzio Cake <${kennaEmail}>`, `Subject: ${subject}`,
               'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
               '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit',
               '', plainText, '', `--${boundary}`, 'Content-Type: text/html; charset=utf-8',
@@ -3285,7 +3285,7 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
 
         const emailLines = [
           `To: ${kennaEmail}`,
-          `From: ${kennaEmail}`,
+          `From: Kenna Giuzio Cake <${kennaEmail}>`,
           `Subject: New Inquiry: ${name}`,
           'Content-Type: text/plain; charset=utf-8',
           '',
@@ -4479,7 +4479,7 @@ async function checkUpcomingEvents() {
         try {
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
-            `To: ${client.email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            `To: ${client.email}`, `From: Kenna Giuzio Cake <${kennaEmail}>`, `Subject: ${subject}`,
             'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`, '',
             `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', plainText, '',
             `--${boundary}`, 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', htmlBody, '',
@@ -4602,7 +4602,7 @@ async function checkUpcomingEvents() {
 
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
-            `To: ${client.email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            `To: ${client.email}`, `From: Kenna Giuzio Cake <${kennaEmail}>`, `Subject: ${subject}`,
             'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`, '',
             `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', plainText, '',
             `--${boundary}`, 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: 7bit', '', htmlBody, '',
