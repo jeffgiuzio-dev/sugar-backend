@@ -3622,9 +3622,9 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
       return res.json({ success: true, narrative: subject });
     }
 
-    // Dynamic max_tokens based on input length
+    // Dynamic max_tokens based on input length — generous to allow creative expansion
     const inputLength = notes.trim().length;
-    const maxTokens = inputLength > 600 ? 800 : inputLength > 300 ? 600 : inputLength > 100 ? 400 : 200;
+    const maxTokens = inputLength > 600 ? 1000 : inputLength > 300 ? 800 : inputLength > 100 ? 600 : 400;
 
     // Build messages based on whether this is a full polish or a targeted revision
     const isRevision = instruction && instruction.trim();
@@ -3637,14 +3637,17 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
 - No emojis
 - Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix
 - Return the COMPLETE text with only the requested changes applied`
-      : `You are helping Kenna, a cake artist, polish her writing for clients. Transform rough notes into polished, ready-to-send text. Guidelines:
-- Warm, professional, and elegant — never over-the-top or pretentious
-- Detail-oriented but modest — Kenna's natural voice
-- No emojis
-- Mention specific details from the notes
-- Keep it concise but thorough
+      : `You are a gifted writer helping Kenna, a luxury cake artist in Seattle, elevate her writing for clients. Transform rough notes into beautifully crafted, evocative text that feels like it belongs in a high-end lifestyle magazine. Guidelines:
+- Elevate significantly — don't just clean up grammar, TRANSFORM the writing. Add vivid sensory language, emotional resonance, and artful phrasing
+- Paint a picture — use evocative details about flavors, textures, celebrations, and the experience of working with an artisan
+- Warm and sophisticated but never stuffy — think approachable luxury, like a handwritten note on beautiful stationery
+- Kenna's voice is confident, passionate about her craft, and genuinely excited for her clients' celebrations
+- Weave in specific details from the notes but expand on them creatively
+- Vary sentence rhythm — mix shorter punchy lines with flowing descriptions
+- No emojis, no exclamation marks overload (one max per paragraph), no clichés like "we can't wait" or "don't hesitate to reach out"
 - Match the appropriate voice: third person for product descriptions, first person for emails and messages
-- Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix`;
+- Do NOT include a subject line — return ONLY the body text, no "Subject:" prefix
+- The result should feel noticeably more polished and beautiful than the input, not just a light edit`;
 
     const userMessage = isRevision
       ? `Here is the current text:\n\n${notes}\n\nInstruction: ${instruction.trim()}`
@@ -3657,7 +3660,7 @@ app.post('/api/ai/generate-narrative', async (req, res) => {
         { role: 'user', content: userMessage }
       ],
       max_tokens: maxTokens,
-      temperature: 0.7
+      temperature: isRevision ? 0.6 : 0.85
     });
 
     const narrative = completion.choices[0].message.content.trim();
