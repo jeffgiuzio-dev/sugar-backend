@@ -885,6 +885,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
           pdfBuffer = await generateReceiptPDF({
             type: 'tasting', clientName: clientName,
             amountFormatted, paymentDate, paymentMethod: 'Test Payment',
+            amountRaw: amountCents / 100, isCardPayment: true,
             receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
           });
         } catch (pdfErr) { console.error('PDF generation failed (test):', pdfErr.message); }
@@ -932,6 +933,7 @@ app.get('/api/test/pdf-receipt', async (req, res) => {
       type: 'tasting',
       clientName: 'Test Client',
       amountFormatted: '$150.00',
+      amountRaw: 150.00, isCardPayment: true,
       paymentDate: 'February 9, 2026',
       paymentMethod: 'Visa •••• 4242',
       receiptNumber: 'KGC-20260209-TEST',
@@ -1259,11 +1261,23 @@ async function generateReceiptPDF(receiptData) {
     };
 
     const detailRows = [
-      ['Description', descriptionByType[receiptData.type] || 'Payment'],
-      ['Amount', receiptData.amountFormatted],
-      ['Method', receiptData.paymentMethod],
-      ['Status', 'Paid']
+      ['Description', descriptionByType[receiptData.type] || 'Payment']
     ];
+
+    // CC fee breakdown for card payments
+    if (receiptData.isCardPayment && receiptData.amountRaw) {
+      const totalCharged = parseFloat(receiptData.amountRaw);
+      const subtotal = totalCharged / 1.03;
+      const ccFee = totalCharged - subtotal;
+      detailRows.push(['Subtotal', '$' + subtotal.toFixed(2)]);
+      detailRows.push(['CC Processing Fee (3%)', '$' + ccFee.toFixed(2)]);
+      detailRows.push(['Total Charged', receiptData.amountFormatted]);
+    } else {
+      detailRows.push(['Amount', receiptData.amountFormatted]);
+    }
+
+    detailRows.push(['Method', receiptData.paymentMethod]);
+    detailRows.push(['Status', 'Paid']);
 
     let tableY = 295;
     const labelX = 60;
@@ -1426,6 +1440,35 @@ async function generateProposalPDF(proposal) {
     if (designNarrative) {
       doc.font('Helvetica').fontSize(9).fillColor(lightText).text(designNarrative, 50, y, { width: pageWidth - 10 });
       y = doc.y + 10;
+    }
+
+    // Selected design image
+    const designImages = (data.designs && data.designs[selectedDesign]) || [];
+    if (designImages.length > 0) {
+      try {
+        const imgSrc = designImages[0];
+        let imgInput = null;
+        if (imgSrc.startsWith('data:image')) {
+          // Data URL (base64 compressed upload) — extract and convert to Buffer
+          const base64Data = imgSrc.split(',')[1];
+          if (base64Data) imgInput = Buffer.from(base64Data, 'base64');
+        } else {
+          // File path — resolve relative to project
+          const imgPaths = [
+            path.join(__dirname, 'client-portal', imgSrc.replace(/^\.\.\//, '')),
+            path.join(__dirname, '..', imgSrc.replace(/^\.\.\//, '')),
+            path.join(__dirname, imgSrc.replace(/^\.\.\//, ''))
+          ];
+          const imgPath = imgPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
+          if (imgPath) imgInput = imgPath;
+        }
+        if (imgInput) {
+          // Center the image, max 220px wide, max 200px tall
+          const imgX = (612 - 220) / 2;
+          doc.image(imgInput, imgX, y, { fit: [220, 200] });
+          y += 210;
+        }
+      } catch (imgErr) { /* skip image if it fails */ }
     }
 
     // Line Items
@@ -2467,10 +2510,12 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           // Generate PDF attachments
           const pdfAttachments = [];
           try {
+            const isCard = method === 'card';
             const receiptData = {
               type: invoice_type || 'other',
               clientName: client_name || firstName,
               amountFormatted, paymentDate, paymentMethod: methodLabel,
+              amountRaw: parseFloat(amount), isCardPayment: isCard,
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
             };
             if (invoice_type === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
@@ -2753,6 +2798,7 @@ app.post('/api/payments/webhook', async (req, res) => {
               type: invoiceType || 'other',
               clientName: clientName || firstName,
               amountFormatted, paymentDate, paymentMethod: 'Card',
+              amountRaw: amountCents / 100, isCardPayment: true,
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(stripeId || '').slice(-4) || Date.now().toString().slice(-4)}`
             };
             if (invoiceType === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
