@@ -1559,6 +1559,8 @@ async function generateProposalPDF(proposal) {
     // Selected design image
     const designImages = (data.designs && data.designs[selectedDesign]) || [];
     if (designImages.length > 0) {
+      // Page break if image won't fit
+      if (y > 520) { doc.addPage(); y = 50; }
       try {
         const imgSrc = designImages[0];
         let imgInput = null;
@@ -1588,6 +1590,8 @@ async function generateProposalPDF(proposal) {
     // Line Items
     const items = data.items || [];
     if (items.length > 0) {
+      // Page break if not enough room for header + at least one item
+      if (y > 650) { doc.addPage(); y = 50; }
       doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke();
       y += 10;
       doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('ADDITIONAL ITEMS', 50, y);
@@ -1601,6 +1605,8 @@ async function generateProposalPDF(proposal) {
       y += 6;
 
       items.forEach(item => {
+        // Page break if near bottom
+        if (y > 700) { doc.addPage(); y = 50; }
         let itemPrice = 0;
         if (item.type === 'fixed') {
           itemPrice = parseFloat(item.price) || 0;
@@ -1619,7 +1625,8 @@ async function generateProposalPDF(proposal) {
     // Tasting credit
     const tastingCredit = parseFloat(data.tastingCredit) || 0;
 
-    // Total
+    // Total — page break if needed
+    if (y > 680) { doc.addPage(); y = 50; }
     y += 4;
     doc.moveTo(50, y).lineTo(562, y).strokeColor(gold).lineWidth(1).stroke();
     y += 10;
@@ -1647,16 +1654,16 @@ async function generateProposalPDF(proposal) {
     doc.text('Total', 50, y); doc.text('$' + grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
     y += 24;
 
-    // Terms (if fits on page, otherwise new page)
-    const terms = data.terms || '';
-    if (terms) {
-      if (y > 550) doc.addPage();
-      else { doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke(); y += 10; }
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('TERMS & CONDITIONS', 50, doc.y || y);
-      doc.moveDown(0.5);
-      doc.font('Helvetica').fontSize(7.5).fillColor(lightText).text(terms, 50, doc.y, { width: pageWidth, lineGap: 2 });
-      doc.moveDown(1);
-    }
+    // Terms (always include - fall back to default if not in proposal data)
+    const defaultTerms = `PAYMENT TERMS\nA 50% deposit is required to secure your date. The remaining balance is due 2 weeks before your event. Payment may be made by credit card (3.0% processing fee applies) or Zelle/Check (no fee).\n\nCANCELLATION POLICY\nCancellations made more than 90 days before the event will receive a full refund of the deposit. Cancellations made 60-90 days before the event will receive a 50% refund of the deposit. Cancellations within 60 days are non-refundable.\n\nDESIGN CHANGES\nDesign changes may be requested up to 60 days before the event, subject to availability and potential price adjustments. Changes requested within 60 days cannot be guaranteed.\n\nDELIVERY & SETUP\nSetup includes placement and assembly of cake at venue. Client is responsible for ensuring venue access and appropriate display surface. Once the cake is delivered and set up, it is the responsibility of the wedding coordinator to ensure it is not damaged.\n\nDISPLAY CONDITIONS\nClient is responsible for ensuring the cake is displayed in a cool, climate-controlled environment away from direct sunlight, heat sources, and outdoor elements. Kenna Giuzio Cake is not responsible for damage due to improper display conditions.\n\nFORCE MAJEURE\nIn the event of circumstances beyond our control (natural disasters, severe weather, illness, etc.), Kenna Giuzio Cake will work with you to reschedule or provide a full refund.\n\nFLOWER CLOCHES\nYour cake is designed to function as both a celebration centerpiece and a keepsake element - the hand crafted sugar components are created to be preserved as heirlooms. These are delicate art pieces and should be handled with care. Not edible.\n\nBy accepting this proposal, you agree to these terms and conditions.`;
+    const terms = data.terms || defaultTerms;
+    // Always start terms on a new page for clean layout
+    doc.addPage();
+    y = 50;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('TERMS & CONDITIONS', 50, y);
+    y += 16;
+    doc.font('Helvetica').fontSize(7.5).fillColor(lightText).text(terms, 50, y, { width: pageWidth, lineGap: 2 });
+    doc.moveDown(1);
 
     // Signature
     const sigY = doc.y + 10;
