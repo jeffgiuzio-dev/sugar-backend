@@ -2824,12 +2824,12 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const { client_id, title, event_date, event_time, event_end_time, event_type, notes } = req.body;
+    const { client_id, title, event_date, event_end_date, event_time, event_end_time, event_type, is_multi_day, notes } = req.body;
     const result = await pool.query(
-      `INSERT INTO calendar_events (client_id, title, event_date, event_time, event_end_time, event_type, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO calendar_events (client_id, title, event_date, event_end_date, event_time, event_end_time, event_type, is_multi_day, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [client_id, title, event_date, event_time, event_end_time || null, event_type, notes]
+      [client_id, title, event_date, event_end_date || null, event_time, event_end_time || null, event_type, is_multi_day || false, notes]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -2840,18 +2840,20 @@ app.post('/api/events', async (req, res) => {
 
 app.put('/api/events/:id', async (req, res) => {
   try {
-    const { title, event_date, event_time, event_end_time, event_type, notes } = req.body;
+    const { title, event_date, event_end_date, event_time, event_end_time, event_type, is_multi_day, notes } = req.body;
     const result = await pool.query(
       `UPDATE calendar_events
        SET title = COALESCE($1, title),
            event_date = COALESCE($2, event_date),
-           event_time = $3,
-           event_end_time = $4,
-           event_type = COALESCE($5, event_type),
-           notes = $6
-       WHERE id = $7
+           event_end_date = $3,
+           event_time = $4,
+           event_end_time = $5,
+           event_type = COALESCE($6, event_type),
+           is_multi_day = COALESCE($7, is_multi_day),
+           notes = $8
+       WHERE id = $9
        RETURNING *`,
-      [title, event_date, event_time, event_end_time, event_type, notes, req.params.id]
+      [title, event_date, event_end_date || null, event_time, event_end_time, event_type, is_multi_day, notes, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Event not found' });
@@ -3233,10 +3235,12 @@ async function runMigrations() {
     `);
     console.log('✓ Clients table updated');
 
-    // Add missing column to calendar_events
+    // Add missing columns to calendar_events
     console.log('Adding columns to calendar_events table...');
     await pool.query(`
       ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS event_end_time TIME;
+      ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS event_end_date DATE;
+      ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS is_multi_day BOOLEAN DEFAULT FALSE;
     `);
     console.log('✓ Calendar events table updated');
 

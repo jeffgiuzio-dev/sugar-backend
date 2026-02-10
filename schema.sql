@@ -70,9 +70,11 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     event_date DATE NOT NULL,
+    event_end_date DATE,
     event_time TIME,
     event_end_time TIME,
     event_type VARCHAR(50), -- wedding, tasting, consultation, custom
+    is_multi_day BOOLEAN DEFAULT FALSE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
