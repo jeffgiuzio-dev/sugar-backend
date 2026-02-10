@@ -1883,44 +1883,7 @@
             </div>
         </div>
 
-        <!-- Communication Notes -->
-        <div class="card collapsible" id="commCard">
-            <div class="card-header" onclick="toggleCard('commCard')">
-                <div style="display: flex; align-items: center;">
-                    <span class="collapse-icon"><span class="icon-minus">−</span><span class="icon-plus">+</span></span>
-                    <h2 class="card-title">General Communication</h2>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="notes-list" id="notesList">
-                    <!-- Populated by JS -->
-                </div>
-                <div class="add-note-form admin-only">
-                    <div class="form-group">
-                        <label class="form-label">Add Note (Visible to Client)</label>
-                        <textarea class="form-textarea" id="newNoteText" placeholder="Add a note that the client can see..."></textarea>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button class="btn btn-primary btn-small" onclick="addNote()">Add Note</button>
-                    </div>
-                </div>
-
-                <!-- Agreement, Images & Files Section -->
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; color: #999;">Agreement, Images & Files</span>
-                        <button class="btn btn-secondary btn-small admin-only" onclick="document.getElementById('fileUpload').click()">+ Upload</button>
-                    </div>
-                    <div class="files-grid" id="filesGrid">
-                        <div class="file-upload admin-only" onclick="document.getElementById('fileUpload').click()">
-                            <div class="file-upload-icon">+</div>
-                            <div class="file-upload-text">Add File</div>
-                        </div>
-                    </div>
-                    <input type="file" id="fileUpload" style="display:none" multiple accept="image/*,.pdf" onchange="handleFileUpload(this)">
-                </div>
-            </div>
-        </div>
+        <!-- General Communication removed — clients don't use the portal -->
 
         <!-- Day of Instructions (Visible to Client & Team) -->
         <div class="card collapsible" id="dayOfCard">
@@ -2974,11 +2937,7 @@ Kenna`
             // Load accounting
             loadAccounting();
 
-            // Load notes
-            loadNotes();
-
-            // Load files
-            loadFiles();
+            // General Communication section removed (clients don't use portal)
 
             // Load internal notes (portalData already loaded above)
             document.getElementById('internalNotes').value = portalData.internalNotes || '';
@@ -3201,105 +3160,6 @@ Kenna`
                 </div>
             `;
             summaryEl.style.display = 'flex';
-        }
-
-        function loadNotes() {
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            const notes = (portalData.notes || []).filter(n => n.visibility === 'client'); // Only client-visible notes
-
-            const container = document.getElementById('notesList');
-
-            if (notes.length === 0) {
-                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No communication notes yet</p>';
-                return;
-            }
-
-            container.innerHTML = notes.map(note => `
-                <div class="note-item client-visible">
-                    <div class="note-header">
-                        <span class="note-date">${formatDate(note.date)}</span>
-                    </div>
-                    <div class="note-content">${note.text}</div>
-                </div>
-            `).join('');
-        }
-
-        function addNote() {
-            const text = document.getElementById('newNoteText').value.trim();
-            if (!text) return;
-
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            portalData.notes = portalData.notes || [];
-            portalData.notes.unshift({
-                text: text,
-                visibility: 'client', // Always client-visible
-                date: new Date().toISOString()
-            });
-
-            localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-
-            document.getElementById('newNoteText').value = '';
-            loadNotes();
-        }
-
-        function loadFiles() {
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            const files = portalData.files || [];
-
-            const container = document.getElementById('filesGrid');
-            const uploadBtn = container.querySelector('.file-upload');
-
-            // Clear existing files (keep upload button)
-            container.innerHTML = '';
-
-            files.forEach((file, index) => {
-                const div = document.createElement('div');
-                div.className = 'file-item';
-                div.innerHTML = `
-                    <div class="file-thumbnail">
-                        ${file.type.startsWith('image/') ? `<img src="${file.data}" alt="${file.name}">` : '📄'}
-                    </div>
-                    <div class="file-name">${file.name}</div>
-                `;
-                div.onclick = () => window.open(file.data, '_blank');
-                container.appendChild(div);
-            });
-
-            // Add upload button back (admin only)
-            if (isAdmin) {
-                const uploadDiv = document.createElement('div');
-                uploadDiv.className = 'file-upload';
-                uploadDiv.onclick = () => document.getElementById('fileUpload').click();
-                uploadDiv.innerHTML = `
-                    <div class="file-upload-icon">+</div>
-                    <div class="file-upload-text">Add File</div>
-                `;
-                container.appendChild(uploadDiv);
-            }
-        }
-
-        function handleFileUpload(input) {
-            if (!input.files) return;
-
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            portalData.files = portalData.files || [];
-
-            Array.from(input.files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    portalData.files.push({
-                        name: file.name,
-                        type: file.type,
-                        data: e.target.result,
-                        uploadedAt: new Date().toISOString()
-                    });
-                    localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-                    loadFiles();
-                };
-                reader.readAsDataURL(file);
-            });
-
-            input.value = '';
         }
 
         function loadInternalDocs() {
@@ -3667,54 +3527,7 @@ Kenna`
             });
         }
 
-        // Drag and drop for files
-        const filesGrid = document.getElementById('filesGrid');
-
-        filesGrid.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            filesGrid.classList.add('dragover');
-        });
-
-        filesGrid.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            filesGrid.classList.remove('dragover');
-        });
-
-        filesGrid.addEventListener('drop', (e) => {
-            e.preventDefault();
-            filesGrid.classList.remove('dragover');
-
-            if (!isAdmin) return;
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleDroppedFiles(files);
-            }
-        });
-
-        function handleDroppedFiles(files) {
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            portalData.files = portalData.files || [];
-
-            Array.from(files).forEach(file => {
-                if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-                    return; // Skip non-image/pdf files
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    portalData.files.push({
-                        name: file.name,
-                        type: file.type,
-                        data: e.target.result,
-                        uploadedAt: new Date().toISOString()
-                    });
-                    localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-                    loadFiles();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+        // General Communication file drag/drop removed (section deleted)
 
         // Team functions
         let teamModalTab = 'new';
@@ -5689,7 +5502,7 @@ Kenna`
 
         // Collapse all sections except Event Details by default
         function setDefaultCollapsedState() {
-            const cardsToCollapse = ['teamCard', 'accountingCard', 'logCard', 'commCard', 'dayOfCard', 'internalCard'];
+            const cardsToCollapse = ['teamCard', 'accountingCard', 'logCard', 'dayOfCard', 'internalCard'];
             cardsToCollapse.forEach(cardId => {
                 const card = document.getElementById(cardId);
                 if (card) card.classList.add('collapsed');
