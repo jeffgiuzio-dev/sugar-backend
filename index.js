@@ -921,6 +921,32 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
   }
 });
 
+// Test PDF receipt generation (sandbox only)
+app.get('/api/test/pdf-receipt', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const pdfBuffer = await generateReceiptPDF({
+      type: 'tasting',
+      clientName: 'Test Client',
+      amountFormatted: '$150.00',
+      paymentDate: 'February 9, 2026',
+      paymentMethod: 'Visa •••• 4242',
+      receiptNumber: 'KGC-20260209-TEST',
+      tastingDate: 'Wednesday, February 26, 2026',
+      tastingTime: '2 PM'
+    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="test-receipt.pdf"');
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('PDF test error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 // ============================================
 // DEV TOOLS — Sandbox only
 // ============================================
@@ -1169,10 +1195,19 @@ async function generateReceiptPDF(receiptData) {
     const pageWidth = 612 - 120; // letter width minus margins
 
     // Logo (centered)
-    const logoPath = path.join(__dirname, '..', 'images', 'logo.png');
-    try {
-      doc.image(logoPath, (612 - 150) / 2, 50, { width: 150 });
-    } catch (e) { /* skip logo if not found */ }
+    // Try multiple logo paths (different on local dev vs Railway)
+    const logoPaths = [
+      path.join(__dirname, 'client-portal', 'images', 'logo.png'),
+      path.join(__dirname, '..', 'images', 'logo.png'),
+      path.join(__dirname, 'images', 'logo.png')
+    ];
+    const fs = require('fs');
+    const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
+    if (logoPath) {
+      try {
+        doc.image(logoPath, (612 - 150) / 2, 50, { width: 150 });
+      } catch (e) { /* skip logo if not found */ }
+    }
 
     // Title
     doc.moveDown(1);
