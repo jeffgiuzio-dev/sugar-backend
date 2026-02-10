@@ -1247,6 +1247,8 @@ function buildBookingConfirmationHTML({ firstName, amountFormatted, paymentDate,
     <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">&#8226; Feel free to reach out anytime with questions or updates!</p>
   </td></tr>`;
 
+  const balanceNote = balanceDueDate ? `Your remaining balance will be due two weeks before your event (${balanceDueDate}).` : 'Your remaining balance will be due two weeks before your event.';
+
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
@@ -1268,12 +1270,16 @@ function buildBookingConfirmationHTML({ firstName, amountFormatted, paymentDate,
   </td></tr>
   <!-- Divider -->
   <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${eventSection}
-  <!-- Message -->
+  <!-- Message (Lock the Date template) -->
   <tr><td style="padding:20px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your deposit! Your date is now officially reserved and I couldn't be more excited to create something beautiful for your ${(eventType || 'celebration').toLowerCase()}.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'll be in touch as we get closer to your event with updates on your design. If you have any questions or inspiration along the way, don't hesitate to reach out!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">With excitement,</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm delighted to share that your date is officially booked! Thank you for trusting me with your ${(eventType || 'celebration').toLowerCase()}.</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">In the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.</p>
+    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What's Next</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; If anything changes with your event, please don't hesitate to let me know.</p>
+    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 16px;">&#8226; ${balanceNote}</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm truly excited to create something beautiful for your celebration!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
   </td></tr>
   <!-- Footer -->
@@ -1290,7 +1296,8 @@ function buildBookingConfirmationPlain({ firstName, amountFormatted, paymentDate
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
   const eventInfo = `\nYOUR EVENT\nEvent: ${eventType || 'Wedding'}\nDate: ${eventDate || 'To be confirmed'}${venue ? `\nVenue: ${venue}` : ''}${balanceDueDate ? `\nFinal Balance Due: ${balanceDueDate}` : ''}\n\nWHAT'S NEXT\n- Your date is officially reserved\n- I'll begin working on your custom design\n- You'll receive a final balance reminder closer to your event\n- Feel free to reach out anytime with questions or updates!\n`;
 
-  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\nDear ${firstName},\n\nThank you for your deposit! Your date is now officially reserved and I couldn't be more excited to create something beautiful for your ${(eventType || 'celebration').toLowerCase()}.\n\nI'll be in touch as we get closer to your event with updates on your design. If you have any questions or inspiration along the way, don't hesitate to reach out!\n\nWith excitement,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  const balanceNote = balanceDueDate ? `Your remaining balance will be due two weeks before your event (${balanceDueDate}).` : 'Your remaining balance will be due two weeks before your event.';
+  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\nHi ${firstName},\n\nI'm delighted to share that your date is officially booked! Thank you for trusting me with your ${(eventType || 'celebration').toLowerCase()}.\n\nIn the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.\n\nWHAT'S NEXT:\n- If anything changes with your event, please don't hesitate to let me know.\n- ${balanceNote}\n\nI'm truly excited to create something beautiful for your celebration!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
 // ===== Deposit Reminder (Auto-Send 24h After Signing) =====
@@ -1847,7 +1854,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             }
 
             const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: method, eventType, eventDate, venue: venueStr, balanceDueDate };
-            subject = eventDate ? `You're Booked! - ${eventDate}` : "You're Booked! - Kenna Giuzio Cake";
+            subject = eventDate ? `Kenna Giuzio Cake - You're Booked! - ${eventDate}` : "Kenna Giuzio Cake - You're Booked!";
             plainText = buildBookingConfirmationPlain(bookingData);
             htmlBody = buildBookingConfirmationHTML(bookingData);
           } else {
@@ -2110,7 +2117,7 @@ app.post('/api/payments/webhook', async (req, res) => {
             }
 
             const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', eventType, eventDate, venue: venueStr, balanceDueDate };
-            subject = eventDate ? `You're Booked! - ${eventDate}` : "You're Booked! - Kenna Giuzio Cake";
+            subject = eventDate ? `Kenna Giuzio Cake - You're Booked! - ${eventDate}` : "Kenna Giuzio Cake - You're Booked!";
             plainText = buildBookingConfirmationPlain(bookingData);
             htmlBody = buildBookingConfirmationHTML(bookingData);
           } else {
