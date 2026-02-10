@@ -1429,6 +1429,7 @@ async function generateProposalPDF(proposal) {
     y += 16;
     if (data.clientEmail) { doc.fontSize(10).fillColor(lightText).text(data.clientEmail, 50, y); y += 14; }
     if (data.clientPhone) { doc.fontSize(10).fillColor(lightText).text(data.clientPhone, 50, y); y += 14; }
+    if (data.clientAddress) { doc.fontSize(9).fillColor(lightText).text(data.clientAddress, 50, y, { width: 250 }); y = doc.y + 4; }
 
     // Event details (right column)
     let ey = 172;
@@ -1440,7 +1441,19 @@ async function generateProposalPDF(proposal) {
       const evtDate = new Date(data.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       doc.text(evtDate, 340, ey); ey += 14;
     }
+    if (data.eventTime) {
+      // Format time (e.g. "14:00:00" → "2:00 PM")
+      const timeParts = data.eventTime.split(':');
+      let hrs = parseInt(timeParts[0], 10);
+      const mins = timeParts[1] || '00';
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      if (hrs > 12) hrs -= 12;
+      if (hrs === 0) hrs = 12;
+      const timeStr = mins === '00' ? `${hrs} ${ampm}` : `${hrs}:${mins} ${ampm}`;
+      doc.text(timeStr, 340, ey); ey += 14;
+    }
     if (data.venue) { doc.text(data.venue, 340, ey); ey += 14; }
+    if (data.venueAddress) { doc.fontSize(9).fillColor(lightText).text(data.venueAddress, 340, ey, { width: 210 }); ey = doc.y + 4; }
 
     y = Math.max(y, ey) + 12;
 
