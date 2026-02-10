@@ -2466,10 +2466,14 @@ app.put('/api/clients/:id', async (req, res) => {
                              new Date(event_date).getTime() !== new Date(oldClient.rows[0].event_date).getTime();
 
     const result = await pool.query(
-      `UPDATE clients SET name=$1, email=$2, phone=$3, status=$4, event_date=$5, event_type=$6,
-       guest_count=$7, venue=$8, source=$9, notes=$10, address=$11,
-       tasting_date=$12, tasting_time=$13, tasting_end_time=$14, tasting_guests=$15, event_time=$16, event_end_time=$17, archived=$18,
-       instagram=$19, linkedin=$20, website=$21, company=$22, updated_at=NOW()
+      `UPDATE clients SET
+       name=COALESCE($1, name), email=COALESCE($2, email), phone=COALESCE($3, phone), status=COALESCE($4, status),
+       event_date=COALESCE($5, event_date), event_type=COALESCE($6, event_type), guest_count=COALESCE($7, guest_count),
+       venue=COALESCE($8, venue), source=COALESCE($9, source), notes=COALESCE($10, notes), address=COALESCE($11, address),
+       tasting_date=COALESCE($12, tasting_date), tasting_time=COALESCE($13, tasting_time), tasting_end_time=COALESCE($14, tasting_end_time),
+       tasting_guests=COALESCE($15, tasting_guests), event_time=COALESCE($16, event_time), event_end_time=COALESCE($17, event_end_time),
+       archived=COALESCE($18, archived), instagram=COALESCE($19, instagram), linkedin=COALESCE($20, linkedin),
+       website=COALESCE($21, website), company=COALESCE($22, company), updated_at=NOW()
        WHERE id=$23 RETURNING *`,
       [name, nullIfEmpty(email), nullIfEmpty(phone), status, nullIfEmpty(event_date), nullIfEmpty(event_type), nullIfEmpty(guest_count), nullIfEmpty(venue), nullIfEmpty(source), nullIfEmpty(notes), nullIfEmpty(address),
        nullIfEmpty(tasting_date), nullIfEmpty(tasting_time), nullIfEmpty(tasting_end_time), nullIfEmpty(tasting_guests), nullIfEmpty(event_time), nullIfEmpty(event_end_time), archived, nullIfEmpty(instagram), nullIfEmpty(linkedin), nullIfEmpty(website), nullIfEmpty(company), req.params.id]
