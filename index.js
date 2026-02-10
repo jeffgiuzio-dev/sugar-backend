@@ -1233,37 +1233,58 @@ async function generateReceiptPDF(receiptData) {
     // Round down to nearest dollar, no cents
     const fmt = (n) => '$' + Math.floor(parseFloat(n)).toLocaleString();
 
-    // Logo (centered, compact)
+    const fs = require('fs');
+
+    // Banner image (full width, top of page)
+    const bannerPaths = [
+      path.join(__dirname, 'client-portal', 'images', 'header-flowers.jpg'),
+      path.join(__dirname, '..', 'images', 'header-flowers.jpg'),
+      path.join(__dirname, 'images', 'header-flowers.jpg')
+    ];
+    const bannerPath = bannerPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
+    const bannerHeight = 120;
+    if (bannerPath) {
+      try {
+        doc.image(bannerPath, 0, 0, { width: 612, height: bannerHeight });
+        // Light overlay for readability
+        doc.save();
+        doc.rect(0, 0, 612, bannerHeight).fill('rgba(255,255,255,0.15)');
+        doc.restore();
+      } catch (e) { /* skip banner */ }
+    }
+
+    // Logo (centered on banner)
     const logoPaths = [
       path.join(__dirname, 'client-portal', 'images', 'logo.png'),
       path.join(__dirname, '..', 'images', 'logo.png'),
       path.join(__dirname, 'images', 'logo.png')
     ];
-    const fs = require('fs');
     const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
     if (logoPath) {
-      try { doc.image(logoPath, (612 - 120) / 2, 40, { width: 120 }); } catch (e) { /* skip */ }
+      try { doc.image(logoPath, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
     }
 
-    // Title
+    // Title (below banner)
     doc.font('Times-Roman').fontSize(18).fillColor(gold)
-      .text('PAYMENT RECEIPT', 50, 105, { align: 'center', width: pageWidth });
+      .text('PAYMENT RECEIPT', 50, bannerHeight + 15, { align: 'center', width: pageWidth });
 
     // Gold divider
-    doc.moveTo(50, 130).lineTo(562, 130).strokeColor(gold).lineWidth(1).stroke();
+    const dividerY = bannerHeight + 42;
+    doc.moveTo(50, dividerY).lineTo(562, dividerY).strokeColor(gold).lineWidth(1).stroke();
 
     // Receipt # and Date (same line, compact)
+    const contentStart = dividerY + 8;
     doc.font('Helvetica').fontSize(8).fillColor(lightText);
-    doc.text(`Receipt #: ${receiptData.receiptNumber}`, 50, 138, { align: 'right', width: pageWidth });
-    doc.text(`Date: ${receiptData.paymentDate}`, 50, 150, { align: 'right', width: pageWidth });
+    doc.text(`Receipt #: ${receiptData.receiptNumber}`, 50, contentStart, { align: 'right', width: pageWidth });
+    doc.text(`Date: ${receiptData.paymentDate}`, 50, contentStart + 12, { align: 'right', width: pageWidth });
 
     // BILL TO
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('BILL TO', 50, 140);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('BILL TO', 50, contentStart);
     doc.font('Helvetica').fontSize(10).fillColor(darkText)
-      .text(receiptData.clientName || 'Client', 50, 152);
+      .text(receiptData.clientName || 'Client', 50, contentStart + 12);
 
     // PAYMENT DETAILS
-    let y = 175;
+    let y = contentStart + 35;
     doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('PAYMENT DETAILS', 50, y);
     y += 14;
 
