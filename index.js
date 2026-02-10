@@ -947,6 +947,25 @@ app.get('/api/test/pdf-receipt', async (req, res) => {
   }
 });
 
+// Test proposal PDF generation (sandbox only)
+app.get('/api/test/proposal-pdf/:clientId', async (req, res) => {
+  try {
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    if (!pk.startsWith('pk_test_')) {
+      return res.status(403).json({ error: 'Only available in sandbox mode' });
+    }
+    const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 ORDER BY updated_at DESC LIMIT 1", [req.params.clientId]);
+    if (propResult.rows.length === 0) return res.status(404).json({ error: 'No proposal found' });
+    const pdfBuffer = await generateProposalPDF(propResult.rows[0]);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="proposal.pdf"');
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Proposal PDF test error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 // ============================================
 // DEV TOOLS — Sandbox only
 // ============================================
@@ -1329,9 +1348,188 @@ async function generateReceiptPDF(receiptData) {
   });
 }
 
-// ===== Raw Email Builder with Attachment =====
+// ===== Signed Proposal PDF Generator =====
 
-function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, attachment }) {
+async function generateProposalPDF(proposal) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'letter', margin: 50 });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const gold = '#b5956a';
+    const darkText = '#1a1a1a';
+    const lightText = '#666666';
+    const pageWidth = 612 - 100; // letter width minus margins
+    const data = typeof proposal.data === 'string' ? JSON.parse(proposal.data) : proposal.data;
+
+    // Logo
+    const fs = require('fs');
+    const logoPaths = [
+      path.join(__dirname, 'client-portal', 'images', 'logo.png'),
+      path.join(__dirname, '..', 'images', 'logo.png'),
+      path.join(__dirname, 'images', 'logo.png')
+    ];
+    const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
+    if (logoPath) {
+      try { doc.image(logoPath, (612 - 140) / 2, 40, { width: 140 }); } catch (e) { /* skip */ }
+    }
+
+    doc.y = 110;
+
+    // Title
+    doc.font('Times-Roman').fontSize(20).fillColor(gold)
+      .text('SIGNED PROPOSAL', 50, 110, { align: 'center', width: pageWidth });
+    doc.font('Helvetica').fontSize(10).fillColor(lightText)
+      .text(`Proposal #${data.proposalNumber || proposal.proposal_number || ''}`, 50, 138, { align: 'center', width: pageWidth });
+
+    // Gold divider
+    doc.moveTo(50, 158).lineTo(562, 158).strokeColor(gold).lineWidth(1.5).stroke();
+
+    // Client & Event info
+    let y = 172;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('CLIENT', 50, y);
+    y += 14;
+    doc.font('Helvetica').fontSize(11).fillColor(darkText).text(data.clientName || '', 50, y);
+    y += 16;
+    if (data.clientEmail) { doc.fontSize(10).fillColor(lightText).text(data.clientEmail, 50, y); y += 14; }
+    if (data.clientPhone) { doc.fontSize(10).fillColor(lightText).text(data.clientPhone, 50, y); y += 14; }
+
+    // Event details (right column)
+    let ey = 172;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('EVENT', 340, ey);
+    ey += 14;
+    doc.font('Helvetica').fontSize(10).fillColor(darkText);
+    if (data.eventType) { doc.text(`${data.eventType}`, 340, ey); ey += 14; }
+    if (data.eventDate) {
+      const evtDate = new Date(data.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      doc.text(evtDate, 340, ey); ey += 14;
+    }
+    if (data.venue) { doc.text(data.venue, 340, ey); ey += 14; }
+
+    y = Math.max(y, ey) + 12;
+
+    // Selected Design
+    const selectedDesign = data.selectedDesign || 'base';
+    const designPrice = data[selectedDesign + 'Price'] || data.basePrice || '0';
+    const designNarrative = data[selectedDesign + 'Narrative'] || data.baseNarrative || '';
+    const designLabel = selectedDesign === 'base' ? 'Base Design' : selectedDesign === 'option1' ? 'Design Option A' : 'Design Option B';
+
+    doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke();
+    y += 10;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('SELECTED DESIGN', 50, y);
+    y += 16;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(darkText).text(designLabel, 50, y);
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(gold).text('$' + parseFloat(designPrice).toLocaleString(), 462, y, { width: 100, align: 'right' });
+    y += 16;
+    if (designNarrative) {
+      doc.font('Helvetica').fontSize(9).fillColor(lightText).text(designNarrative, 50, y, { width: pageWidth - 10 });
+      y = doc.y + 10;
+    }
+
+    // Line Items
+    const items = data.items || [];
+    if (items.length > 0) {
+      doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke();
+      y += 10;
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('ADDITIONAL ITEMS', 50, y);
+      y += 16;
+
+      // Table header
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(lightText);
+      doc.text('Item', 50, y); doc.text('Description', 180, y); doc.text('Qty', 390, y); doc.text('Amount', 462, y, { width: 100, align: 'right' });
+      y += 14;
+      doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke();
+      y += 6;
+
+      items.forEach(item => {
+        let itemPrice = 0;
+        if (item.type === 'fixed') {
+          itemPrice = parseFloat(item.price) || 0;
+        } else {
+          itemPrice = (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+        }
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText).text(item.name || '', 50, y, { width: 125 });
+        doc.font('Helvetica').fontSize(8).fillColor(lightText).text(item.desc || '', 180, y, { width: 200 });
+        const descHeight = doc.heightOfString(item.desc || '', { width: 200 });
+        doc.font('Helvetica').fontSize(9).fillColor(darkText).text(item.qty || '', 390, y);
+        doc.text('$' + itemPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
+        y = Math.max(y + 14, doc.y) + 6;
+      });
+    }
+
+    // Tasting credit
+    const tastingCredit = parseFloat(data.tastingCredit) || 0;
+
+    // Total
+    y += 4;
+    doc.moveTo(50, y).lineTo(562, y).strokeColor(gold).lineWidth(1).stroke();
+    y += 10;
+
+    let itemsTotal = 0;
+    items.forEach(item => {
+      if (item.type === 'fixed') itemsTotal += parseFloat(item.price) || 0;
+      else itemsTotal += (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+    });
+    const designTotal = parseFloat(designPrice) || 0;
+    const grandTotal = designTotal + itemsTotal - tastingCredit;
+
+    doc.font('Helvetica').fontSize(10).fillColor(darkText);
+    doc.text('Design', 50, y); doc.text('$' + designTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
+    y += 16;
+    if (itemsTotal > 0) {
+      doc.text('Additional Items', 50, y); doc.text('$' + itemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
+      y += 16;
+    }
+    if (tastingCredit > 0) {
+      doc.text('Tasting Credit', 50, y); doc.fillColor('#4a9'); doc.text('-$' + tastingCredit.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
+      y += 16;
+    }
+    doc.font('Helvetica-Bold').fontSize(13).fillColor(gold);
+    doc.text('Total', 50, y); doc.text('$' + grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 }), 462, y, { width: 100, align: 'right' });
+    y += 24;
+
+    // Terms (if fits on page, otherwise new page)
+    const terms = data.terms || '';
+    if (terms) {
+      if (y > 550) doc.addPage();
+      else { doc.moveTo(50, y).lineTo(562, y).strokeColor('#e8e0d5').lineWidth(0.5).stroke(); y += 10; }
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('TERMS & CONDITIONS', 50, doc.y || y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').fontSize(7.5).fillColor(lightText).text(terms, 50, doc.y, { width: pageWidth, lineGap: 2 });
+      doc.moveDown(1);
+    }
+
+    // Signature
+    const sigY = doc.y + 10;
+    if (sigY > 680) doc.addPage();
+    doc.moveTo(50, doc.y).lineTo(562, doc.y).strokeColor(gold).lineWidth(1).stroke();
+    doc.moveDown(0.8);
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold).text('ACCEPTED & SIGNED', 50, doc.y);
+    doc.moveDown(0.5);
+    doc.font('Times-Italic').fontSize(18).fillColor(darkText).text(proposal.signature || data._signature || '', 50, doc.y);
+    doc.moveDown(0.3);
+    const signedDate = proposal.signed_at || data._signedAt;
+    if (signedDate) {
+      doc.font('Helvetica').fontSize(9).fillColor(lightText)
+        .text('Signed: ' + new Date(signedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 50, doc.y);
+    }
+
+    // Footer
+    doc.moveDown(2);
+    doc.font('Helvetica').fontSize(8).fillColor(lightText)
+      .text('Kenna Giuzio Cake  |  (206) 472-5401  |  kenna@kennagiuziocake.com', 50, doc.y, { align: 'center', width: pageWidth });
+
+    doc.end();
+  });
+}
+
+// ===== Raw Email Builder with Attachment(s) =====
+
+function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, attachment, attachments }) {
+  // Support single attachment or array of attachments
+  const allAttachments = attachments || (attachment ? [attachment] : []);
   const mixedBoundary = 'mixed_' + Date.now().toString(36);
   const altBoundary = 'alt_' + Date.now().toString(36) + '_a';
 
@@ -1357,17 +1555,22 @@ function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, a
     '',
     htmlBody,
     '',
-    `--${altBoundary}--`,
-    '',
-    `--${mixedBoundary}`,
-    `Content-Type: ${attachment.contentType}; name="${attachment.filename}"`,
-    `Content-Disposition: attachment; filename="${attachment.filename}"`,
-    'Content-Transfer-Encoding: base64',
-    '',
-    attachment.data.toString('base64').replace(/(.{76})/g, '$1\r\n'),
-    '',
-    `--${mixedBoundary}--`
+    `--${altBoundary}--`
   ];
+
+  allAttachments.forEach(att => {
+    lines.push(
+      '',
+      `--${mixedBoundary}`,
+      `Content-Type: ${att.contentType}; name="${att.filename}"`,
+      `Content-Disposition: attachment; filename="${att.filename}"`,
+      'Content-Transfer-Encoding: base64',
+      '',
+      att.data.toString('base64').replace(/(.{76})/g, '$1\r\n')
+    );
+  });
+
+  lines.push('', `--${mixedBoundary}--`);
 
   return Buffer.from(lines.join('\r\n'))
     .toString('base64')
@@ -2261,8 +2464,8 @@ app.post('/api/payments/offline-verify', async (req, res) => {
 </body></html>`;
           }
 
-          // Generate PDF receipt
-          let pdfBuffer = null;
+          // Generate PDF attachments
+          const pdfAttachments = [];
           try {
             const receiptData = {
               type: invoice_type || 'other',
@@ -2272,14 +2475,26 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             };
             if (invoice_type === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
             if (invoice_type === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
-            pdfBuffer = await generateReceiptPDF(receiptData);
+            const receiptBuf = await generateReceiptPDF(receiptData);
+            pdfAttachments.push({ filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: receiptBuf });
           } catch (pdfErr) { console.error('PDF receipt generation failed (offline):', pdfErr.message); }
 
+          // For deposit payments, also attach the signed proposal
+          if (invoice_type === 'deposit' && client_id) {
+            try {
+              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [client_id]);
+              if (propResult.rows.length > 0) {
+                const proposalBuf = await generateProposalPDF(propResult.rows[0]);
+                pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
+              }
+            } catch (propErr) { console.error('Proposal PDF generation failed (offline):', propErr.message); }
+          }
+
           let encodedClientEmail;
-          if (pdfBuffer) {
+          if (pdfAttachments.length > 0) {
             encodedClientEmail = buildRawEmailWithAttachment({
               to: client_email, from: kennaEmail, subject, plainText, htmlBody,
-              attachment: { filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: pdfBuffer }
+              attachments: pdfAttachments
             });
           } else {
             const boundary = 'boundary_' + Date.now().toString(36);
@@ -2531,8 +2746,8 @@ app.post('/api/payments/webhook', async (req, res) => {
 </body></html>`;
           }
 
-          // Generate PDF receipt
-          let pdfBuffer = null;
+          // Generate PDF attachments
+          const pdfAttachments = [];
           try {
             const receiptData = {
               type: invoiceType || 'other',
@@ -2542,14 +2757,26 @@ app.post('/api/payments/webhook', async (req, res) => {
             };
             if (invoiceType === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
             if (invoiceType === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
-            pdfBuffer = await generateReceiptPDF(receiptData);
+            const receiptBuf = await generateReceiptPDF(receiptData);
+            pdfAttachments.push({ filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: receiptBuf });
           } catch (pdfErr) { console.error('PDF receipt generation failed (webhook):', pdfErr.message); }
 
+          // For deposit payments, also attach the signed proposal
+          if (invoiceType === 'deposit' && clientId) {
+            try {
+              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [clientId]);
+              if (propResult.rows.length > 0) {
+                const proposalBuf = await generateProposalPDF(propResult.rows[0]);
+                pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
+              }
+            } catch (propErr) { console.error('Proposal PDF generation failed (webhook):', propErr.message); }
+          }
+
           let encodedClientEmail;
-          if (pdfBuffer) {
+          if (pdfAttachments.length > 0) {
             encodedClientEmail = buildRawEmailWithAttachment({
               to: clientEmail, from: kennaEmail, subject, plainText, htmlBody,
-              attachment: { filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: pdfBuffer }
+              attachments: pdfAttachments
             });
           } else {
             const boundary = 'boundary_' + Date.now().toString(36);
