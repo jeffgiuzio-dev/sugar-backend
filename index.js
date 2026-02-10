@@ -1297,10 +1297,16 @@ async function generateReceiptPDF(receiptData) {
       } catch (e) { console.error('Receipt banner image error:', e.message); }
     }
 
-    // Logo (centered on banner)
-    if (logoImg) {
-      try { doc.image(logoImg, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
-    }
+    // Logo text (white on banner for legibility)
+    const logoY = (bannerHeight - 40) / 2;
+    doc.save();
+    doc.fillOpacity(0.9);
+    doc.font('Times-Roman').fontSize(22).fillColor('#ffffff')
+      .text('Kenna Giuzio Cake', 0, logoY, { align: 'center', width: 612 });
+    doc.font('Helvetica').fontSize(7).fillColor('#ffffff')
+      .text('A N   A R T I S A N   S T U D I O', 0, logoY + 26, { align: 'center', width: 612, characterSpacing: 0.5 });
+    doc.fillOpacity(1);
+    doc.restore();
 
     // Title (below banner)
     doc.font('Times-Roman').fontSize(18).fillColor(gold)
@@ -1479,10 +1485,16 @@ async function generateProposalPDF(proposal) {
       } catch (e) { console.error('Proposal banner image error:', e.message); }
     }
 
-    // Logo (centered on banner)
-    if (logoImg) {
-      try { doc.image(logoImg, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
-    }
+    // Logo text (white on banner for legibility)
+    const logoY = (bannerHeight - 40) / 2;
+    doc.save();
+    doc.fillOpacity(0.9);
+    doc.font('Times-Roman').fontSize(22).fillColor('#ffffff')
+      .text('Kenna Giuzio Cake', 0, logoY, { align: 'center', width: 612 });
+    doc.font('Helvetica').fontSize(7).fillColor('#ffffff')
+      .text('A N   A R T I S A N   S T U D I O', 0, logoY + 26, { align: 'center', width: 612, characterSpacing: 0.5 });
+    doc.fillOpacity(1);
+    doc.restore();
 
     // Title (below banner)
     const titleY = bannerHeight + 15;
