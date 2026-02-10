@@ -881,7 +881,7 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
         const emailLines = [
           `To: ${clientEmail}`,
           `From: ${kennaEmail}`,
-          `Subject: Payment Confirmed - Kenna Giuzio Cake`,
+          `Subject: Kenna Giuzio Cake - Tasting Confirmed`,
           'MIME-Version: 1.0',
           `Content-Type: multipart/alternative; boundary="${boundary}"`,
           '',
@@ -1162,17 +1162,9 @@ function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate,
         <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Tasting</p>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">${dateLine}</p>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Location:</strong> Queen Anne, Seattle</p>
-        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1 hour</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1-2 hours</p>
       </td></tr>
     </table>
-  </td></tr>
-  <!-- What to Expect -->
-  <tr><td style="padding:16px 40px 0;">
-    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What to Expect</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Sample a variety of cake flavors and fillings</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Discuss your design vision and inspiration</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Review timeline and logistics</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">Feel free to bring inspiration photos, color swatches, or your event team!</p>
   </td></tr>`;
 
   return `<!DOCTYPE html>
@@ -1199,7 +1191,8 @@ function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate,
   <!-- Message -->
   <tr><td style="padding:20px 40px 30px;">
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment of ${amountFormatted}. Your tasting is confirmed!</p>
+    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Feel free to bring any inspiration photos, color swatches, or your event team members.</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions before your tasting, don't hesitate to reach out.</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">See you soon,</p>
     <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
@@ -1217,9 +1210,9 @@ function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate,
 function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
   const dateStr = tastingDate ? `${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}` : 'To be confirmed';
-  const tastingInfo = `\nYOUR TASTING\nDate: ${dateStr}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1 hour\n\nWHAT TO EXPECT\n- Sample a variety of cake flavors and fillings\n- Discuss your design vision and inspiration\n- Review timeline and logistics\n- Feel free to bring inspiration photos, color swatches, or your event team!\n`;
+  const tastingInfo = `\nYOUR TASTING:\nDate: ${dateStr}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1-2 hours\n`;
 
-  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment. I'm so looking forward to meeting you and creating something beautiful together!\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}. Your tasting is confirmed!\n\nFeel free to bring any inspiration photos, color swatches, or your event team members.\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
 // Build Booking Confirmation email (sent when deposit is paid)
@@ -1827,7 +1820,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             }
 
             const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: method, tastingDate, tastingTime };
-            subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
+            subject = tastingDate ? `Kenna Giuzio Cake - Tasting Confirmed - ${tastingDate}` : 'Kenna Giuzio Cake - Tasting Confirmed';
             plainText = buildTastingConfirmationPlain(emailData);
             htmlBody = buildTastingConfirmationHTML(emailData);
           } else if (invoice_type === 'deposit') {
@@ -2091,7 +2084,7 @@ app.post('/api/payments/webhook', async (req, res) => {
             }
 
             const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', tastingDate, tastingTime };
-            subject = tastingDate ? `Tasting Confirmed - ${tastingDate}` : 'Tasting Confirmed - Kenna Giuzio Cake';
+            subject = tastingDate ? `Kenna Giuzio Cake - Tasting Confirmed - ${tastingDate}` : 'Kenna Giuzio Cake - Tasting Confirmed';
             plainText = buildTastingConfirmationPlain(emailData);
             htmlBody = buildTastingConfirmationHTML(emailData);
           } else if (invoiceType === 'deposit') {
