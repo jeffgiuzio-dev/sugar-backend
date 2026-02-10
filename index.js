@@ -1718,9 +1718,12 @@ function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, a
   const mixedBoundary = 'mixed_' + Date.now().toString(36);
   const altBoundary = 'alt_' + Date.now().toString(36) + '_a';
 
+  // Ensure From header always includes display name
+  const fromHeader = from.includes('<') ? from : `Kenna Giuzio Cake <${from}>`;
+
   const lines = [
     `To: ${to}`,
-    `From: ${from}`,
+    `From: ${fromHeader}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',
     `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
