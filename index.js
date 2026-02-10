@@ -4204,22 +4204,25 @@ async function checkUpcomingEvents() {
       if (daysUntil <= 30 && daysUntil > 14) {
         if (await alreadySent('one_month')) continue;
 
-        // Calculate balance info
+        // Calculate balance info and build final balance link
         let balanceAmount = 'your remaining balance';
+        let proposalTotal = 0, tastingCredit = 0, depositPaid = 0;
         try {
           const invResult = await pool.query(
-            "SELECT data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
+            "SELECT amount, data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
             [client.id]
           );
           if (invResult.rows.length > 0) {
             const invData = invResult.rows[0].data || {};
-            const proposalTotal = parseFloat(invData.proposalTotal) || 0;
-            const tastingCredit = parseFloat(invData.tastingCredit) || 0;
-            const depositPaid = parseFloat(invData.amount) || 0;
-            const remaining = (proposalTotal - tastingCredit) - depositPaid;
-            if (remaining > 0) balanceAmount = '$' + remaining.toFixed(2);
+            proposalTotal = parseFloat(invData.proposalTotal) || 0;
+            tastingCredit = parseFloat(invData.tastingCredit) || 0;
+            depositPaid = parseFloat(invResult.rows[0].amount) || parseFloat(invData.amount) || 0;
+            const remaining = Math.floor((proposalTotal - tastingCredit) - depositPaid);
+            if (remaining > 0) balanceAmount = '$' + remaining.toLocaleString();
           }
         } catch (e) { console.log('Could not calculate balance for reminder'); }
+
+        const finalBalanceLinkOneMonth = `https://portal.kennagiuziocake.com/welcome-proposal.html?dest=final-balance&clientId=${client.id}&mode=final-balance&total=${proposalTotal}&tastingCredit=${tastingCredit}&depositPaid=${depositPaid}`;
 
         const balanceDueDate = new Date(eventDate);
         balanceDueDate.setDate(balanceDueDate.getDate() - 14);
@@ -4253,11 +4256,13 @@ async function checkUpcomingEvents() {
     </table>
   </td></tr>`;
 
-        const plainText = bodyText + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+        const plainText = bodyText + `\n\nView and pay your final balance here:\n${finalBalanceLinkOneMonth}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 
         const htmlBody = buildBrandedPaymentEmailHTML(bodyText, {
           title: 'One Month to Go!',
-          detailsHTML: eventDetailsHTML
+          detailsHTML: eventDetailsHTML,
+          ctaUrl: finalBalanceLinkOneMonth,
+          ctaText: 'VIEW YOUR FINAL BALANCE'
         });
 
         try {
@@ -4304,7 +4309,7 @@ async function checkUpcomingEvents() {
           }
         } catch (e) { console.log('Could not calculate balance for 2-week reminder'); }
 
-        const balanceFormatted = balanceAmount > 0 ? '$' + balanceAmount.toFixed(2) : 'your remaining balance';
+        const balanceFormatted = balanceAmount > 0 ? '$' + Math.floor(balanceAmount).toLocaleString() : 'your remaining balance';
         const finalBalanceLink = `https://portal.kennagiuziocake.com/welcome-proposal.html?dest=final-balance&clientId=${client.id}&mode=final-balance&total=${proposalTotal}&tastingCredit=${tastingCredit}&depositPaid=${depositPaid}`;
 
         const eventType = (client.event_type || 'event').toLowerCase();
@@ -4329,8 +4334,7 @@ async function checkUpcomingEvents() {
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
       <tr><td>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDateFormatted}</p>
-        ${client.venue ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Venue:</strong> ${client.venue}</p>` : ''}
-        <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Balance Due:</strong> ${balanceFormatted}</p>
+        ${client.venue ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Venue:</strong> ${client.venue}</p>` : ''}
       </td></tr>
     </table>
   </td></tr>`;
