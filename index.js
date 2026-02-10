@@ -4211,7 +4211,7 @@ async function checkUpcomingEvents() {
     oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
     const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
-    // Get all booked clients with future event dates
+    // Get all booked clients with future event dates who haven't paid final balance
     const result = await pool.query(`
       SELECT c.id, c.name, c.email, c.event_type, c.event_date, c.venue,
              pd.deposit_paid_date
@@ -4220,6 +4220,7 @@ async function checkUpcomingEvents() {
       WHERE c.status = 'booked'
         AND c.event_date IS NOT NULL
         AND c.event_date > NOW()
+        AND (pd.final_paid IS NULL OR pd.final_paid = FALSE)
       ORDER BY c.event_date ASC
     `);
 
