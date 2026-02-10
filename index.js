@@ -4458,8 +4458,6 @@ async function checkUpcomingEvents() {
 
         const htmlBody = buildBrandedPaymentEmailHTML(bodyText, {
           title: 'Final Balance Due',
-          amountFormatted: balanceFormatted,
-          paymentDate: `Due before ${eventDateFormatted}`,
           detailsHTML: eventDetailsHTML,
           ctaUrl: finalBalanceLink,
           ctaText: 'VIEW YOUR FINAL BALANCE'
