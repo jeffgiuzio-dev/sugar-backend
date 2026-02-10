@@ -1277,13 +1277,19 @@ async function generateReceiptPDF(receiptData) {
     // Round down to nearest dollar, no cents
     const fmt = (n) => '$' + Math.floor(parseFloat(n)).toLocaleString();
 
-    // Banner image (full width, top of page)
-    const bannerHeight = 120;
+    // Banner image (full width, cover-style: scale to fill width, clip height, center vertically)
+    const bannerHeight = 160;
     if (bannerImg) {
       try {
-        doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
-        // Light white overlay for softer look (PDFKit uses fillOpacity, not rgba)
         doc.save();
+        doc.rect(0, 0, 612, bannerHeight).clip();
+        // Scale image to full page width (612), let height be natural aspect ratio
+        // Image is 4032x3024 → at width 612, height ≈ 459. Center vertically in 160px banner.
+        const imgAspect = 3024 / 4032;
+        const renderedHeight = 612 * imgAspect;
+        const yOffset = -(renderedHeight - bannerHeight) / 2;
+        doc.image(bannerImg, 0, yOffset, { width: 612 });
+        // Light white overlay for softer look
         doc.fillOpacity(0.15);
         doc.rect(0, 0, 612, bannerHeight).fill('#ffffff');
         doc.fillOpacity(1);
@@ -1456,13 +1462,16 @@ async function generateProposalPDF(proposal) {
     const pageWidth = 612 - 100; // letter width minus margins
     const data = typeof proposal.data === 'string' ? JSON.parse(proposal.data) : proposal.data;
 
-    // Banner image (full width, top of page)
-    const bannerHeight = 120;
+    // Banner image (full width, cover-style: scale to fill width, clip height, center vertically)
+    const bannerHeight = 160;
     if (bannerImg) {
       try {
-        doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
-        // Light white overlay for softer look (PDFKit uses fillOpacity, not rgba)
         doc.save();
+        doc.rect(0, 0, 612, bannerHeight).clip();
+        const imgAspect = 3024 / 4032;
+        const renderedHeight = 612 * imgAspect;
+        const yOffset = -(renderedHeight - bannerHeight) / 2;
+        doc.image(bannerImg, 0, yOffset, { width: 612 });
         doc.fillOpacity(0.15);
         doc.rect(0, 0, 612, bannerHeight).fill('#ffffff');
         doc.fillOpacity(1);
