@@ -1260,17 +1260,37 @@ async function generateReceiptPDF(receiptData) {
       final: 'Final Balance Payment'
     };
 
+    const fmt = (n) => '$' + parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const detailRows = [
       ['Description', descriptionByType[receiptData.type] || 'Payment']
     ];
 
-    // CC fee breakdown for card payments
-    if (receiptData.isCardPayment && receiptData.amountRaw) {
+    // Deposit receipts: show full proposal accounting trail
+    if (receiptData.type === 'deposit' && receiptData.proposalTotal) {
+      const proposalTotal = parseFloat(receiptData.proposalTotal);
+      const tastingCredit = parseFloat(receiptData.tastingCredit) || 0;
+      const revisedTotal = proposalTotal - tastingCredit;
+      const deposit = revisedTotal / 2;
+      detailRows.push(['Proposal Total', fmt(proposalTotal)]);
+      if (tastingCredit > 0) {
+        detailRows.push(['Tasting Credit', '-' + fmt(tastingCredit)]);
+      }
+      detailRows.push(['Revised Total', fmt(revisedTotal)]);
+      detailRows.push(['Deposit (50%)', fmt(deposit)]);
+      if (receiptData.isCardPayment) {
+        const ccFee = deposit * 0.03;
+        detailRows.push(['CC Processing Fee (3%)', fmt(ccFee)]);
+        detailRows.push(['Total Charged', receiptData.amountFormatted]);
+      } else {
+        detailRows.push(['Amount Due', fmt(deposit)]);
+      }
+    } else if (receiptData.isCardPayment && receiptData.amountRaw) {
+      // Tasting / final: simple CC fee breakdown
       const totalCharged = parseFloat(receiptData.amountRaw);
       const subtotal = totalCharged / 1.03;
       const ccFee = totalCharged - subtotal;
-      detailRows.push(['Subtotal', '$' + subtotal.toFixed(2)]);
-      detailRows.push(['CC Processing Fee (3%)', '$' + ccFee.toFixed(2)]);
+      detailRows.push(['Subtotal', fmt(subtotal)]);
+      detailRows.push(['CC Processing Fee (3%)', fmt(ccFee)]);
       detailRows.push(['Total Charged', receiptData.amountFormatted]);
     } else {
       detailRows.push(['Amount', receiptData.amountFormatted]);
@@ -2509,6 +2529,17 @@ app.post('/api/payments/offline-verify', async (req, res) => {
 
           // Generate PDF attachments
           const pdfAttachments = [];
+
+          // For deposit payments, fetch proposal first (needed for receipt breakdown AND proposal PDF)
+          let proposalRow = null;
+          if (invoice_type === 'deposit' && client_id) {
+            try {
+              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [client_id]);
+              if (propResult.rows.length > 0) proposalRow = propResult.rows[0];
+            } catch (propErr) { console.error('Failed to fetch proposal for deposit receipt:', propErr.message); }
+          }
+
+          // Receipt PDF
           try {
             const isCard = method === 'card';
             const receiptData = {
@@ -2519,19 +2550,33 @@ app.post('/api/payments/offline-verify', async (req, res) => {
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
             };
             if (invoice_type === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
-            if (invoice_type === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
+            if (invoice_type === 'deposit') {
+              receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate;
+              // Extract proposal totals for receipt breakdown
+              if (proposalRow) {
+                try {
+                  const pData = typeof proposalRow.data === 'string' ? JSON.parse(proposalRow.data) : proposalRow.data;
+                  const selectedDesign = pData.selectedDesign || 'base';
+                  const designPrice = parseFloat(pData[selectedDesign + 'Price'] || pData.basePrice || 0);
+                  let itemsTotal = 0;
+                  (pData.items || []).forEach(item => {
+                    if (item.type === 'fixed') itemsTotal += parseFloat(item.price) || 0;
+                    else itemsTotal += (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+                  });
+                  receiptData.proposalTotal = designPrice + itemsTotal;
+                  receiptData.tastingCredit = parseFloat(pData.tastingCredit) || 0;
+                } catch (e) { console.error('Failed to parse proposal data for receipt:', e.message); }
+              }
+            }
             const receiptBuf = await generateReceiptPDF(receiptData);
             pdfAttachments.push({ filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: receiptBuf });
           } catch (pdfErr) { console.error('PDF receipt generation failed (offline):', pdfErr.message); }
 
-          // For deposit payments, also attach the signed proposal
-          if (invoice_type === 'deposit' && client_id) {
+          // Signed proposal PDF for deposit payments
+          if (proposalRow) {
             try {
-              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [client_id]);
-              if (propResult.rows.length > 0) {
-                const proposalBuf = await generateProposalPDF(propResult.rows[0]);
-                pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
-              }
+              const proposalBuf = await generateProposalPDF(proposalRow);
+              pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
             } catch (propErr) { console.error('Proposal PDF generation failed (offline):', propErr.message); }
           }
 
@@ -2793,6 +2838,17 @@ app.post('/api/payments/webhook', async (req, res) => {
 
           // Generate PDF attachments
           const pdfAttachments = [];
+
+          // For deposit payments, fetch proposal first (needed for receipt breakdown AND proposal PDF)
+          let proposalRow = null;
+          if (invoiceType === 'deposit' && clientId) {
+            try {
+              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [clientId]);
+              if (propResult.rows.length > 0) proposalRow = propResult.rows[0];
+            } catch (propErr) { console.error('Failed to fetch proposal for deposit receipt:', propErr.message); }
+          }
+
+          // Receipt PDF
           try {
             const receiptData = {
               type: invoiceType || 'other',
@@ -2802,19 +2858,33 @@ app.post('/api/payments/webhook', async (req, res) => {
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(stripeId || '').slice(-4) || Date.now().toString().slice(-4)}`
             };
             if (invoiceType === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
-            if (invoiceType === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
+            if (invoiceType === 'deposit') {
+              receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate;
+              // Extract proposal totals for receipt breakdown
+              if (proposalRow) {
+                try {
+                  const pData = typeof proposalRow.data === 'string' ? JSON.parse(proposalRow.data) : proposalRow.data;
+                  const selectedDesign = pData.selectedDesign || 'base';
+                  const designPrice = parseFloat(pData[selectedDesign + 'Price'] || pData.basePrice || 0);
+                  let itemsTotal = 0;
+                  (pData.items || []).forEach(item => {
+                    if (item.type === 'fixed') itemsTotal += parseFloat(item.price) || 0;
+                    else itemsTotal += (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+                  });
+                  receiptData.proposalTotal = designPrice + itemsTotal;
+                  receiptData.tastingCredit = parseFloat(pData.tastingCredit) || 0;
+                } catch (e) { console.error('Failed to parse proposal data for receipt:', e.message); }
+              }
+            }
             const receiptBuf = await generateReceiptPDF(receiptData);
             pdfAttachments.push({ filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: receiptBuf });
           } catch (pdfErr) { console.error('PDF receipt generation failed (webhook):', pdfErr.message); }
 
-          // For deposit payments, also attach the signed proposal
-          if (invoiceType === 'deposit' && clientId) {
+          // Signed proposal PDF for deposit payments
+          if (proposalRow) {
             try {
-              const propResult = await pool.query("SELECT * FROM proposals WHERE client_id = $1 AND status = 'signed' ORDER BY updated_at DESC LIMIT 1", [clientId]);
-              if (propResult.rows.length > 0) {
-                const proposalBuf = await generateProposalPDF(propResult.rows[0]);
-                pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
-              }
+              const proposalBuf = await generateProposalPDF(proposalRow);
+              pdfAttachments.push({ filename: 'KGC-Signed-Proposal.pdf', contentType: 'application/pdf', data: proposalBuf });
             } catch (propErr) { console.error('Proposal PDF generation failed (webhook):', propErr.message); }
           }
 
