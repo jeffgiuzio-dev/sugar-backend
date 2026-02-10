@@ -634,23 +634,6 @@
             text-decoration: underline;
         }
 
-        .remind-btn {
-            font-size: 0.6rem;
-            color: var(--accent-gold);
-            cursor: pointer;
-            padding: 2px 6px;
-            border: 1px solid var(--accent-gold);
-            border-radius: 3px;
-            background: var(--bg-secondary);
-            transition: all 0.2s;
-        }
-
-        .remind-btn:hover {
-            background: var(--accent-gold);
-            color: #fff;
-            border-color: var(--accent-gold);
-        }
-
         .row-actions {
             display: flex;
             gap: 8px;
@@ -2006,6 +1989,13 @@
                 </svg>
                 Archive
             </a>
+            <a href="/admin/dev-tools.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Dev Tools
+            </a>
         </nav>
         <!-- Dark Mode Toggle -->
         <div style="padding: 14px 30px; margin-top: auto;">
@@ -2653,11 +2643,8 @@
             loadData();
             populateClientSelect();
 
-            // Load clients from API in background
-            loadClientsFromAPI();
-
-            // Sync invoice statuses from API (catches payments made on other devices)
-            syncInvoiceStatuses();
+            // Load clients from API first, then sync invoices (needs client names)
+            loadClientsFromAPI().then(() => syncInvoiceStatuses());
         });
 
         async function syncInvoiceStatuses() {
@@ -2668,11 +2655,14 @@
                 if (!Array.isArray(apiInvoices) || apiInvoices.length === 0) return;
 
                 const localInvoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
                 let updated = false;
 
                 apiInvoices.forEach(api => {
-                    const invoiceId = api.invoice_number || api.id;
-                    const localIdx = localInvoices.findIndex(l => l.id === invoiceId);
+                    const invoiceId = api.invoice_number || String(api.id);
+                    const localIdx = localInvoices.findIndex(l => l.id === invoiceId || l.invoiceNumber === invoiceId);
+                    const apiData = typeof api.data === 'string' ? JSON.parse(api.data || '{}') : (api.data || {});
+
                     if (localIdx >= 0) {
                         // Sync paid status
                         if (api.status === 'paid' && localInvoices[localIdx].status !== 'paid') {
@@ -2680,19 +2670,69 @@
                             localInvoices[localIdx].paidAt = api.paid_at || new Date().toISOString();
                             updated = true;
                         }
+                        // Sync amount from DB if local has 0 or missing
+                        const apiAmount = parseFloat(api.amount || 0);
+                        if (apiAmount > 0 && (!localInvoices[localIdx].amount || parseFloat(localInvoices[localIdx].amount) === 0)) {
+                            localInvoices[localIdx].amount = apiAmount;
+                            updated = true;
+                        }
+                        // Sync type from DB if local has generic type
+                        if (api.type && api.type !== 'other' && (!localInvoices[localIdx].type || localInvoices[localIdx].type === 'other')) {
+                            localInvoices[localIdx].type = api.type;
+                            updated = true;
+                        }
                         // Sync pending_verification status (Zelle/check claims)
                         if (api.status === 'pending_verification' && localInvoices[localIdx].status === 'sent') {
                             localInvoices[localIdx].status = 'pending_verification';
                             localInvoices[localIdx].claimedAt = api.updated_at || new Date().toISOString();
-                            // Sync payment method from API data
-                            const apiData = typeof api.data === 'string' ? JSON.parse(api.data) : (api.data || {});
                             if (apiData.payment_method) {
                                 localInvoices[localIdx].paymentMethod = apiData.payment_method;
                             }
                             updated = true;
                         }
+                    } else if (api.status === 'pending_verification' || api.status === 'paid' || api.status === 'sent') {
+                        // Invoice exists in DB but not in localStorage — create it
+                        const client = clients.find(c => String(c.id) === String(api.client_id));
+                        localInvoices.push({
+                            id: invoiceId,
+                            invoiceNumber: api.invoice_number || '',
+                            type: api.type || 'other',
+                            clientId: api.client_id,
+                            clientName: (client ? (client.first_name || client.name || '') + (client.last_name ? ' ' + client.last_name : '') : '').trim() || apiData.client_name || 'Unknown',
+                            clientEmail: (client ? client.email : '') || apiData.client_email || '',
+                            amount: parseFloat(api.amount || 0),
+                            status: api.status,
+                            sentAt: api.created_at || new Date().toISOString(),
+                            paidAt: api.paid_at || null,
+                            claimedAt: api.status === 'pending_verification' ? (api.updated_at || new Date().toISOString()) : null,
+                            paymentMethod: apiData.payment_method || null
+                        });
+                        updated = true;
                     }
                 });
+
+                // Remove stale 'sent' duplicates: if same client+type has a paid or pending_verification invoice, remove the 'sent' one
+                const beforeCount = localInvoices.length;
+                const invoicesByClientType = {};
+                localInvoices.forEach(inv => {
+                    const key = `${inv.clientId || inv.client_id}_${inv.type}`;
+                    if (!invoicesByClientType[key]) invoicesByClientType[key] = [];
+                    invoicesByClientType[key].push(inv);
+                });
+                for (const key of Object.keys(invoicesByClientType)) {
+                    const group = invoicesByClientType[key];
+                    if (group.length > 1) {
+                        const hasPaidOrPending = group.some(i => i.status === 'paid' || i.status === 'pending_verification');
+                        if (hasPaidOrPending) {
+                            // Remove 'sent' duplicates from this group
+                            const toRemove = group.filter(i => i.status === 'sent');
+                            toRemove.forEach(inv => {
+                                const idx = localInvoices.indexOf(inv);
+                                if (idx !== -1) { localInvoices.splice(idx, 1); updated = true; }
+                            });
+                        }
+                    }
+                }
 
                 if (updated) {
                     localStorage.setItem('kgc_invoices', JSON.stringify(localInvoices));
@@ -3246,7 +3286,8 @@
             const allExpenses = JSON.parse(localStorage.getItem('kgc_expenses') || '[]');
 
             // Auto-populate revenue from paid invoices
-            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+            // Filter out 'proposal' type — proposals aren't invoices, tracked in comms log
+            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]').filter(i => i.type !== 'proposal');
             const allPaidInvoices = invoices.filter(i => i.status === 'paid');
             const allSentInvoices = invoices.filter(i => i.status === 'sent');
             const allPendingInvoices = invoices.filter(i => i.status === 'pending_verification');
@@ -3259,7 +3300,7 @@
                         id: 'inv-' + inv.id,
                         invoiceId: inv.id,
                         date: inv.paidAt ? inv.paidAt.split('T')[0] : new Date().toISOString().split('T')[0],
-                        description: inv.clientName + ' - ' + (inv.type === 'tasting' ? 'Tasting' : inv.type === 'deposit' ? 'Deposit' : 'Payment'),
+                        description: inv.clientName + ' - ' + (inv.type === 'tasting' ? 'Tasting' : inv.type === 'deposit' ? 'Deposit' : inv.type === 'final' ? 'Final' : inv.type === 'lock_deposit' ? 'Lock Deposit' : 'Payment'),
                         amount: inv.amount,
                         source: 'invoice',
                         clientId: inv.clientId
@@ -3347,14 +3388,15 @@
             const sorted = [...items].sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0));
             container.innerHTML = sorted.map(item => {
                 const eventName = item.eventType ? `${item.clientName} ${item.eventType}` : item.clientName || '-';
+                const invNum = item.invoiceNumber || item.id || '';
                 return `
                 <div class="finance-table-row">
                     <div class="row-date">${formatDate(item.sentAt?.split('T')[0])}</div>
                     <div>
                         <span class="clickable" onclick="openInvoice('${item.id}')">${eventName}</span>
-                        <span class="remind-btn" onclick="event.stopPropagation(); sendReminder('${item.id}', '${item.clientId}')" style="margin-left: 12px;">remind</span>
+                        ${invNum ? `<div style="font-size:0.7rem; color:#999; margin-top:2px;">${invNum}</div>` : ''}
                     </div>
-                    <div><span class="row-type" style="background: #f5eee3; color: #8b7355;">${item.type === 'tasting' ? 'Tasting' : item.type === 'deposit' ? 'Deposit' : 'Payment'}</span></div>
+                    <div><span class="row-type" style="background: #f5eee3; color: #8b7355;">${item.type === 'tasting' ? 'Tasting' : item.type === 'deposit' ? 'Deposit' : item.type === 'final' ? 'Final' : item.type === 'lock_deposit' ? 'Lock Deposit' : 'Payment'}</span></div>
                     <div style="text-align: right; color: #b5956a; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;">${formatCurrency(item.amount)}</div>
                 </div>
             `;}).join('');
@@ -3370,10 +3412,14 @@
             container.innerHTML = sorted.map(item => {
                 const eventName = item.clientName || 'Unknown Client';
                 const method = (item.paymentMethod || 'zelle').charAt(0).toUpperCase() + (item.paymentMethod || 'zelle').slice(1);
+                const invNum = item.invoiceNumber || item.id || '';
                 return `
                 <div class="finance-table-row" style="align-items: center;">
                     <div class="row-date">${formatDate((item.claimedAt || item.sentAt || '').split('T')[0])}</div>
-                    <div class="clickable" onclick="openInvoice('${item.id}')">${eventName}</div>
+                    <div>
+                        <span class="clickable" onclick="openInvoice('${item.id}')">${eventName}</span>
+                        ${invNum ? `<div style="font-size:0.7rem; color:#999; margin-top:2px;">${invNum}</div>` : ''}
+                    </div>
                     <div><span class="row-type" style="background: #fff3cd; color: #856404;">${method}</span></div>
                     <div style="text-align: right; color: #b5956a; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;">${formatCurrency(item.amount)}</div>
                     <div style="text-align: center;">
@@ -3447,11 +3493,15 @@
             const sorted = [...items].sort((a, b) => new Date(b.paidAt || 0) - new Date(a.paidAt || 0));
             container.innerHTML = sorted.map(item => {
                 const eventName = item.eventType ? `${item.clientName} ${item.eventType}` : item.clientName || '-';
+                const invNum = item.invoiceNumber || item.id || '';
                 return `
                 <div class="finance-table-row">
                     <div class="row-date">${formatDate(item.paidAt?.split('T')[0])}</div>
-                    <div class="clickable" onclick="openInvoice('${item.id}')">${eventName}</div>
-                    <div><span class="row-type" style="background: #e8ede5; color: #5a6b52;">${item.type === 'tasting' ? 'Tasting' : item.type === 'deposit' ? 'Deposit' : 'Payment'}</span></div>
+                    <div>
+                        <span class="clickable" onclick="openInvoice('${item.id}')">${eventName}</span>
+                        ${invNum ? `<div style="font-size:0.7rem; color:#999; margin-top:2px;">${invNum}</div>` : ''}
+                    </div>
+                    <div><span class="row-type" style="background: #e8ede5; color: #5a6b52;">${item.type === 'tasting' ? 'Tasting' : item.type === 'deposit' ? 'Deposit' : item.type === 'final' ? 'Final' : item.type === 'lock_deposit' ? 'Lock Deposit' : 'Payment'}</span></div>
                     <div style="text-align: right; color: #27ae60; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;">${formatCurrency(item.amount)}</div>
                 </div>
             `;}).join('');
@@ -4481,7 +4531,8 @@
 
         function formatDate(dateStr) {
             if (!dateStr) return '-';
-            const date = new Date(dateStr + 'T00:00:00');
+            const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+            const date = new Date(clean + 'T00:00:00');
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
@@ -4491,35 +4542,6 @@
             }
         }
 
-        function sendReminder(invoiceId, clientId) {
-            // Get client and invoice info
-            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-            const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
-            const invoice = invoices.find(i => i.id === invoiceId);
-            const client = clients.find(c => c.id === clientId);
-
-            if (!invoice || !client) {
-                alert('Could not find invoice or client information');
-                return;
-            }
-
-            // Log to communication
-            if (!client.communications) client.communications = [];
-            client.communications.push({
-                date: new Date().toISOString(),
-                type: 'reminder',
-                note: `Payment reminder sent for ${invoice.type === 'tasting' ? 'Tasting' : invoice.type === 'deposit' ? 'Deposit' : 'Payment'} invoice - ${formatCurrency(invoice.amount)}`
-            });
-
-            // Save updated client
-            const clientIndex = clients.findIndex(c => c.id === clientId);
-            if (clientIndex !== -1) {
-                clients[clientIndex] = client;
-                localStorage.setItem('kgc_clients', JSON.stringify(clients));
-            }
-
-            alert('Reminder logged to communication history for ' + client.name);
-        }
 
         // Drag and drop for receipt
         const uploadArea = document.getElementById('receiptUpload');

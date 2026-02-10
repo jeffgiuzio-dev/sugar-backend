@@ -297,52 +297,77 @@
         }
 
         /* Progress Bar */
-        .progress-cell {
-            min-width: 180px;
-        }
-
-        .progress-bar {
+        /* Workflow Buttons */
+        .wf-btn {
             display: flex;
-            gap: 4px;
-            margin-bottom: 6px;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.2s;
+            border-radius: 6px;
+            width: 100%;
         }
 
-        .progress-step {
-            flex: 1;
-            height: 6px;
-            background: var(--border-color);
-            border-radius: 3px;
+        .wf-btn:hover {
+            border-color: var(--accent-gold);
         }
 
-        .progress-step.complete {
-            background: var(--accent-gold);
-        }
-
-        .progress-step.current {
-            background: #dfc89f;
-        }
-
-        .progress-step.skipped {
-            background: #eee;
-            opacity: 0.5;
-        }
-
-        .progress-wrapper {
-            position: relative;
-            padding-bottom: 18px;
-        }
-
-        .progress-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            top: 10px;
-        }
-
-        .progress-label.current {
-            color: var(--accent-gold);
+        .wf-btn .wf-label {
+            font-size: 0.65rem;
             font-weight: 500;
+            letter-spacing: 0.3px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .wf-btn .wf-status {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .wf-btn.wf-done {
+            background: #f0f7f2;
+            border-color: #a8b5a0;
+        }
+
+        .wf-btn.wf-done .wf-label {
+            color: #5a6b52;
+        }
+
+        .wf-btn.wf-done .wf-status {
+            color: #5a6b52;
+        }
+
+        .wf-btn.wf-progress {
+            background: #fdf8f3;
+            border-color: #dfc89f;
+        }
+
+        .wf-btn.wf-progress .wf-label {
+            color: #8b7355;
+        }
+
+        .wf-btn.wf-progress .wf-status {
+            color: #8b7355;
+        }
+
+        .wf-btn.wf-disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .wf-btn.wf-disabled:hover {
+            border-color: var(--border-color);
+        }
+
+        .wf-cell {
+            padding: 10px 4px !important;
         }
 
         .empty-state {
@@ -390,6 +415,14 @@
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
+        }
+
+        .to-modal {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            overflow: hidden;
+            height: auto;
         }
 
         .modal-header {
@@ -578,68 +611,15 @@
             color: var(--accent-gold) !important;
         }
 
-        /* Action Buttons */
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 0.7rem;
-            border: 1px solid var(--border-color);
-            background: var(--bg-secondary);
+        /* Location cell */
+        .location-cell {
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            cursor: pointer;
-            font-family: 'Montserrat', sans-serif;
-            transition: all 0.2s;
-            margin-right: 6px;
-            margin-bottom: 4px;
-            border-radius: 6px;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-
-        .btn-small:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .btn-small.status-draft {
-            background: #fdf8f3;
-            border-color: #dfc89f;
-            color: #8b7355;
-        }
-
-        .btn-small.status-sent {
-            background: #f5f0fa;
-            border-color: #b8a9c9;
-            color: #6b5b7a;
-        }
-
-        .btn-small.status-paid {
-            background: #f0f7f2;
-            border-color: #a8b5a0;
-            color: #5a6b52;
-        }
-
-        /* The Setup Legend */
-        .actions-legend {
-            display: flex;
-            gap: 12px;
-            font-size: 0.55rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-        }
-
-        .legend-dot.draft { background: #dfc89f; }
-        .legend-dot.sent { background: #b8a9c9; }
-        .legend-dot.paid { background: #a8b5a0; }
 
         /* Calendar Popup */
         .calendar-popup {
@@ -817,6 +797,64 @@
         .day-event.personal {
             background: var(--bg-tertiary);
             color: var(--text-secondary);
+        }
+
+        .day-event.custom {
+            background: #b5956a;
+            color: #fff;
+        }
+
+        .day-event.hold {
+            background: #f0e6d4;
+            color: #b5956a;
+            border: 1px dashed #cbb896;
+            font-style: italic;
+        }
+
+        .day-event.prep {
+            background: #8a9a7b;
+            color: #fff;
+        }
+
+        .day-event.multi-day {
+            border-radius: 0;
+            margin-left: -7px;
+            margin-right: -7px;
+            padding-left: 4px;
+            padding-right: 4px;
+            width: calc(100% + 14px);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .day-event.multi-day.bar-start {
+            margin-left: 0;
+            margin-right: -7px;
+            width: calc(100% + 7px);
+            border-radius: 3px 0 0 3px;
+        }
+
+        .day-event.multi-day.bar-end {
+            margin-left: -7px;
+            margin-right: 0;
+            width: calc(100% + 7px);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .day-event.multi-day.bar-single {
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
+            border-radius: 3px;
+        }
+
+        .calendar-day {
+            overflow: visible;
+        }
+
+        .calendar-day .day-events {
+            overflow: visible;
         }
 
         .day-event-more {
@@ -1147,6 +1185,13 @@
                 </svg>
                 Archive
             </a>
+            <a href="/admin/dev-tools.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Dev Tools
+            </a>
         </nav>
 
         <!-- Dark Mode Toggle -->
@@ -1172,7 +1217,10 @@
             <div class="section" style="padding: 20px 24px; margin-bottom: 20px;">
                 <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <span style="font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted);">Upcoming Events</span>
-                    <button class="btn" onclick="openInquiryModal()" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;">Add Inquiry</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn" onclick="openLockTheDateModal()" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px; background: #b5956a; color: #fff;">Lock the Date</button>
+                        <button class="btn" onclick="openInquiryModal()" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;">Add Inquiry</button>
+                    </div>
                 </div>
                 <div class="timeline-container" id="timelineContainer">
                     <!-- Populated by JavaScript -->
@@ -1183,19 +1231,14 @@
                 <table class="projects-table">
                     <thead>
                         <tr>
-                            <th style="width: 22%;">Project</th>
-                            <th style="width: 10%;">Tasting</th>
-                            <th style="width: 5%; padding-left: 0;">Guests</th>
-                            <th style="width: 10%;">Event</th>
-                            <th style="width: 5%; padding-left: 0;">Guests</th>
-                            <th style="width: 28%;">Progress</th>
-                            <th style="width: 20%;">
-                                <div class="actions-legend">
-                                    <span class="legend-item"><span class="legend-dot draft"></span>Draft</span>
-                                    <span class="legend-item"><span class="legend-dot sent"></span>Sent</span>
-                                    <span class="legend-item"><span class="legend-dot paid"></span>Paid</span>
-                                </div>
-                            </th>
+                            <th style="width: 20%;">Project</th>
+                            <th style="width: 10%;">Event Date</th>
+                            <th style="width: 12%;">Location</th>
+                            <th style="width: 5%;">Guests</th>
+                            <th style="width: 13%;"></th>
+                            <th style="width: 13%;"></th>
+                            <th style="width: 13%;"></th>
+                            <th style="width: 14%;"></th>
                         </tr>
                     </thead>
                     <tbody id="projectsBody">
@@ -1234,6 +1277,67 @@
         </div>
         <div class="calendar-popup-footer">
             <a href="/admin/calendar.html" class="full-calendar-link">Open Full Calendar &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Tasting Options Email Modal -->
+    <div class="modal-overlay" id="tastingOptionsModal" style="display:none;">
+        <div class="modal to-modal" id="toModalInner" style="max-width:95vw; width:800px; resize:both; min-width:500px; min-height:350px;">
+            <div class="modal-header to-drag-handle" id="toDragHandle" style="cursor:move; user-select:none;">
+                <h2 class="modal-title" id="tastingOptionsTitle">Tasting Options</h2>
+                <button class="modal-close" onclick="closeTastingOptionsModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div style="display:flex; gap:0; flex:1; overflow:hidden;">
+                <!-- Left: Date Slots -->
+                <div style="width:220px; flex-shrink:0; padding:16px; background:#faf8f5; border-right:1px solid #e8e0d5; overflow-y:auto; display:flex; flex-direction:column;">
+                    <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#b5956a; margin-bottom:12px; font-weight:500;">Tasting Date Options</div>
+                    <div id="toDateSlotsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button onclick="addTODateSlot()" style="margin-top:10px; width:100%; padding:8px; background:transparent; border:1px dashed #cbb896; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.7rem; color:#b5956a;">+ Add Option</button>
+                </div>
+                <!-- Right: Email Preview -->
+                <div style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column;">
+                    <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#999; margin-bottom:12px;">Email Preview</div>
+                    <div style="font-size:0.75rem; color:#666; margin-bottom:6px;">
+                        To: <span id="toEmailTo" style="color:#333;"></span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#666; margin-bottom:12px;">
+                        Subject: <span id="toEmailSubject" style="color:#333;"></span>
+                    </div>
+                    <div id="toEmailBody" style="flex:1; background:#fff; border:1px solid #eee; padding:20px; font-size:0.85rem; line-height:1.7; color:#333; white-space:pre-wrap; font-family:'Montserrat',sans-serif;"></div>
+                </div>
+            </div>
+            <div style="padding:16px 20px; border-top:1px solid #eee; display:flex; justify-content:space-between; background:#faf8f5;">
+                <button onclick="closeTastingOptionsModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;">Cancel</button>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="saveTastingOptionsDraft()" style="padding:10px 20px; background:#fff; border:1px solid #b5956a; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#b5956a;">Save Draft</button>
+                    <button id="toSendBtn" onclick="sendTastingOptionsEmail()" style="padding:10px 24px; background:#b5956a; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem;">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Tasting Date Modal -->
+    <div class="modal-overlay" id="setTastingDateModal" style="display:none;">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="setTastingDateTitle">Set Tasting Date</h2>
+                <button class="modal-close" onclick="closeSetTastingDateModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="setTastingDateBody" style="padding:20px;"></div>
+            <div style="padding:16px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="closeSetTastingDateModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;">Cancel</button>
+                <button id="confirmTastingDateBtn" onclick="confirmTastingDate()" style="padding:10px 24px; background:#b5956a; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem;">Confirm</button>
+            </div>
         </div>
     </div>
 
@@ -1288,8 +1392,6 @@
                                 <option value="Wedding">Wedding</option>
                                 <option value="Birthday">Birthday</option>
                                 <option value="Anniversary">Anniversary</option>
-                                <option value="Corporate">Corporate Event</option>
-                                <option value="Baby Shower">Baby Shower</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
@@ -1407,8 +1509,71 @@
         </div>
     </div>
 
+    <!-- Lock the Date Modal -->
+    <div class="modal-overlay" id="lockTheDateModal" style="display:none;">
+        <div class="modal" id="ltdModalInner" style="max-width:95vw; width:820px; min-width:500px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="ltdTitle">Lock the Date</h2>
+                <button class="modal-close" onclick="closeLockTheDateModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div style="display:flex; gap:0; flex:1; overflow:hidden;">
+                <!-- Left: Client & Amount -->
+                <div style="width:260px; flex-shrink:0; padding:20px; background:#faf8f5; border-right:1px solid #e8e0d5; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
+                    <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#b5956a; font-weight:500;">Client & Deposit</div>
+
+                    <div>
+                        <label style="font-size:0.7rem; color:var(--text-muted); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:4px;">Client *</label>
+                        <select id="ltdClientSelect" onchange="ltdClientChanged()" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:4px; background:var(--input-bg); color:var(--text-primary); font-family:'Montserrat',sans-serif; font-size:0.85rem;">
+                            <option value="">Select client...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-size:0.7rem; color:var(--text-muted); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:4px;">Lock Deposit Amount *</label>
+                        <div style="position:relative;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;">$</span>
+                            <input type="number" id="ltdAmount" placeholder="1500" min="100" step="50" style="width:100%; padding:10px 12px 10px 28px; border:1px solid var(--border-color); border-radius:4px; background:var(--input-bg); color:var(--text-primary); font-family:'Montserrat',sans-serif; font-size:0.85rem;">
+                        </div>
+                    </div>
+
+                    <div id="ltdClientInfo" style="display:none; padding:12px; background:#fff; border:1px solid #eee; border-radius:4px;">
+                        <div style="font-size:0.7rem; color:#b5956a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Client Info</div>
+                        <div id="ltdClientEmail" style="font-size:0.8rem; color:var(--text-secondary);"></div>
+                        <div id="ltdClientEvent" style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"></div>
+                        <div id="ltdClientDate" style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Email Preview -->
+                <div style="flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div style="font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:#999;">Email Preview</div>
+                        <button class="ai-polish-btn" id="ltdAiPolishBtn" onclick="aiPolish(document.getElementById('ltdEmailBody'), { apiUrl: API_BASE_URL, onAccept: ltdUpdatePreview, subjectInput: document.getElementById('ltdEmailSubjectInput') })" style="padding:4px 12px; background:linear-gradient(135deg,#b5956a,#d4b896); color:#fff; border:none; border-radius:3px; font-size:0.7rem; font-family:'Montserrat',sans-serif; font-weight:400; letter-spacing:0.5px; cursor:pointer;">Optional AI</button>
+                    </div>
+                    <div style="font-size:0.75rem; color:#666; margin-bottom:6px;">
+                        To: <span id="ltdEmailTo" style="color:#333;">Select a client</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#666; margin-bottom:4px;">
+                        Subject: <input type="text" id="ltdEmailSubjectInput" style="border:1px solid #eee; padding:4px 8px; font-family:'Montserrat',sans-serif; font-size:0.75rem; color:#333; width:80%; border-radius:3px;" value="">
+                    </div>
+                    <textarea id="ltdEmailBody" style="flex:1; min-height:250px; background:#fff; border:1px solid #eee; padding:16px; font-size:0.85rem; line-height:1.7; color:#333; font-family:'Montserrat',sans-serif; resize:none; outline:none;"></textarea>
+                </div>
+            </div>
+            <div style="padding:16px 20px; border-top:1px solid #eee; display:flex; justify-content:space-between; background:#faf8f5;">
+                <button onclick="closeLockTheDateModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem; color:#666;">Cancel</button>
+                <button id="ltdSendBtn" onclick="sendLockTheDate()" style="padding:10px 24px; background:#b5956a; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:0.8rem;">Send Lock the Date</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="/js/api.js"></script>
+    <script src="/js/ai-polish.js"></script>
     <script>
         // Dark Mode - check saved preference on load
         (function() {
@@ -1524,11 +1689,24 @@
         }
 
         // Show error message to user
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            const bg = type === 'success' ? '#5a6b52' : type === 'error' ? '#c44' : '#b5956a';
+            Object.assign(toast.style, {
+                position: 'fixed', bottom: '24px', right: '24px', padding: '12px 24px',
+                background: bg, color: '#fff', borderRadius: '6px', zIndex: '9999',
+                fontFamily: "'Montserrat',sans-serif", fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            });
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
         function showError(message) {
             const tbody = document.getElementById('projectsBody');
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="empty-state" style="color: #c00;">
+                    <td colspan="8" class="empty-state" style="color: #c00;">
                         <h3>Connection Error</h3>
                         <p>${message}</p>
                         <button onclick="location.reload()" class="btn" style="margin-top: 15px;">Retry</button>
@@ -1597,6 +1775,18 @@
             window.location.href = `/invoices/tasting-scheduler.html?clientId=${clientId}`;
         }
 
+        // Guarded tasting invoice - check date first
+        function openTastingInvoiceGuarded(clientId) {
+            const client = clientsCache.find(c => String(c.id) === String(clientId));
+            const tastingDraft = getTastingDraft(clientId);
+            const tastingDate = tastingDraft?.date || client?.tastingDate;
+            if (!tastingDate) {
+                showToast('Set a tasting date first', 'warning');
+                return;
+            }
+            openTastingScheduler(clientId);
+        }
+
         async function openProposalBuilder(clientId) {
             // Generate a unique 4-digit proposal number if not already assigned
             const drafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
@@ -1641,15 +1831,986 @@
             window.location.href = `/proposals/proposal-builder.html?clientId=${clientId}&view=signed`;
         }
 
+        // ============ TASTING OPTIONS EMAIL MODAL ============
+
+        let toCurrentClientId = null;
+        let toDateSlots = [];
+
+        const defaultTastingOptionsTemplate = {
+            subject: 'Kenna Giuzio Cake - Tasting Options for Your {eventType}',
+            body: `Hi {firstName},
+
+I'd love to schedule your tasting consultation! Here is a date and time that works for me:
+
+[Click to select date/time]
+
+Tastings typically last about 1-2 hours. We'll sample flavors, discuss your design vision, and I'll answer any questions you have.
+
+Please let me know what works for you, or if you'd prefer a different time, share a few times that fit your schedule and I'll do my best to accommodate.
+
+Looking forward to meeting you!
+
+Warmly,
+Kenna`
+        };
+
+        async function getTastingOptionsTemplate() {
+            let custom = {};
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/settings/email_templates`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.value && typeof data.value === 'object') custom = data.value;
+                }
+            } catch (e) {
+                try { custom = JSON.parse(localStorage.getItem('kgc_email_templates') || '{}'); } catch (e2) {}
+            }
+            if (custom['tasting-options']) {
+                return { ...defaultTastingOptionsTemplate, ...custom['tasting-options'] };
+            }
+            return defaultTastingOptionsTemplate;
+        }
+
+        function openTastingOptionsModal(clientId) {
+            toCurrentClientId = clientId;
+            const client = clientsCache.find(c => String(c.id) === String(clientId));
+            if (!client) { showToast('Client not found', 'error'); return; }
+            if (!client.email) { showToast('No email for this client', 'warning'); return; }
+
+            document.getElementById('tastingOptionsTitle').textContent = 'Tasting Options — ' + client.name;
+            document.getElementById('toEmailTo').textContent = client.email;
+
+            // Load saved draft or start with 1 empty slot
+            const drafts = JSON.parse(localStorage.getItem('kgc_tasting_options_drafts') || '{}');
+            const draft = drafts[clientId] || drafts[String(clientId)];
+            if (draft && draft.dateSlots) {
+                toDateSlots = draft.dateSlots;
+            } else {
+                toDateSlots = [{ date: null, startTime: '14:00', endTime: '16:00' }];
+            }
+            renderTODateSlots();
+            updateTOEmailPreview();
+
+            // Reset modal position for fresh open
+            const inner = document.getElementById('toModalInner');
+            inner.style.position = '';
+            inner.style.left = '';
+            inner.style.top = '';
+            inner.style.transform = '';
+            inner.style.margin = '';
+
+            const modal = document.getElementById('tastingOptionsModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTastingOptionsModal() {
+            // Clear pending holds if modal was cancelled (not sent)
+            if (toCurrentClientId) clearPendingHolds(toCurrentClientId);
+            const modal = document.getElementById('tastingOptionsModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+            toCurrentClientId = null;
+        }
+
+        // Draggable modal
+        (function() {
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            const handle = document.getElementById('toDragHandle');
+            const modal = document.getElementById('toModalInner');
+
+            handle.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.modal-close')) return;
+                isDragging = true;
+                const rect = modal.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                modal.style.position = 'fixed';
+                modal.style.margin = '0';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                modal.style.left = (e.clientX - dragOffsetX) + 'px';
+                modal.style.top = (e.clientY - dragOffsetY) + 'px';
+                modal.style.transform = 'none';
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        })();
+
+        function addTODateSlot() {
+            if (toDateSlots.length >= 3) return;
+            toDateSlots.push({ date: null, startTime: '14:00', endTime: '16:00' });
+            renderTODateSlots();
+            updateTOEmailPreview();
+        }
+
+        function removeTODateSlot(index) {
+            if (toDateSlots.length <= 1) return;
+            toDateSlots.splice(index, 1);
+            renderTODateSlots();
+            updateTOEmailPreview();
+            syncPendingHoldsToCalendar();
+        }
+
+        function updateTOSlotStartTime(index, newStartTime) {
+            toDateSlots[index].startTime = newStartTime;
+            // Auto-set end time to start + 2 hours
+            const [h, m] = newStartTime.split(':').map(Number);
+            const endH = h + 2;
+            if (endH <= 23) {
+                toDateSlots[index].endTime = String(endH).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            }
+            renderTODateSlots();
+            updateTOEmailPreview();
+            syncPendingHoldsToCalendar();
+        }
+
+        function renderTODateSlots() {
+            const container = document.getElementById('toDateSlotsList');
+            container.innerHTML = toDateSlots.map((slot, i) => {
+                const label = toDateSlots.length > 1 ? `Option ${i + 1}` : '';
+                const dateDisplay = slot.date ? new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Pick from calendar...';
+
+                return `
+                    <div style="position:relative; background:#fff; border:1px solid ${slot.date ? '#b5956a' : '#ddd'}; border-radius:6px; padding:10px;">
+                        ${label ? `<div style="font-size:0.55rem; text-transform:uppercase; letter-spacing:0.5px; color:#999; margin-bottom:4px;">${label}</div>` : ''}
+                        <div class="to-date-btn" data-slot="${i}" onclick="openCalendarForSlot(${i})"
+                            style="width:100%; padding:6px 8px; border:1px solid #eee; border-radius:3px; font-family:'Montserrat',sans-serif; font-size:0.75rem; cursor:pointer; background:#fafafa; margin-bottom:6px; box-sizing:border-box; color:${slot.date ? '#333' : '#999'};">
+                            ${dateDisplay}
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <select onchange="updateTOSlotStartTime(${i}, this.value)" style="flex:1; padding:4px; border:1px solid #eee; border-radius:3px; font-size:0.65rem; font-family:'Montserrat',sans-serif;">
+                                ${generateTimeOptions(slot.startTime)}
+                            </select>
+                            <span style="font-size:0.6rem; color:#999; align-self:center;">to</span>
+                            <select onchange="toDateSlots[${i}].endTime=this.value; updateTOEmailPreview(); syncPendingHoldsToCalendar();" style="flex:1; padding:4px; border:1px solid #eee; border-radius:3px; font-size:0.65rem; font-family:'Montserrat',sans-serif;">
+                                ${generateTimeOptions(slot.endTime)}
+                            </select>
+                        </div>
+                        ${toDateSlots.length > 1 ? `<button onclick="removeTODateSlot(${i})" style="position:absolute; top:4px; right:4px; width:16px; height:16px; padding:0; background:#fff; border:1px solid #ddd; border-radius:50%; cursor:pointer; color:#999; font-size:0.6rem; line-height:14px; text-align:center;">&times;</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function syncPendingHoldsToCalendar() {
+            // Write current date slots as pending holds so they show on calendar immediately
+            if (!toCurrentClientId) return;
+            const client = clientsCache.find(c => String(c.id) === String(toCurrentClientId));
+            if (!client) return;
+            const lastName = client.name.split(' ').pop();
+
+            const holds = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+            // Remove old pending holds for this client
+            const cleaned = holds.filter(e => !(e.isPending && String(e.clientId) === String(toCurrentClientId)));
+            // Add current filled slots as pending holds
+            toDateSlots.forEach((slot, i) => {
+                if (slot.date) {
+                    cleaned.push({
+                        id: 'pending_' + toCurrentClientId + '_' + i,
+                        title: lastName + ' Tasting Hold',
+                        date: slot.date,
+                        time: slot.startTime || '',
+                        endTime: slot.endTime || '',
+                        type: 'hold',
+                        clientId: toCurrentClientId,
+                        isHold: true,
+                        isPending: true
+                    });
+                }
+            });
+            localStorage.setItem('kgc_tasting_holds', JSON.stringify(cleaned));
+        }
+
+        function clearPendingHolds(clientId) {
+            const holds = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+            localStorage.setItem('kgc_tasting_holds', JSON.stringify(holds.filter(e => !(e.isPending && String(e.clientId) === String(clientId)))));
+        }
+
+        function openCalendarForSlot(slotIndex) {
+            // Set callback so calendar returns the date to this slot
+            calendarPickerCallback = function(dateStr) {
+                toDateSlots[slotIndex].date = dateStr;
+                renderTODateSlots();
+                updateTOEmailPreview();
+                // Sync pending holds so the just-picked date shows on calendar
+                syncPendingHoldsToCalendar();
+                // Reset z-index after picking
+                document.getElementById('calendarOverlay').style.zIndex = '';
+                document.getElementById('calendarPopup').style.zIndex = '';
+            };
+
+            // Open the full calendar popup (shows all events for conflict detection)
+            calendarEditingClientId = null;
+            calendarEditingField = null;
+            calendarSelectedDate = toDateSlots[slotIndex].date || null;
+
+            const title = 'Select Tasting Date — See Calendar for Conflicts';
+            document.getElementById('calendarPopupTitle').textContent = title;
+
+            calendarCurrentMonth = today.getMonth();
+            calendarCurrentYear = today.getFullYear();
+
+            // Bump z-index above the modal overlay (z-index: 1200)
+            document.getElementById('calendarOverlay').style.zIndex = '1300';
+            document.getElementById('calendarPopup').style.zIndex = '1301';
+
+            renderCalendar();
+            document.getElementById('calendarOverlay').classList.add('active');
+            document.getElementById('calendarPopup').classList.add('active');
+        }
+
+        function generateTimeOptions(selectedValue) {
+            const times = [];
+            for (let h = 8; h <= 19; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    const val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                    const hour12 = h % 12 || 12;
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    const label = `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+                    const sel = val === selectedValue ? ' selected' : '';
+                    times.push(`<option value="${val}"${sel}>${label}</option>`);
+                }
+            }
+            return times.join('');
+        }
+
+        async function updateTOEmailPreview() {
+            const client = clientsCache.find(c => String(c.id) === String(toCurrentClientId));
+            if (!client) return;
+
+            const template = await getTastingOptionsTemplate();
+
+            // Build first name (handle couples)
+            let firstName = 'there';
+            if (client.name) {
+                const name = client.name.trim();
+                if (name.includes(' & ')) {
+                    const parts = name.split(' ');
+                    parts.pop();
+                    firstName = parts.join(' ');
+                } else {
+                    firstName = name.split(' ')[0];
+                }
+            }
+            const eventType = client.eventType || 'event';
+
+            // Build date options list
+            let dateList = '';
+            const filledSlots = toDateSlots.filter(s => s.date);
+            if (filledSlots.length > 0) {
+                dateList = filledSlots.map((slot, i) => {
+                    const d = new Date(slot.date + 'T00:00:00');
+                    const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                    const startH = parseInt(slot.startTime.split(':')[0]);
+                    const startM = slot.startTime.split(':')[1];
+                    const startAmpm = startH >= 12 ? 'PM' : 'AM';
+                    const startH12 = startH % 12 || 12;
+                    const endH = parseInt(slot.endTime.split(':')[0]);
+                    const endM = slot.endTime.split(':')[1];
+                    const endAmpm = endH >= 12 ? 'PM' : 'AM';
+                    const endH12 = endH % 12 || 12;
+                    const timeStr = `${startH12}:${startM} ${startAmpm} - ${endH12}:${endM} ${endAmpm}`;
+                    const prefix = filledSlots.length > 1 ? `Option ${i + 1}: ` : '';
+                    return `${prefix}${dateStr}, ${timeStr}`;
+                }).join('\n');
+            } else {
+                dateList = '[Select dates above]';
+            }
+
+            // Replace placeholders
+            let subject = template.subject
+                .replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType);
+
+            let body = template.body
+                .replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType)
+                .replace(/\[Click to select date\/time\]/g, dateList);
+
+            document.getElementById('toEmailSubject').textContent = subject;
+            document.getElementById('toEmailBody').textContent = body;
+        }
+
+        function buildBrandedEmailHtml(bodyText) {
+            const paragraphs = bodyText.split('\n\n').map(p =>
+                '<p style="margin:0 0 16px 0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.7; color:#333333;">' +
+                p.replace(/\n/g, '<br>') + '</p>'
+            ).join('');
+
+            return '<div style="background-color:#f5f3f0; padding:30px 20px;">' +
+                '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff;">' +
+                '<tr><td style="height:4px; background-color:#b5956a;"></td></tr>' +
+                '<tr><td align="center" style="padding:30px 40px 10px;">' +
+                '<img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" width="140" style="display:block;">' +
+                '</td></tr>' +
+                '<tr><td style="padding:20px 40px 10px;">' +
+                paragraphs +
+                '</td></tr>' +
+                '<tr><td style="padding:0 40px;"><hr style="border:none; border-top:1px solid #eeeeee; margin:0;"></td></tr>' +
+                '<tr><td align="center" style="padding:24px 40px 30px;">' +
+                '<p style="margin:0; font-family:Georgia,serif; font-size:13px; color:#999999; line-height:1.6;">' +
+                'Kenna Giuzio Cake<br>' +
+                '(206) 472-5401 &nbsp;|&nbsp; kenna@kennagiuziocake.com<br>' +
+                'Queen Anne, Seattle' +
+                '</p>' +
+                '</td></tr>' +
+                '</table>' +
+                '</div>';
+        }
+
+        function saveTastingOptionsDraft() {
+            if (!toCurrentClientId) return;
+            const drafts = JSON.parse(localStorage.getItem('kgc_tasting_options_drafts') || '{}');
+            drafts[toCurrentClientId] = {
+                dateSlots: toDateSlots,
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('kgc_tasting_options_drafts', JSON.stringify(drafts));
+            showToast('Draft saved', 'success');
+            closeTastingOptionsModal();
+            renderProjects();
+        }
+
+        async function sendTastingOptionsEmail() {
+            const client = clientsCache.find(c => String(c.id) === String(toCurrentClientId));
+            if (!client || !client.email) { showToast('No client email', 'error'); return; }
+
+            const subject = document.getElementById('toEmailSubject').textContent;
+            const bodyText = document.getElementById('toEmailBody').textContent;
+
+            if (!bodyText.trim()) { showToast('Email body is empty', 'warning'); return; }
+
+            const btn = document.getElementById('toSendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const html = buildBrandedEmailHtml(bodyText);
+                const response = await fetch(`${API_BASE_URL}/api/gmail/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: client.email,
+                        subject: subject,
+                        message: bodyText,
+                        html: html,
+                        client_id: toCurrentClientId
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to send');
+
+                // Mark tasting options as sent for this client
+                const sentFlags = JSON.parse(localStorage.getItem('kgc_tasting_options_sent') || '{}');
+                sentFlags[toCurrentClientId] = new Date().toISOString();
+                localStorage.setItem('kgc_tasting_options_sent', JSON.stringify(sentFlags));
+
+                // Convert pending holds to permanent (remove pending flag)
+                const holds = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+                // Remove any pending holds for this client first
+                const cleaned = holds.filter(e => !(e.isPending && String(e.clientId) === String(toCurrentClientId)));
+                // Add permanent holds
+                const filledSlots = toDateSlots.filter(s => s.date);
+                const lastName = client.name.split(' ').pop();
+                filledSlots.forEach(slot => {
+                    cleaned.push({
+                        id: 'hold_' + toCurrentClientId + '_' + slot.date + '_' + Date.now(),
+                        title: lastName + ' Tasting Hold',
+                        date: slot.date,
+                        time: slot.startTime || '',
+                        endTime: slot.endTime || '',
+                        type: 'hold',
+                        clientId: toCurrentClientId,
+                        isHold: true
+                    });
+                });
+                localStorage.setItem('kgc_tasting_holds', JSON.stringify(cleaned));
+                console.log('Tasting holds saved:', cleaned.length, 'holds for client', toCurrentClientId, cleaned);
+
+                // Clear draft since it's been sent
+                const drafts = JSON.parse(localStorage.getItem('kgc_tasting_options_drafts') || '{}');
+                delete drafts[toCurrentClientId];
+                delete drafts[String(toCurrentClientId)];
+                localStorage.setItem('kgc_tasting_options_drafts', JSON.stringify(drafts));
+
+                showToast('Tasting options email sent!', 'success');
+                closeTastingOptionsModal();
+                // Refresh to update button statuses
+                renderProjects();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Email';
+            }
+        }
+
+        // ============ END TASTING OPTIONS MODAL ============
+
+        // ============ LOCK THE DATE MODAL ============
+        let ltdCurrentClient = null;
+
+        const defaultLockTheDateTemplate = {
+            subject: 'Kenna Giuzio Cake - Lock Your Date - {eventDate}',
+            body: `Hi {firstName},
+
+Thank you for your interest in a custom creation for your {eventType}! I'm truly excited about the possibility of working together.
+
+To reserve your date of {eventDate}, a Lock the Date deposit of {lockAmount} is required. This deposit will be credited toward your final balance once your custom proposal is ready.
+
+You can submit your deposit securely here:
+[LOCK DEPOSIT LINK]
+
+Once received, your date will be held exclusively for you while we finalize the design details.
+
+I look forward to creating something beautiful for your celebration!
+
+Warmly,
+Kenna`
+        };
+
+        async function getLockTheDateTemplate() {
+            let custom = {};
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/settings/email_templates`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.value && typeof data.value === 'object') custom = data.value;
+                }
+            } catch (e) {
+                try { custom = JSON.parse(localStorage.getItem('kgc_email_templates') || '{}'); } catch (e2) {}
+            }
+            if (custom['lock-the-date']) {
+                return { ...defaultLockTheDateTemplate, ...custom['lock-the-date'] };
+            }
+            return defaultLockTheDateTemplate;
+        }
+
+        async function openLockTheDateModal() {
+            // Populate client dropdown
+            const select = document.getElementById('ltdClientSelect');
+            const clients = clientsCache.length ? clientsCache : await getClients();
+            select.innerHTML = '<option value="">Select client...</option>' +
+                clients.sort((a, b) => a.name.localeCompare(b.name)).map(c =>
+                    `<option value="${c.id}">${c.name}${c.email ? ' — ' + c.email : ''}</option>`
+                ).join('');
+
+            // Reset fields
+            document.getElementById('ltdAmount').value = '';
+            document.getElementById('ltdEmailTo').textContent = 'Select a client';
+            document.getElementById('ltdClientInfo').style.display = 'none';
+            ltdCurrentClient = null;
+
+            // Load template
+            const tpl = await getLockTheDateTemplate();
+            document.getElementById('ltdEmailSubjectInput').value = tpl.subject;
+            document.getElementById('ltdEmailBody').value = tpl.body;
+
+            const modal = document.getElementById('lockTheDateModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLockTheDateModal() {
+            const modal = document.getElementById('lockTheDateModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+            ltdCurrentClient = null;
+        }
+
+        // Close modal on overlay click
+        document.getElementById('lockTheDateModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLockTheDateModal();
+        });
+
+        function ltdClientChanged() {
+            const select = document.getElementById('ltdClientSelect');
+            const clientId = select.value;
+            if (!clientId) {
+                ltdCurrentClient = null;
+                document.getElementById('ltdEmailTo').textContent = 'Select a client';
+                document.getElementById('ltdClientInfo').style.display = 'none';
+                return;
+            }
+
+            const client = clientsCache.find(c => String(c.id) === String(clientId));
+            if (!client) return;
+            ltdCurrentClient = client;
+
+            document.getElementById('ltdEmailTo').textContent = client.email || 'No email';
+            document.getElementById('ltdClientInfo').style.display = 'block';
+            document.getElementById('ltdClientEmail').textContent = client.email || 'No email';
+            document.getElementById('ltdClientEvent').textContent = client.eventType || 'No event type';
+            document.getElementById('ltdClientDate').textContent = client.eventDate ? new Date(client.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No date';
+
+            ltdUpdatePreview();
+        }
+
+        function ltdUpdatePreview() {
+            if (!ltdCurrentClient) return;
+            const client = ltdCurrentClient;
+            const firstName = (client.name || '').split(' ')[0];
+            const eventType = client.eventType || 'celebration';
+            const eventDate = client.eventDate ? new Date(client.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '[date]';
+            const amount = document.getElementById('ltdAmount').value;
+            const lockAmount = amount ? '$' + parseFloat(amount).toLocaleString() : '[amount]';
+
+            // Update subject
+            const subjectInput = document.getElementById('ltdEmailSubjectInput');
+            let subject = subjectInput.value;
+            subject = subject.replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType)
+                .replace(/{eventDate}/g, eventDate)
+                .replace(/{lockAmount}/g, lockAmount);
+            // Only replace if template vars are present (don't re-replace after manual edits)
+            if (subjectInput.value.includes('{')) {
+                subjectInput.value = subject;
+            }
+
+            // Update body
+            const bodyEl = document.getElementById('ltdEmailBody');
+            let body = bodyEl.value;
+            body = body.replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType)
+                .replace(/{eventDate}/g, eventDate)
+                .replace(/{lockAmount}/g, lockAmount);
+            bodyEl.value = body;
+        }
+
+        // Update preview when amount changes
+        document.getElementById('ltdAmount').addEventListener('input', function() {
+            if (ltdCurrentClient) {
+                // Only replace {lockAmount} placeholder, not already-filled amounts
+                const bodyEl = document.getElementById('ltdEmailBody');
+                const body = bodyEl.value;
+                const amount = this.value;
+                const lockAmount = amount ? '$' + parseFloat(amount).toLocaleString() : '[amount]';
+                // Replace the lock amount pattern
+                bodyEl.value = body.replace(/\$[\d,]+(?= is required)|\[amount\](?= is required)/g, lockAmount);
+            }
+        });
+
+        async function sendLockTheDate() {
+            if (!ltdCurrentClient) { showToast('Select a client first', 'warning'); return; }
+            if (!ltdCurrentClient.email) { showToast('Client has no email address', 'error'); return; }
+
+            const amount = parseFloat(document.getElementById('ltdAmount').value);
+            if (!amount || amount < 100) { showToast('Enter a deposit amount ($100 minimum)', 'warning'); return; }
+
+            const btn = document.getElementById('ltdSendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                // 1. Create the lock_deposit invoice in the database
+                const invoiceNumber = 'LI-' + new Date().getFullYear() + '-' + String(ltdCurrentClient.id).padStart(4, '0');
+                const invoiceResp = await fetch(`${API_BASE_URL}/api/invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: ltdCurrentClient.id,
+                        invoice_number: invoiceNumber,
+                        type: 'lock_deposit',
+                        amount: amount,
+                        status: 'sent',
+                        data: {
+                            clientName: ltdCurrentClient.name,
+                            eventType: ltdCurrentClient.eventType,
+                            eventDate: ltdCurrentClient.eventDate,
+                            sentAt: new Date().toISOString()
+                        }
+                    })
+                });
+                if (!invoiceResp.ok) throw new Error('Failed to create invoice');
+                const invoice = await invoiceResp.json();
+
+                // 2. Build the payment link
+                const paymentUrl = `https://portal.kennagiuziocake.com/invoices/deposit-invoice.html?clientId=${ltdCurrentClient.id}&invoiceId=${invoice.id}&mode=lock-deposit&amount=${amount}&name=${encodeURIComponent(ltdCurrentClient.name)}&email=${encodeURIComponent(ltdCurrentClient.email)}&eventType=${encodeURIComponent(ltdCurrentClient.eventType || '')}&eventDate=${encodeURIComponent(ltdCurrentClient.eventDate || '')}`;
+
+                // 3. Build email with payment link
+                const subject = document.getElementById('ltdEmailSubjectInput').value;
+                let bodyText = document.getElementById('ltdEmailBody').value;
+                bodyText = bodyText.replace('[LOCK DEPOSIT LINK]', paymentUrl);
+
+                // Build branded HTML with button
+                const buttonHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center"><a href="${paymentUrl}" style="display:inline-block; padding:16px 48px; background-color:#b5956a; color:#ffffff; font-family:'Montserrat',Arial,sans-serif; font-size:14px; font-weight:400; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:2px;">View Invoice & Pay</a></td></tr></table>`;
+                const htmlBody = bodyText.replace(paymentUrl, buttonHtml);
+                const html = buildBrandedEmailHtml(htmlBody);
+
+                // 4. Send the email
+                const sendResp = await fetch(`${API_BASE_URL}/api/gmail/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: ltdCurrentClient.email,
+                        subject: subject,
+                        message: bodyText,
+                        html: html,
+                        client_id: ltdCurrentClient.id
+                    })
+                });
+                const sendResult = await sendResp.json();
+                if (!sendResp.ok) throw new Error(sendResult.error || 'Failed to send email');
+
+                showToast('Lock the Date sent to ' + ltdCurrentClient.name + '!', 'success');
+                closeLockTheDateModal();
+                renderProjects();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Lock the Date';
+            }
+        }
+
+        // ============ END LOCK THE DATE MODAL ============
+
+        // ============ SET TASTING DATE MODAL ============
+        let stdClientId = null;
+
+        function openSetTastingDate(clientId) {
+            const client = clientsCache.find(c => String(c.id) === String(clientId));
+            if (!client) return;
+
+            // Check for hold events (sent tasting options) — check both new and legacy keys
+            const newHolds = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+            const legacyHolds = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]').filter(e => e.isHold);
+            const allHolds = [...newHolds, ...legacyHolds];
+            const holds = allHolds.filter(e => String(e.clientId) === String(clientId));
+            console.log('Set Tasting Date — holds found:', holds.length, 'for client', clientId, '| new:', newHolds.length, 'legacy:', legacyHolds.length);
+
+            // Check if a tasting date is already set
+            const td = getTastingDraft(clientId);
+            const existingDate = td?.date || client.tastingDate;
+            const existingTime = td?.time || client.tastingTime;
+
+            if (holds.length === 0 && !existingDate) {
+                // No tasting options sent and no date set — fall back to calendar popup
+                openCalendarPopup(clientId, 'tasting', null, null);
+                return;
+            }
+
+            if (holds.length === 0 && existingDate) {
+                // Date already set, no holds — open edit mode with current date pre-selected
+                openEditTastingDate(clientId, existingDate, existingTime);
+                return;
+            }
+
+            stdClientId = clientId;
+            const lastName = client.name.split(' ').pop();
+            document.getElementById('setTastingDateTitle').textContent = 'Set Tasting Date — ' + client.name;
+
+            // Build options HTML
+            let html = '<div style="display:flex; flex-direction:column; gap:12px;">';
+
+            const multipleHolds = holds.length > 1;
+            holds.forEach((hold, i) => {
+                const d = new Date(hold.date + 'T00:00:00');
+                const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const startLabel = hold.time ? formatTime(hold.time) : '';
+                const endLabel = hold.endTime ? formatTime(hold.endTime) : '';
+                const timeLabel = startLabel && endLabel ? startLabel + ' - ' + endLabel : startLabel || '';
+                const optionLabel = multipleHolds ? `Option ${i + 1}: ` : '';
+
+                html += `
+                    <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #eee; border-radius:6px; cursor:pointer; transition:background 0.15s;"
+                           onmouseover="this.style.background='#faf8f5'" onmouseout="this.style.background=''">
+                        <input type="radio" name="tastingDateOption" value="hold_${i}"
+                               data-date="${hold.date}" data-start="${hold.time || ''}" data-end="${hold.endTime || ''}"
+                               style="margin-top:3px; accent-color:#b5956a;">
+                        <div>
+                            <div style="font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:500; color:#333;">${optionLabel}${dateLabel}</div>
+                            ${timeLabel ? `<div style="font-family:'Montserrat',sans-serif; font-size:0.75rem; color:#888; margin-top:2px;">${timeLabel}</div>` : ''}
+                        </div>
+                    </label>`;
+            });
+
+            // Custom option
+            html += `
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #eee; border-radius:6px; cursor:pointer; transition:background 0.15s;"
+                       onmouseover="this.style.background='#faf8f5'" onmouseout="this.style.background=''">
+                    <input type="radio" name="tastingDateOption" value="custom" style="margin-top:3px; accent-color:#b5956a;"
+                           onchange="document.getElementById('stdCustomFields').style.display='flex'">
+                    <div style="flex:1;">
+                        <div style="font-family:'Montserrat',sans-serif; font-size:0.85rem; font-weight:500; color:#333;">Custom date & time</div>
+                        <div id="stdCustomFields" style="display:none; flex-direction:column; gap:8px; margin-top:8px;">
+                            <div id="stdCustomDateBtn" onclick="openCalendarForCustomTastingDate()"
+                                style="padding:6px 8px; border:1px solid #ddd; border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer; background:#fafafa; color:#999;">
+                                Pick from calendar...
+                            </div>
+                            <input type="hidden" id="stdCustomDate">
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <select id="stdCustomStartTime" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:0.75rem; font-family:'Montserrat',sans-serif;">
+                                    ${generateTimeOptions('14:00')}
+                                </select>
+                                <span style="font-size:0.7rem; color:#999;">to</span>
+                                <select id="stdCustomEndTime" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:0.75rem; font-family:'Montserrat',sans-serif;">
+                                    ${generateTimeOptions('16:00')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </label>`;
+
+            html += '</div>';
+
+            document.getElementById('setTastingDateBody').innerHTML = html;
+
+            // Show/hide custom fields based on radio selection
+            document.querySelectorAll('input[name="tastingDateOption"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    document.getElementById('stdCustomFields').style.display = this.value === 'custom' ? 'flex' : 'none';
+                });
+            });
+
+            // Show modal — ensure confirm button uses the holds-based handler
+            const modal = document.getElementById('setTastingDateModal');
+            document.getElementById('confirmTastingDateBtn').setAttribute('onclick', 'confirmTastingDate()');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeSetTastingDateModal() {
+            const modal = document.getElementById('setTastingDateModal');
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+            stdClientId = null;
+        }
+
+        function openEditTastingDate(clientId, existingDate, existingTime) {
+            stdClientId = clientId;
+            const client = clientsCache.find(c => String(c.id) === String(clientId));
+            if (!client) return;
+
+            document.getElementById('setTastingDateTitle').textContent = 'Edit Tasting Date — ' + client.name;
+
+            const d = new Date(existingDate + 'T00:00:00');
+            const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            const timeLabel = existingTime ? formatTime(existingTime) : '';
+
+            let html = '<div style="display:flex; flex-direction:column; gap:12px;">';
+
+            // Show current date
+            html += `
+                <div style="padding:12px; border:1px solid #b5956a; border-radius:6px; background:#faf8f5;">
+                    <div style="font-size:0.6rem; text-transform:uppercase; letter-spacing:0.5px; color:#999; margin-bottom:4px;">Current Tasting Date</div>
+                    <div style="font-family:'Montserrat',sans-serif; font-size:0.9rem; font-weight:500; color:#333;">${dateLabel}</div>
+                    ${timeLabel ? `<div style="font-family:'Montserrat',sans-serif; font-size:0.75rem; color:#888; margin-top:2px;">${timeLabel}</div>` : ''}
+                </div>`;
+
+            // Calendar pick button
+            html += `
+                <div style="text-align:center;">
+                    <div id="editTastingDateBtn" onclick="openCalendarForEditTastingDate()"
+                        style="display:inline-block; padding:8px 16px; border:1px solid #b5956a; border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer; background:#fff; color:#b5956a; transition:background 0.15s;"
+                        onmouseover="this.style.background='#faf8f5'" onmouseout="this.style.background='#fff'">
+                        Change Date on Calendar
+                    </div>
+                    <input type="hidden" id="editTastingDate" value="${existingDate}">
+                </div>`;
+
+            // Time selectors
+            html += `
+                <div style="display:flex; gap:6px; align-items:center; justify-content:center;">
+                    <select id="editTastingStartTime" style="padding:6px; border:1px solid #ddd; border-radius:4px; font-size:0.75rem; font-family:'Montserrat',sans-serif;">
+                        ${generateTimeOptions(existingTime || '14:00')}
+                    </select>
+                    <span style="font-size:0.7rem; color:#999;">to</span>
+                    <select id="editTastingEndTime" style="padding:6px; border:1px solid #ddd; border-radius:4px; font-size:0.75rem; font-family:'Montserrat',sans-serif;">
+                        ${generateTimeOptions(existingTime ? (() => { const [h,m] = existingTime.split(':').map(Number); return String(h+2).padStart(2,'0') + ':' + String(m).padStart(2,'0'); })() : '16:00')}
+                    </select>
+                </div>`;
+
+            html += '</div>';
+
+            document.getElementById('setTastingDateBody').innerHTML = html;
+
+            // Show modal — reuse the same setTastingDateModal but swap the confirm button handler
+            const modal = document.getElementById('setTastingDateModal');
+            const confirmBtn = document.getElementById('confirmTastingDateBtn');
+            confirmBtn.setAttribute('onclick', 'confirmEditTastingDate()');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function openCalendarForEditTastingDate() {
+            calendarPickerCallback = function(dateStr) {
+                document.getElementById('editTastingDate').value = dateStr;
+                const d = new Date(dateStr + 'T00:00:00');
+                const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const btn = document.getElementById('editTastingDateBtn');
+                btn.textContent = label;
+                btn.style.color = '#333';
+                btn.style.borderColor = '#4a9a6a';
+                btn.style.background = '#f0f8f4';
+                document.getElementById('calendarOverlay').style.zIndex = '';
+                document.getElementById('calendarPopup').style.zIndex = '';
+            };
+
+            calendarEditingClientId = null;
+            calendarEditingField = null;
+            calendarSelectedDate = document.getElementById('editTastingDate').value || null;
+
+            document.getElementById('calendarPopupTitle').textContent = 'Change Tasting Date — See Calendar for Conflicts';
+
+            calendarCurrentMonth = today.getMonth();
+            calendarCurrentYear = today.getFullYear();
+
+            document.getElementById('calendarOverlay').style.zIndex = '1300';
+            document.getElementById('calendarPopup').style.zIndex = '1301';
+
+            renderCalendar();
+            document.getElementById('calendarOverlay').classList.add('active');
+            document.getElementById('calendarPopup').classList.add('active');
+        }
+
+        async function confirmEditTastingDate() {
+            const date = document.getElementById('editTastingDate').value;
+            const startTime = document.getElementById('editTastingStartTime').value;
+            if (!date) { showToast('Pick a date', 'warning'); return; }
+
+            const client = clientsCache.find(c => String(c.id) === String(stdClientId));
+            if (!client) return;
+
+            const btn = document.getElementById('confirmTastingDateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                // Save tasting date via API
+                await updateClient(client.id, {
+                    tastingDate: date,
+                    tastingTime: startTime
+                });
+
+                // Sync to tasting drafts
+                const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+                if (!tastingDrafts[client.id]) tastingDrafts[client.id] = {};
+                tastingDrafts[client.id].tastingDate = date;
+                tastingDrafts[client.id].tastingTime = startTime;
+                localStorage.setItem('kgc_tasting_drafts', JSON.stringify(tastingDrafts));
+
+                showToast('Tasting date updated!', 'success');
+                closeSetTastingDateModal();
+                renderProjects();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Confirm';
+                // Restore original confirm handler
+                btn.setAttribute('onclick', 'confirmTastingDate()');
+            }
+        }
+
+        function openCalendarForCustomTastingDate() {
+            calendarPickerCallback = function(dateStr) {
+                document.getElementById('stdCustomDate').value = dateStr;
+                const d = new Date(dateStr + 'T00:00:00');
+                const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const btn = document.getElementById('stdCustomDateBtn');
+                btn.textContent = label;
+                btn.style.color = '#333';
+                // Reset z-index
+                document.getElementById('calendarOverlay').style.zIndex = '';
+                document.getElementById('calendarPopup').style.zIndex = '';
+            };
+
+            calendarEditingClientId = null;
+            calendarEditingField = null;
+            calendarSelectedDate = document.getElementById('stdCustomDate').value || null;
+
+            document.getElementById('calendarPopupTitle').textContent = 'Select Tasting Date — See Calendar for Conflicts';
+
+            calendarCurrentMonth = today.getMonth();
+            calendarCurrentYear = today.getFullYear();
+
+            // Bump z-index above both modals
+            document.getElementById('calendarOverlay').style.zIndex = '1300';
+            document.getElementById('calendarPopup').style.zIndex = '1301';
+
+            renderCalendar();
+            document.getElementById('calendarOverlay').classList.add('active');
+            document.getElementById('calendarPopup').classList.add('active');
+        }
+
+        async function confirmTastingDate() {
+            const selected = document.querySelector('input[name="tastingDateOption"]:checked');
+            if (!selected) { showToast('Select a date option', 'warning'); return; }
+
+            let date, startTime, endTime;
+
+            if (selected.value === 'custom') {
+                date = document.getElementById('stdCustomDate').value;
+                startTime = document.getElementById('stdCustomStartTime').value;
+                endTime = document.getElementById('stdCustomEndTime').value;
+                if (!date) { showToast('Enter a custom date', 'warning'); return; }
+            } else {
+                date = selected.dataset.date;
+                startTime = selected.dataset.start;
+                endTime = selected.dataset.end;
+            }
+
+            const client = clientsCache.find(c => String(c.id) === String(stdClientId));
+            if (!client) return;
+
+            const btn = document.getElementById('confirmTastingDateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                // Save tasting date via API
+                await updateClient(client.id, {
+                    tastingDate: date,
+                    tastingTime: startTime
+                });
+
+                // Sync to tasting drafts for calendar
+                const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
+                if (!tastingDrafts[client.id]) tastingDrafts[client.id] = {};
+                tastingDrafts[client.id].tastingDate = date;
+                tastingDrafts[client.id].tastingTime = startTime;
+                localStorage.setItem('kgc_tasting_drafts', JSON.stringify(tastingDrafts));
+
+                // Remove hold events for this client (both keys)
+                const newHolds = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+                localStorage.setItem('kgc_tasting_holds', JSON.stringify(newHolds.filter(e => String(e.clientId) !== String(stdClientId))));
+                const calEvts = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+                localStorage.setItem('kgc_calendar_events', JSON.stringify(calEvts.filter(e => !(e.isHold && String(e.clientId) === String(stdClientId)))));
+
+                showToast('Tasting date set!', 'success');
+                closeSetTastingDateModal();
+                renderProjects();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Confirm';
+            }
+        }
+
+        // ============ END SET TASTING DATE MODAL ============
+
         function formatDate(dateStr) {
             if (!dateStr) return null;
-            // Handle both simple dates (2026-06-15) and ISO timestamps (2026-06-15T00:00:00.000Z)
-            let date;
-            if (dateStr.includes('T')) {
-                date = new Date(dateStr);
-            } else {
-                date = new Date(dateStr + 'T00:00:00');
-            }
+            // Always strip time/timezone to avoid UTC→local shift (-1 day in PT)
+            const clean = String(dateStr).split('T')[0];
+            const date = new Date(clean + 'T00:00:00');
             if (isNaN(date.getTime())) return null;
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
@@ -1672,8 +2833,9 @@
 
         function getDateClass(dateStr) {
             if (!dateStr) return 'empty';
-            // Handle both simple dates and ISO timestamps
-            const date = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T00:00:00');
+            // Always strip time/timezone to avoid UTC→local shift
+            const clean = String(dateStr).split('T')[0];
+            const date = new Date(clean + 'T00:00:00');
             if (isNaN(date.getTime())) return 'empty';
             const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 
@@ -1780,6 +2942,7 @@
 
         // Calendar popup functions
         let calendarEditingCurrentTime = null;
+        let calendarPickerCallback = null; // For Tasting Options date picker mode
 
         function openCalendarPopup(clientId, field, currentDate, currentTime) {
             calendarEditingClientId = clientId;
@@ -1809,8 +2972,11 @@
         function closeCalendarPopup() {
             document.getElementById('calendarOverlay').classList.remove('active');
             document.getElementById('calendarPopup').classList.remove('active');
+            document.getElementById('calendarOverlay').style.zIndex = '';
+            document.getElementById('calendarPopup').style.zIndex = '';
             calendarEditingClientId = null;
             calendarEditingField = null;
+            calendarPickerCallback = null;
         }
 
         function changeMonth(delta) {
@@ -1858,8 +3024,10 @@
                 }
                 // Inquiry dates
                 if (client.createdAt) {
-                    const inquiryDate = client.createdAt.split('T')[0];
-                    const d = new Date(inquiryDate + 'T00:00:00');
+                    // Convert UTC timestamp to local date to avoid +1 day offset
+                    const createdLocal = new Date(client.createdAt);
+                    const inquiryDate = createdLocal.getFullYear() + '-' + String(createdLocal.getMonth()+1).padStart(2,'0') + '-' + String(createdLocal.getDate()).padStart(2,'0');
+                    const d = createdLocal;
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         const lastName = client.name.split(' ').pop();
                         events.push({
@@ -1881,6 +3049,22 @@
                         name: evt.title || 'Event',
                         eventType: evt.eventType || 'Event'
                     });
+                }
+            });
+
+            // Tasting hold events (stored separately to survive API sync)
+            const holdEvents = JSON.parse(localStorage.getItem('kgc_tasting_holds') || '[]');
+            holdEvents.forEach(evt => {
+                if (evt.date) {
+                    const d = new Date(evt.date + 'T00:00:00');
+                    if (d.getFullYear() === year && d.getMonth() === month) {
+                        events.push({
+                            date: evt.date,
+                            type: 'hold',
+                            name: evt.title || 'Tasting Hold',
+                            eventType: 'Hold'
+                        });
+                    }
                 }
             });
 
@@ -1978,8 +3162,16 @@
                 let eventsHtml = '<div class="day-events">';
                 const maxDisplay = 2;
                 dayEvents.slice(0, maxDisplay).forEach(e => {
+                    let classes = `day-event ${e.type}`;
                     const shortName = e.name.length > 10 ? e.name.substring(0, 8) + '...' : e.name;
-                    eventsHtml += `<div class="day-event ${e.type}" title="${e.name} (${e.eventType})">${shortName}</div>`;
+                    if (e.isMultiDay) {
+                        classes += ' multi-day';
+                        if (e.isStart && e.isEnd) classes += ' bar-single';
+                        else if (e.isStart) classes += ' bar-start';
+                        else if (e.isEnd) classes += ' bar-end';
+                        else classes += ' bar-middle';
+                    }
+                    eventsHtml += `<div class="${classes}" title="${e.name} (${e.eventType})">${shortName}</div>`;
                 });
                 if (dayEvents.length > maxDisplay) {
                     eventsHtml += `<div class="day-event-more">+${dayEvents.length - maxDisplay} more</div>`;
@@ -2006,6 +3198,15 @@
             calendarSelectedDate = dateStr;
             pendingDate = dateStr;
             renderCalendar();
+
+            // If in picker callback mode (Tasting Options), return date and close
+            if (calendarPickerCallback) {
+                const cb = calendarPickerCallback;
+                calendarPickerCallback = null;
+                closeCalendarPopup();
+                cb(dateStr);
+                return;
+            }
 
             // Show time picker
             setTimeout(() => {
@@ -2105,7 +3306,7 @@
             if (activeClients.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <h3>No Active Projects</h3>
                             <p>Click "Add Inquiry" to start a new project.</p>
                         </td>
@@ -2127,53 +3328,85 @@
             tbody.innerHTML = activeClients.map(client => {
                 const portalData = getPortalData(client.id);
                 const tastingDraft = getTastingDraft(client.id);
-                const progress = getProgressInfo(client);
 
-                // Get dates, times, and guests
+                // Key data
                 const tastingDate = tastingDraft?.date || client.tastingDate;
                 const tastingTime = tastingDraft?.time || client.tastingTime;
-                const tastingGuests = tastingDraft?.guests || client.tastingGuests;
                 const eventDate = client.eventDate;
                 const eventTime = client.eventTime;
                 const eventGuests = client.guestCount;
+                const venue = client.venue || '';
 
                 // Project title
                 const eventTitle = portalData.portalTitle || `${client.name} ${client.eventType || 'Event'}`;
 
-                // Tasting cell - clickable to open calendar (stacked date/time)
-                const tastingDisplay = tastingDate
-                    ? `<span class="clickable" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'tasting', '${tastingDate}', '${tastingTime || ''}')">${formatDate(tastingDate)}${tastingTime ? '<br><span class="time-display">' + formatTime(tastingTime) + '</span>' : ''}</span>`
-                    : `<span class="set-date" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'tasting', null, null)">+ Set</span>`;
-
-                // Event date cell - clickable to open calendar (stacked date/time)
+                // Event date cell - clickable to open calendar
                 const eventDisplay = eventDate
                     ? `<span class="clickable" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'event', '${eventDate}', '${eventTime || ''}')">${formatDate(eventDate)}${eventTime ? '<br><span class="time-display">' + formatTime(eventTime) + '</span>' : ''}</span>`
                     : `<span class="set-date" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'event', null, null)">+ Set</span>`;
 
-                // Action buttons - status based highlighting
-                const proposalDraft = hasProposalDraft(client.id);
-                const signed = isProposalSigned(client.id);
-                const depositPaid = portalData.depositPaid;
+                // --- Workflow button statuses ---
 
-                let proposalBtnClass = 'btn-small';
-                if (depositPaid) {
-                    proposalBtnClass = 'btn-small status-paid';
-                } else if (signed) {
-                    proposalBtnClass = 'btn-small status-sent';
-                } else if (proposalDraft) {
-                    proposalBtnClass = 'btn-small status-draft';
+                // 1. Tasting Options: done if sent, draft if saved, default if nothing
+                const toSentFlags = JSON.parse(localStorage.getItem('kgc_tasting_options_sent') || '{}');
+                const tastingOptionsSent = !!toSentFlags[client.id] || !!toSentFlags[String(client.id)];
+                const toDraftFlags = JSON.parse(localStorage.getItem('kgc_tasting_options_drafts') || '{}');
+                const tastingOptionsDraft = !!toDraftFlags[client.id] || !!toDraftFlags[String(client.id)];
+                let tastingOptClass = 'wf-btn';
+                let tastingOptStatus = 'Not sent';
+                if (tastingOptionsSent || !!tastingDate) {
+                    tastingOptClass = 'wf-btn wf-done';
+                    tastingOptStatus = 'Sent';
+                } else if (tastingOptionsDraft) {
+                    tastingOptClass = 'wf-btn wf-progress';
+                    tastingOptStatus = 'Draft';
                 }
 
-                const tastingPaid = isTastingPaid(client.id);
-                const tastingSent = client.status === 'tasting';
+                // 2. Set Tasting Date: done if date exists
+                const setDateClass = tastingDate ? 'wf-btn wf-done' : 'wf-btn';
+                const setDateStatus = tastingDate ? formatDate(tastingDate) : 'Not set';
 
-                let tastingBtnClass = 'btn-small';
-                if (tastingPaid) {
-                    tastingBtnClass = 'btn-small status-paid';
-                } else if (tastingSent) {
-                    tastingBtnClass = 'btn-small status-sent';
-                } else if (tastingDraft) {
-                    tastingBtnClass = 'btn-small status-draft';
+                // 3. Tasting Invoice: disabled if no date, draft if date set, sent if emailed, paid if paid
+                const tastingPaid = isTastingPaid(client.id);
+                const invoiceSentFlags = JSON.parse(localStorage.getItem('kgc_tasting_invoice_sent') || '{}');
+                const tastingInvoiceSent = !!invoiceSentFlags[client.id] || !!invoiceSentFlags[String(client.id)];
+                let invoiceClass = 'wf-btn';
+                let invoiceStatus = 'Not sent';
+                if (!tastingDate) {
+                    invoiceClass = 'wf-btn wf-disabled';
+                    invoiceStatus = 'Set date first';
+                } else if (tastingPaid) {
+                    invoiceClass = 'wf-btn wf-done';
+                    invoiceStatus = 'Paid';
+                } else if (tastingInvoiceSent) {
+                    invoiceClass = 'wf-btn wf-done';
+                    invoiceStatus = 'Sent';
+                } else {
+                    invoiceClass = 'wf-btn wf-progress';
+                    invoiceStatus = 'Draft';
+                }
+
+                // 4. Proposal: Not started → Draft → Sent → Signed → Paid
+                const proposalFromAPI = proposalsCache[client.id] || proposalsCache[String(client.id)];
+                const localDrafts = JSON.parse(localStorage.getItem('kgc_proposal_drafts') || '{}');
+                const hasLocalDraft = !!localDrafts[client.id] || !!localDrafts[String(client.id)];
+                const proposalSent = (proposalFromAPI && proposalFromAPI.status === 'sent') || client.proposalSentAt || client.status === 'proposal';
+                const signed = isProposalSigned(client.id);
+                const depositPaid = portalData.depositPaid;
+                let proposalClass = 'wf-btn';
+                let proposalStatus = 'Not started';
+                if (depositPaid) {
+                    proposalClass = 'wf-btn wf-done';
+                    proposalStatus = 'Paid';
+                } else if (signed) {
+                    proposalClass = 'wf-btn wf-done';
+                    proposalStatus = 'Signed';
+                } else if (proposalSent) {
+                    proposalClass = 'wf-btn wf-done';
+                    proposalStatus = 'Sent';
+                } else if (hasLocalDraft || proposalFromAPI) {
+                    proposalClass = 'wf-btn wf-progress';
+                    proposalStatus = 'Draft';
                 }
 
                 return `
@@ -2181,24 +3414,34 @@
                         <td class="project-name">
                             <a href="#" onclick="openClientPortal(${client.id}); return false;">${eventTitle}</a>
                         </td>
-                        <td class="date-cell ${getDateClass(tastingDate)}" style="padding-right: 0;" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'tasting', ${tastingDate ? `'${tastingDate}'` : 'null'}, ${tastingTime ? `'${tastingTime}'` : 'null'})">
-                            ${tastingDisplay}
-                        </td>
-                        <td class="date-cell" style="color: var(--text-muted); padding-left: 8px;">
-                            ${tastingGuests || '-'}
-                        </td>
-                        <td class="date-cell ${getDateClass(eventDate)}" style="padding-right: 0;" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'event', ${eventDate ? `'${eventDate}'` : 'null'}, ${eventTime ? `'${eventTime}'` : 'null'})">
+                        <td class="date-cell ${getDateClass(eventDate)}" onclick="event.stopPropagation(); openCalendarPopup(${client.id}, 'event', ${eventDate ? `'${eventDate}'` : 'null'}, ${eventTime ? `'${eventTime}'` : 'null'})">
                             ${eventDisplay}
                         </td>
-                        <td class="date-cell" style="color: var(--text-muted); padding-left: 8px;">
-                            ${eventGuests || '-'}
+                        <td class="location-cell" title="${venue}">${venue || '-'}</td>
+                        <td class="date-cell" style="color: var(--text-muted);">${eventGuests || '-'}</td>
+                        <td class="wf-cell" onclick="event.stopPropagation();">
+                            <button class="${tastingOptClass}" onclick="openTastingOptionsModal(${client.id})">
+                                <span class="wf-label">Tasting Options</span>
+                                <span class="wf-status">${tastingOptStatus}</span>
+                            </button>
                         </td>
-                        <td class="progress-cell">
-                            ${renderProgressBar(progress)}
+                        <td class="wf-cell" onclick="event.stopPropagation();">
+                            <button class="${setDateClass}" onclick="openSetTastingDate(${client.id})">
+                                <span class="wf-label">Tasting Date</span>
+                                <span class="wf-status">${setDateStatus}</span>
+                            </button>
                         </td>
-                        <td onclick="event.stopPropagation();">
-                            <button class="${tastingBtnClass}" onclick="openTastingScheduler(${client.id})">Tasting</button>
-                            <button class="${proposalBtnClass}" onclick="${signed ? 'viewSignedProposal' : 'openProposalBuilder'}(${client.id})">Proposal</button>
+                        <td class="wf-cell" onclick="event.stopPropagation();">
+                            <button class="${invoiceClass}" onclick="openTastingInvoiceGuarded(${client.id})">
+                                <span class="wf-label">Tasting Invoice</span>
+                                <span class="wf-status">${invoiceStatus}</span>
+                            </button>
+                        </td>
+                        <td class="wf-cell" onclick="event.stopPropagation();">
+                            <button class="${proposalClass}" onclick="${signed ? 'viewSignedProposal' : 'openProposalBuilder'}(${client.id})">
+                                <span class="wf-label">Proposal</span>
+                                <span class="wf-status">${proposalStatus}</span>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -2216,10 +3459,8 @@
                 css += `.nav-item.active { border-left-color: ${primary[0].hex}; }\n`;
                 css += `.btn { background: ${primary[0].hex}; }\n`;
                 css += `.btn:hover { background: ${primary[0].hex}dd; }\n`;
-                css += `.progress-step.complete { background: ${primary[0].hex}; }\n`;
-                css += `.progress-step.current { background: ${primary[0].hex}66; }\n`;
-                css += `.progress-label.current { color: ${primary[0].hex}; }\n`;
                 css += `.date-cell.soon { color: ${primary[0].hex}; }\n`;
+                css += `.wf-btn:hover { border-color: ${primary[0].hex}; }\n`;
                 css += `.date-cell .set-date { color: ${primary[0].hex}; }\n`;
                 css += `.date-cell.clickable:hover { color: ${primary[0].hex}; }\n`;
                 css += `.project-name a:hover { color: ${primary[0].hex}; }\n`;
@@ -2249,7 +3490,7 @@
             const firstNames = ['Emma', 'Olivia', 'Ava', 'Sophia', 'Isabella', 'Charlotte', 'Amelia', 'Harper', 'Michael', 'James', 'William', 'Benjamin'];
             const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Chen', 'Thompson'];
             const venues = ['The Foundry Seattle', 'Golden Gardens', 'The Edgewater Hotel', 'Olympic Rooftop', 'Willows Lodge', 'Salish Lodge', 'Woodinville Wine Country'];
-            const eventTypes = ['Wedding', 'Birthday', 'Anniversary', 'Corporate'];
+            const eventTypes = ['Wedding', 'Birthday', 'Anniversary', 'Other'];
             const addresses = [
                 '1423 NW Market St, Seattle, WA 98107',
                 '742 Bellevue Way NE, Bellevue, WA 98004',
@@ -2452,9 +3693,9 @@
                 const lastName = c.name.split(' ').pop();
 
                 if (c.eventDate) {
-                    // Handle both ISO timestamps and plain dates
-                    const dateStr = c.eventDate.includes('T') ? c.eventDate : c.eventDate + 'T00:00:00';
-                    const eventDate = new Date(dateStr);
+                    // Always strip timezone to avoid UTC→local shift
+                    const clean = String(c.eventDate).split('T')[0];
+                    const eventDate = new Date(clean + 'T00:00:00');
                     if (!isNaN(eventDate.getTime()) && eventDate >= now && eventDate <= sixMonthsLater) {
                         eventDots.push({
                             id: c.id,
@@ -2580,7 +3821,7 @@
         // Show loading state
         document.getElementById('projectsBody').innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state">
+                <td colspan="8" class="empty-state">
                     <p>Loading...</p>
                 </td>
             </tr>

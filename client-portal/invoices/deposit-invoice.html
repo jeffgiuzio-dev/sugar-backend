@@ -494,21 +494,21 @@
         }
 
         .terms-schedule-item .status.due {
-            background: #fff3cd;
-            color: #856404;
+            background: #f5efe8;
+            color: #b5956a;
         }
 
         .terms-schedule-item .status.upcoming {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: #eef1ec;
+            color: #6b7d63;
         }
 
         .terms-note {
-            background: #e8f5e9;
+            background: #eef1ec;
             padding: 16px 20px;
             margin-top: 20px;
             font-size: 0.8rem;
-            color: #2e7d32;
+            color: #6b7d63;
         }
 
         /* Footer */
@@ -659,7 +659,7 @@
                     <span id="subtotalAmount">$0.00</span>
                 </div>
                 <div class="totals-row fee" id="processingFeeRow">
-                    <span>Processing Fee (3.4%)</span>
+                    <span>Processing Fee (3%)</span>
                     <span id="processingFee">$0.00</span>
                 </div>
                 <div class="totals-row deposit">
@@ -673,6 +673,35 @@
             </div>
         </div>
 
+        <!-- Terms -->
+        <div class="terms-section">
+            <div class="terms-title">Payment Terms</div>
+            <div class="terms-text">
+                <p>
+                    Thank you for choosing Kenna Giuzio Cake for your celebration! This deposit invoice
+                    secures your event date and begins the creation process for your custom cake.
+                </p>
+
+                <div class="terms-schedule">
+                    <div class="terms-schedule-title">Payment Schedule</div>
+                    <div class="terms-schedule-item">
+                        <span><strong>Deposit (50%)</strong> - Due now to reserve date</span>
+                        <span class="status due">DUE NOW</span>
+                    </div>
+                    <div class="terms-schedule-item">
+                        <span><strong>Balance (50%)</strong> - Due 2 weeks before event</span>
+                        <span class="status upcoming">UPCOMING</span>
+                    </div>
+                </div>
+
+                <div class="terms-note">
+                    <strong>Your date is not reserved until deposit is received.</strong>
+                    Once payment is confirmed, you will receive an email confirmation with your
+                    reserved date and next steps.
+                </div>
+            </div>
+        </div>
+
         <!-- Payment Options -->
         <div class="payment-section" id="paymentSection">
             <h2 class="payment-title">Select Payment Method</h2>
@@ -680,7 +709,7 @@
                 <div class="payment-option selected" data-method="card" onclick="selectPayment('card')">
                     <div class="payment-option-title">Credit Card</div>
                     <div class="payment-option-desc">Visa, Mastercard, Amex</div>
-                    <div class="payment-option-fee">+3.4% processing fee</div>
+                    <div class="payment-option-fee">+3% processing fee</div>
                 </div>
                 <div class="payment-option" data-method="zelle" onclick="selectPayment('zelle')">
                     <div class="payment-option-title">Zelle</div>
@@ -739,40 +768,6 @@
             </button>
         </div>
 
-        <!-- Terms -->
-        <div class="terms-section">
-            <div class="terms-title">Payment Terms</div>
-            <div class="terms-text">
-                <p>
-                    Thank you for choosing Kenna Giuzio Cake for your celebration! This deposit invoice
-                    secures your event date and begins the creation process for your custom cake.
-                </p>
-
-                <div class="terms-schedule">
-                    <div class="terms-schedule-title">Payment Schedule</div>
-                    <div class="terms-schedule-item">
-                        <span><strong>Deposit (50%)</strong> - Due now to reserve date</span>
-                        <span class="status due">DUE NOW</span>
-                    </div>
-                    <div class="terms-schedule-item">
-                        <span><strong>Balance (50%)</strong> - Due 2 weeks before event</span>
-                        <span class="status upcoming">UPCOMING</span>
-                    </div>
-                </div>
-
-                <p>
-                    The deposit is non-refundable but may be applied to a rescheduled event date
-                    (subject to availability) if notice is given at least 30 days in advance.
-                </p>
-
-                <div class="terms-note">
-                    <strong>Your date is not reserved until deposit is received.</strong>
-                    Once payment is confirmed, you will receive an email confirmation with your
-                    reserved date and next steps.
-                </div>
-            </div>
-        </div>
-
         <!-- Footer -->
         <div class="invoice-footer">
             <img src="../images/logo.png" alt="Kenna Giuzio Cake">
@@ -825,8 +820,9 @@
         // Mode detection
         const params = new URLSearchParams(window.location.search);
         const isFinalBalance = params.get('mode') === 'final-balance';
-        const invoiceType = isFinalBalance ? 'final' : 'deposit';
-        const invoicePrefix = isFinalBalance ? 'FB-' : 'DI-';
+        const isLockDeposit = params.get('mode') === 'lock-deposit';
+        const invoiceType = isFinalBalance ? 'final' : isLockDeposit ? 'lock_deposit' : 'deposit';
+        const invoicePrefix = isFinalBalance ? 'FB-' : isLockDeposit ? 'LI-' : 'DI-';
 
         const API_URL = 'https://sugar-backend-production.up.railway.app';
 
@@ -872,6 +868,8 @@
             const clientEmail = document.getElementById('clientEmail').textContent;
             const description = isFinalBalance
                 ? 'Final Balance - Kenna Giuzio Cake'
+                : isLockDeposit
+                ? 'Lock the Date Deposit - Kenna Giuzio Cake'
                 : 'Deposit (50%) - Kenna Giuzio Cake';
 
             try {
@@ -1086,7 +1084,7 @@
                 try {
                     const clientName = document.getElementById('clientName').textContent;
                     const clientEmail = document.getElementById('clientEmail').textContent;
-                    const memoType = isFinalBalance ? 'Final Balance' : 'Deposit';
+                    const memoType = isFinalBalance ? 'Final Balance' : isLockDeposit ? 'Lock Deposit' : 'Deposit';
 
                     const resp = await fetch(`${API_URL}/api/payments/offline-claimed`, {
                         method: 'POST',
@@ -1121,13 +1119,15 @@
         }
 
         function formatCurrency(amount) {
-            return '$' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return '$' + Math.floor(amount).toLocaleString();
         }
 
         function formatDate(dateStr) {
             if (!dateStr || dateStr === 'undefined' || dateStr === 'null') return 'TBD';
             try {
-                const date = new Date(dateStr + 'T00:00:00');
+                // Handle both "2026-03-15" and "2026-03-15T00:00:00.000Z"
+                const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+                const date = new Date(clean + 'T00:00:00');
                 if (isNaN(date.getTime())) return 'TBD';
                 return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             } catch(e) {
@@ -1152,6 +1152,13 @@
                 document.getElementById('invoiceTitle').textContent = 'Final Balance';
                 document.getElementById('invoiceSubtitle').textContent = 'Final Balance Due';
                 document.title = 'Final Balance - Kenna Giuzio Cake';
+            }
+
+            // Lock deposit mode — simplified invoice for pre-proposal reserve
+            if (isLockDeposit) {
+                document.getElementById('invoiceTitle').textContent = 'Lock the Date';
+                document.getElementById('invoiceSubtitle').textContent = 'Reserve Your Date';
+                document.title = 'Lock the Date - Kenna Giuzio Cake';
             }
 
             // Try to get client data from URL params first
@@ -1236,16 +1243,117 @@
                 }
             }
 
-            // Financial data
-            const proposalTotal = parseFloat(params.get('total')) || 2500;
-            const tastingCredit = parseFloat(params.get('tastingCredit')) || 250;
-            const adjustedTotal = proposalTotal - tastingCredit;
+            // Financial data — fetch from API if in final balance mode to ensure correct amounts
+            let proposalTotal = parseFloat(params.get('total')) || 0;
+            let tastingCredit = parseFloat(params.get('tastingCredit')) || 0;
+            let depositPaidFromDB = 0;
+
+            if (isFinalBalance && clientId) {
+                // Fetch the signed proposal to get real totals
+                try {
+                    const propResp = await fetch(`${API_URL}/api/proposals?client_id=${clientId}`);
+                    if (propResp.ok) {
+                        const allProposals = await propResp.json();
+                        const proposals = allProposals.filter(p => p.status === 'signed');
+                        if (proposals.length > 0) {
+                            const propData = typeof proposals[0].data === 'string' ? JSON.parse(proposals[0].data) : proposals[0].data;
+                            const selectedDesign = propData.selectedDesign || 'base';
+                            const designPrice = parseFloat(propData[selectedDesign + 'Price'] || propData.basePrice || 0);
+                            let itemsTotal = 0;
+                            (propData.items || []).forEach(item => {
+                                if (item.type === 'fixed') itemsTotal += parseFloat(item.price) || 0;
+                                else itemsTotal += (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+                            });
+                            const realTotal = designPrice + itemsTotal;
+                            if (realTotal > 0) proposalTotal = realTotal;
+                            if (propData.tastingCredit) tastingCredit = parseFloat(propData.tastingCredit) || 0;
+                            // Also get proposal number
+                            if (propData.proposalNumber) {
+                                document.getElementById('proposalNumber').textContent = '#P-' + propData.proposalNumber;
+                            }
+                        }
+                    }
+                } catch (e) { console.log('Could not fetch proposal for final balance:', e); }
+
+                // Fetch the paid deposit invoice (fallback only — prefer calculating from proposal)
+                try {
+                    const depResp = await fetch(`${API_URL}/api/invoices`);
+                    if (depResp.ok) {
+                        const invoices = await depResp.json();
+                        const depInv = invoices.find(i => String(i.client_id) === String(clientId) && i.type === 'deposit' && i.status === 'paid');
+                        if (depInv) depositPaidFromDB = parseFloat(depInv.amount) || 0;
+                    }
+                } catch (e) { console.log('Could not fetch deposit invoice:', e); }
+            }
+
+            // Lock deposit mode — simple fixed amount, no proposal reference
+            if (isLockDeposit) {
+                depositAmount = parseFloat(params.get('amount')) || 0;
+                const processingFee = Math.floor(depositAmount * 0.03);
+                depositWithFee = depositAmount + processingFee;
+
+                // Replace the summary box with simple lock deposit info
+                const summaryBox = document.querySelector('.summary-box');
+                if (summaryBox) {
+                    summaryBox.innerHTML = `
+                        <div class="summary-title">Lock the Date Deposit</div>
+                        <div class="summary-row" style="border-top: 1px solid #eee; padding-top: 12px;">
+                            <span class="label">Reserve Deposit</span>
+                            <span class="amount">${formatCurrency(depositAmount)}</span>
+                        </div>
+                        <div class="summary-row" style="font-size: 0.8rem; color: #888; padding-top: 4px;">
+                            <span>This deposit will be credited toward your final balance</span>
+                        </div>
+                    `;
+                }
+
+                // Update totals
+                document.querySelector('.totals-row.subtotal span:first-child').textContent = 'Lock Deposit';
+                document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
+                document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+                document.getElementById('totalDue').textContent = formatCurrency(depositWithFee);
+                document.querySelector('.totals-row.deposit span:first-child').textContent = 'Total Due';
+
+                // Hide remaining balance row
+                const remainingRow = document.querySelector('.totals-row.balance');
+                if (remainingRow) remainingRow.style.display = 'none';
+
+                // Update Zelle and Check amounts
+                document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
+                document.getElementById('checkAmount').textContent = formatCurrency(depositAmount);
+
+                // Update pay button
+                document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
+
+                // Update payment terms
+                const termsSection = document.querySelector('.terms-section');
+                if (termsSection) {
+                    termsSection.innerHTML = `
+                        <div class="terms-title">Lock the Date</div>
+                        <div class="terms-text">
+                            <p>This deposit reserves your event date with Kenna Giuzio Cake. The full amount will be credited toward your 50% deposit once your custom proposal is finalized.</p>
+                            <div class="terms-note">
+                                <strong>Your date is reserved once payment is received.</strong>
+                                A 3% processing fee applies to credit card payments. Zelle and check payments do not include a processing fee.
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Fallback defaults only for deposit mode (not final balance or lock deposit)
+            if (!isLockDeposit && !proposalTotal) proposalTotal = parseFloat(params.get('total')) || (isFinalBalance ? 0 : 2500);
+            if (!isLockDeposit && !tastingCredit) tastingCredit = parseFloat(params.get('tastingCredit')) || (isFinalBalance ? 0 : 250);
+            const adjustedTotal = isLockDeposit ? 0 : (proposalTotal - tastingCredit);
 
             if (isFinalBalance) {
                 // Final balance mode: total minus deposit already paid
-                const depositPaid = parseFloat(params.get('depositPaid')) || 0;
-                depositAmount = adjustedTotal - depositPaid;
-                const processingFee = depositAmount * 0.034;
+                // Calculate deposit from proposal (service amount = half of adjusted total)
+                // DO NOT use DB invoice amount — it includes the 3% CC processing fee
+                const depositFromProposal = proposalTotal > 0 ? Math.floor(adjustedTotal / 2) : 0;
+                const depositPaid = depositFromProposal || depositPaidFromDB || parseFloat(params.get('depositPaid')) || 0;
+                depositAmount = Math.floor(adjustedTotal - depositPaid);
+                const processingFee = Math.floor(depositAmount * 0.03);
                 depositWithFee = depositAmount + processingFee;
 
                 // Update summary box for final balance
@@ -1274,12 +1382,40 @@
 
                 // Update deposit row label
                 document.querySelector('.totals-row.deposit span:first-child').textContent = 'Total Due';
-            } else {
-                // Normal deposit mode
-                depositAmount = adjustedTotal / 2;
-                const processingFee = depositAmount * 0.034;
+            } else if (!isLockDeposit) {
+                // Normal deposit mode — check for existing lock deposit to credit
+                let lockDepositCredit = 0;
+                if (clientId) {
+                    try {
+                        const invResp = await fetch(`${API_URL}/api/invoices?client_id=${clientId}`);
+                        if (invResp.ok) {
+                            const invoices = await invResp.json();
+                            const lockInv = invoices.find(i => i.type === 'lock_deposit' && (i.status === 'paid' || i.status === 'pending_verification'));
+                            if (lockInv) lockDepositCredit = parseFloat(lockInv.amount) || 0;
+                        }
+                    } catch (e) { console.log('Could not check lock deposit:', e); }
+                }
+
+                const fullDeposit = Math.floor(adjustedTotal / 2);
+                depositAmount = Math.max(0, fullDeposit - lockDepositCredit);
+                const processingFee = Math.floor(depositAmount * 0.03);
                 depositWithFee = depositAmount + processingFee;
-                const remainingBalance = adjustedTotal - depositAmount;
+                const remainingBalance = adjustedTotal - fullDeposit;
+
+                // If there's a lock deposit credit, show it in the summary
+                if (lockDepositCredit > 0) {
+                    const highlightRow = document.querySelector('.summary-row.highlight');
+                    if (highlightRow) {
+                        const creditRow = document.createElement('div');
+                        creditRow.className = 'summary-row';
+                        creditRow.innerHTML = `
+                            <span class="label">Less: Lock the Date Deposit</span>
+                            <span class="amount">-${formatCurrency(lockDepositCredit)}</span>
+                        `;
+                        highlightRow.parentNode.insertBefore(creditRow, highlightRow);
+                        highlightRow.querySelector('.label').textContent = 'Deposit Due Now';
+                    }
+                }
 
                 // Update totals
                 document.getElementById('subtotalAmount').textContent = formatCurrency(depositAmount);
@@ -1288,20 +1424,22 @@
                 document.getElementById('remainingBalance').textContent = formatCurrency(remainingBalance);
             }
 
-            // Update summary (common fields)
-            document.getElementById('proposalTotal').textContent = formatCurrency(proposalTotal);
-            document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
-            document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
-            if (!isFinalBalance) {
-                document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+            // Update summary (common fields) — skip for lock deposit (summary box replaced)
+            if (!isLockDeposit) {
+                document.getElementById('proposalTotal').textContent = formatCurrency(proposalTotal);
+                document.getElementById('tastingCredit').textContent = '-' + formatCurrency(tastingCredit);
+                document.getElementById('adjustedTotal').textContent = formatCurrency(adjustedTotal);
+                if (!isFinalBalance) {
+                    document.getElementById('depositAmount').textContent = formatCurrency(depositAmount);
+                }
+
+                // Update Zelle and Check amounts
+                document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
+                document.getElementById('checkAmount').textContent = formatCurrency(depositAmount);
+
+                // Update pay button
+                document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
             }
-
-            // Update Zelle and Check amounts
-            document.getElementById('zelleAmount').textContent = formatCurrency(depositAmount);
-            document.getElementById('checkAmount').textContent = formatCurrency(depositAmount);
-
-            // Update pay button
-            document.getElementById('payButton').textContent = 'Pay ' + formatCurrency(depositWithFee) + ' with Card';
 
             // Line items from proposal
             const lineItemsList = document.getElementById('lineItemsList');
@@ -1345,7 +1483,19 @@
                 `;
             }
 
-            // Generate invoice number
+            // Generate invoice number — but first check if one already exists in DB for this client
+            if (!invoiceId && clientId) {
+                try {
+                    const existResp = await fetch(`${API_URL}/api/invoices?client_id=${clientId}`);
+                    if (existResp.ok) {
+                        const allInvoices = await existResp.json();
+                        const existing = allInvoices.find(i => i.type === invoiceType && (i.status === 'sent' || i.status === 'draft'));
+                        if (existing) {
+                            invoiceId = existing.invoice_number || existing.id;
+                        }
+                    }
+                } catch (e) { console.log('Could not check existing invoices:', e); }
+            }
             if (!invoiceId) {
                 invoiceId = invoicePrefix + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
             }

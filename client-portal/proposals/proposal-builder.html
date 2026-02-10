@@ -2467,8 +2467,8 @@ By accepting this proposal, you agree to these terms and conditions.`;
 
         // Lock proposal UI when sent/booked/paid
         function lockProposalUI(reason) {
-            // Disable all form inputs
-            document.querySelectorAll('.edit-panel input, .edit-panel textarea, .edit-panel select, .edit-panel button').forEach(el => {
+            // Disable all form inputs in the builder panel (left side)
+            document.querySelectorAll('.builder-panel input, .builder-panel textarea, .builder-panel select, .builder-panel button').forEach(el => {
                 if (!el.classList.contains('preview-proposal-btn')) {
                     el.disabled = true;
                     el.style.opacity = '0.6';
@@ -2476,12 +2476,18 @@ By accepting this proposal, you agree to these terms and conditions.`;
                 }
             });
 
+            // Disable sketch upload areas and other interactive elements
+            document.querySelectorAll('.builder-panel .sketch-upload, .builder-panel .quick-add-btn, .builder-panel .ai-polish-btn').forEach(el => {
+                el.style.pointerEvents = 'none';
+                el.style.opacity = '0.4';
+            });
+
             // Hide send button, show locked status
             const sendBtn = document.getElementById('sendSection');
             if (sendBtn) sendBtn.style.display = 'none';
 
             // Add banner to edit panel based on reason
-            const editPanel = document.querySelector('.edit-panel');
+            const editPanel = document.querySelector('.builder-panel');
             if (editPanel) {
                 const banner = document.createElement('div');
                 banner.id = 'proposalLockedBanner';
@@ -2535,7 +2541,7 @@ By accepting this proposal, you agree to these terms and conditions.`;
             isProposalLocked = false;
 
             // Re-enable all form inputs
-            document.querySelectorAll('.edit-panel input, .edit-panel textarea, .edit-panel select, .edit-panel button').forEach(el => {
+            document.querySelectorAll('.builder-panel input, .builder-panel textarea, .builder-panel select, .builder-panel button').forEach(el => {
                 el.disabled = false;
                 el.style.opacity = '';
                 el.style.pointerEvents = '';

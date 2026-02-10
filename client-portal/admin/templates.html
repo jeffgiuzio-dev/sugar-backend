@@ -442,7 +442,32 @@
         .confirm-dialog .btn {
             min-width: 100px;
         }
+
+        .ai-polish-btn {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #b5956a, #d4b896);
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ai-polish-btn:hover {
+            background: linear-gradient(135deg, #a0825c, #c4a880);
+            transform: translateY(-1px);
+        }
+        .ai-polish-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
+    <script src="/js/api.js"></script>
+    <script src="/js/ai-polish.js?v=4"></script>
 </head>
 <body>
     <aside class="sidebar">
@@ -530,6 +555,13 @@
                 </svg>
                 Archive
             </a>
+            <a href="/admin/dev-tools.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Dev Tools
+            </a>
         </nav>
 
         <!-- Dark Mode Toggle -->
@@ -586,6 +618,29 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Proposal Contract Template -->
+                    <div class="section-header" style="margin-top: 40px;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <path d="M12 18v-6"/>
+                            <path d="M9 15l3 3 3-3"/>
+                        </svg>
+                        <h2>Proposal Contract</h2>
+                    </div>
+
+                    <div class="template-list">
+                        <div class="template-item">
+                            <div class="template-info">
+                                <h3>Terms & Conditions <span id="contractCustomBadge" style="color:#b5956a; font-size:0.7rem;"></span></h3>
+                                <p>Contract terms included in every cake proposal (payment, cancellation, delivery, etc.)</p>
+                            </div>
+                            <div class="template-actions">
+                                <button class="btn" onclick="openContractModal()">Preview</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -604,7 +659,10 @@
                     <input type="text" id="editSubject">
                 </div>
                 <div class="form-group flex-grow">
-                    <label>Email Body</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="margin-bottom:0">Email Body</label>
+                        <button class="ai-polish-btn" onclick="aiPolish(document.getElementById('editBody'), { apiUrl: API_BASE_URL, subjectInput: document.getElementById('editSubject') })">Optional AI</button>
+                    </div>
                     <textarea id="editBody"></textarea>
                 </div>
             </div>
@@ -636,6 +694,32 @@
             <div class="confirm-actions">
                 <button class="btn" onclick="closeConfirmModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveTemplate()">Yes, Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposal Contract Edit Modal -->
+    <div class="modal-overlay" id="contractModal" onclick="if(event.target===this) closeContractModal()">
+        <div class="modal" style="width: 700px; max-width: 95vw; height: 75vh;">
+            <div class="modal-header">
+                <h2>Proposal Contract — Terms & Conditions</h2>
+                <button class="modal-close" onclick="closeContractModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group flex-grow">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="margin-bottom:0">Contract Text (shown on proposals)</label>
+                        <button class="ai-polish-btn" onclick="aiPolish(document.getElementById('contractTplBody'), { apiUrl: API_BASE_URL })">Optional AI</button>
+                    </div>
+                    <textarea id="contractTplBody" style="line-height: 1.8; font-size: 0.9rem;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="resetContractTemplate()">Reset to Default</button>
+                <div class="modal-footer-right">
+                    <button class="btn" onclick="closeContractModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveContractTemplate()">Save as Default</button>
+                </div>
             </div>
         </div>
     </div>
@@ -736,7 +820,7 @@
                             <span>$<span id="tastingPreviewSubtotal">250.00</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #999; margin-bottom: 6px;">
-                            <span>Processing Fee (3.4%)</span>
+                            <span>Processing Fee (3%)</span>
                             <span>$<span id="tastingPreviewProcessing">8.50</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 400; border-top: 1px solid #1a1a1a; padding-top: 10px;">
@@ -789,27 +873,23 @@
             'inquiry-response': {
                 name: 'Inquiry Response',
                 description: 'Thank them for reaching out, confirm date availability',
-                subject: 'Thank You for Your Inquiry - {eventType}',
+                subject: 'Kenna Giuzio Cake - Thank You for Your Inquiry - {eventType}',
                 body: `Hi {firstName},
 
 Thank you so much for reaching out about your {eventType}! I'm excited to hear about your vision for {eventDate}.
 
-Great news - your date is currently available!
-
 Here's how my process works:
 
 1. TASTING CONSULTATION
-We'll schedule a tasting where you can sample flavors and we'll discuss your design vision in detail. Tastings are complimentary and typically last about an hour.
+Tastings are designed as a salon-style experience. A moment to slow down with cake and champagne with up to 4 additional guests, explore ideas, and determine if my work is the right fit for your celebration. The tasting fee is $250, which will then be fully credited to your final invoice should we decide to move forward together.
 
 2. CUSTOM PROPOSAL
-After our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements.
+After our tasting, I'll create a detailed proposal with pricing based on your specific design, guest count, and any special requirements we discuss.
 
 3. BOOKING
 A 50% deposit locks in your date. The remaining balance is due two weeks before your event.
 
-I'd love to learn more about your event! Are there other team members (planner, florist, venue coordinator) I should connect with?
-
-Looking forward to creating something beautiful for your celebration!
+I work on a limited commission basis, with projects beginning at $2,500. Looking forward to creating something beautiful for your celebration!
 
 Warmly,
 Kenna`
@@ -817,142 +897,29 @@ Kenna`
             'tasting-options': {
                 name: 'Tasting Options',
                 description: 'Offer available tasting dates and times',
-                subject: 'Tasting Options for Your {eventType}',
+                subject: 'Kenna Giuzio Cake - Tasting Options for Your {eventType}',
                 body: `Hi {firstName},
 
 I'd love to schedule your tasting consultation! Here is a date and time that works for me:
 
 [Click to select date/time]
 
-Tastings typically last about an hour. We'll sample flavors, discuss your design vision, and I'll answer any questions you have.
+Tastings typically last about an 1-2 hours. We'll sample flavors, discuss your design vision, and I'll answer any questions you have.
 
-Please let me know if this works for you, or if you'd prefer a different time, share a few times that fit your schedule and I'll do my best to accommodate.
+Please let me know what works for you, or if you'd prefer a different time, share a few times that fit your schedule and I'll do my best to accommodate.
 
 Looking forward to meeting you!
 
 Warmly,
 Kenna`
             },
-            'tasting-confirmation': {
-                name: 'Tasting Confirmation',
-                description: 'Combined tasting confirmation + payment receipt (sent automatically after payment)',
-                subject: 'Tasting Confirmed - {tastingDate}',
-                body: `Dear {firstName},
-
-Thank you for your payment of {amount}. Your tasting is confirmed!
-
-YOUR TASTING:
-Date: {tastingDate} at {tastingTime}
-Location: Queen Anne, Seattle
-Duration: Approximately 1 hour
-
-WHAT TO EXPECT:
-- Sample a variety of cake flavors and fillings
-- Discuss your design vision and inspiration
-- Review timeline and logistics
-
-Feel free to bring any inspiration photos, color swatches, or your event team members.
-
-If you have any questions before your tasting, don't hesitate to reach out.
-
-See you soon,
-Kenna
-
-Kenna Giuzio Cake
-(206) 472-5401
-kenna@kennagiuziocake.com`
-            },
-            'proposal-delivery': {
-                name: 'Proposal Ready',
-                description: 'Let them know their custom proposal is ready',
-                subject: 'Your Custom Proposal is Ready!',
-                body: `Hi {firstName},
-
-It was wonderful meeting you at your tasting! I've put together a custom proposal for your {eventType}.
-
-You can view your proposal here:
-[PROPOSAL LINK]
-
-The proposal includes:
-- Design details based on our conversation
-- Itemized pricing
-- Timeline and delivery information
-
-To secure your date, a 50% deposit is required. Once received, your {eventDate} date will be officially booked!
-
-Please let me know if you have any questions or would like to make any adjustments.
-
-Excited to create this for you!
-
-Warmly,
-Kenna`
-            },
-            'booking-confirmation': {
-                name: 'Booking Confirmation',
-                description: 'Thank them for booking, confirm next steps',
-                subject: 'You\'re Booked! - {eventDate}',
-                body: `Hi {firstName},
-
-Wonderful news - your date is officially booked! Thank you so much for trusting me with your {eventType}.
-
-WHAT'S NEXT:
-- Your remaining balance will be due two weeks before your event ({balanceDueDate})
-- I'll reach out closer to your date to confirm final details
-- If anything changes with your event, just let me know
-
-I'm so excited to create something beautiful for your celebration!
-
-Warmly,
-Kenna`
-            },
-            'one-month-reminder': {
-                name: 'One Month Reminder',
-                description: 'Friendly reminder about upcoming balance',
-                subject: 'One Month Until Your {eventType}!',
-                body: `Hi {firstName},
-
-Can you believe your {eventType} is just one month away?! I'm getting excited to deliver your cake!
-
-Just a friendly reminder that your remaining balance of {balanceAmount} will be due on {balanceDueDate} (two weeks before your event).
-
-If you have any last-minute questions or changes, now is the perfect time to let me know.
-
-Counting down with you!
-
-Warmly,
-Kenna`
-            },
-            'two-week-reminder': {
-                name: 'Final Balance Due',
-                description: 'Balance due reminder two weeks before event',
-                subject: 'Final Balance Due - {eventType}',
-                body: `Hi {firstName},
-
-Your {eventType} is just two weeks away!
-
-This is a friendly reminder that your final balance of {balanceAmount} is now due.
-
-DELIVERY DETAILS:
-- Date: {eventDate}
-- Time: [DELIVERY TIME]
-- Location: {venue}
-
-Please let me know if any details have changed. I'll reach out a few days before to confirm everything.
-
-So excited for your big day!
-
-Warmly,
-Kenna`
-            },
             'tasting-invoice-email': {
                 name: 'Tasting Invoice Email',
-                description: 'Branded email sent with tasting invoice link',
-                subject: 'Your Tasting Invitation - {tastingDate}',
+                description: 'Branded email sent with tasting invoice link. Footer is added automatically.',
+                subject: 'Kenna Giuzio Cake - Your Tasting Invitation - {tastingDate}',
                 body: `Dear {firstName},
 
 Thank you so much for reaching out! I'm thrilled at the opportunity to create something beautiful for your {eventType}.
-
-I'd love to invite you to a tasting party at my studio where we can sample cakes, explore designs, and discuss your vision together.
 
 Your tasting is scheduled for:
 {tastingDate} at {tastingTime}
@@ -962,11 +929,140 @@ Click below to view your invoice to schedule your tasting.
 I can't wait to meet you and hear all about what you're dreaming of!
 
 Warmly,
-Kenna
+Kenna`
+            },
+            'tasting-confirmation': {
+                name: 'Tasting Confirmation',
+                description: 'Sent automatically after tasting payment. Tasting details card, payment receipt, and footer are added automatically.',
+                subject: 'Kenna Giuzio Cake - Tasting Paid & Confirmed - {tastingDate}',
+                body: `Dear {firstName},
 
-Kenna Giuzio Cake
-(206) 472-5401
-kenna@kennagiuziocake.com`
+Thank you for your payment of {amount}. Your tasting is confirmed!
+
+Feel free to bring any inspiration photos, color swatches, or your event team members.
+
+If you have any questions before your tasting, don't hesitate to reach out.
+
+See you soon,
+Kenna`
+            },
+            'proposal-delivery': {
+                name: 'Proposal Ready',
+                description: 'Let them know their custom proposal is ready',
+                subject: 'Kenna Giuzio Cake - Your Custom Proposal is Ready!',
+                body: `Hi {firstName},
+
+It was a pleasure meeting you at your tasting! I'm excited to share the custom proposal I've prepared for your {eventType}.  Each commission is a fully bespoke artist-led process that combines design, craftsmanship, and personal narrative.  Cakes are conceived as both a celebratory center piece and a lasting keepsake, with select elements designed to be preserved beyond the event.
+
+The proposal includes:
+- Design details reflecting our conversations including a sketch
+- Itemized pricing
+- Timeline and delivery information
+
+To secure your date, after signing the proposal you will be redirected to your deposit invoice. Once deposit is paid, your date of {eventDate} will be officially booked!
+
+If you have any questions or would like to make adjustments, please don't hesitate to reach out.
+
+I look forward to creating something special for you!
+
+You can view your proposal here:
+[PROPOSAL LINK]
+
+Warmly,
+Kenna`
+            },
+            'deposit-reminder': {
+                name: 'Deposit Reminder',
+                description: 'Gentle nudge sent 24 hours after signing if deposit not yet paid',
+                subject: 'Kenna Giuzio Cake - A Gentle Reminder About Your {eventType}',
+                body: `Hi {firstName},
+
+Thank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your {eventType}.
+
+I wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of {eventDate} stays available for you. As a reminder, your date is officially reserved once the deposit is received.
+
+You can complete your deposit here:
+[DEPOSIT LINK]
+
+If you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out. I'm always happy to help.
+
+Warmly,
+Kenna`
+            },
+            'lock-the-date': {
+                name: 'Lock the Date',
+                description: 'Pre-proposal reserve deposit email with payment link. Sent manually from In Studio.',
+                subject: 'Kenna Giuzio Cake - Lock Your Date - {eventDate}',
+                body: `Hi {firstName},
+
+Thank you for your interest in a custom creation for your {eventType}! I'm truly excited about the possibility of working together.
+
+To reserve your date of {eventDate}, a Lock the Date deposit of {lockAmount} is required. This deposit will be credited toward your final balance once your custom proposal is ready.
+
+You can submit your deposit securely here:
+[LOCK DEPOSIT LINK]
+
+Once received, your date will be held exclusively for you while we finalize the design details.
+
+I look forward to creating something beautiful for your celebration!
+
+Warmly,
+Kenna`
+            },
+            'booking-confirmation': {
+                name: 'Booking Confirmation',
+                description: 'Sent automatically after deposit payment. Event details card, payment receipt, and footer are added automatically.',
+                subject: 'Kenna Giuzio Cake - You\'re Booked! - {eventDate}',
+                body: `Hi {firstName},
+
+I'm delighted to share that your date is officially booked! Thank you for trusting me with your {eventType}.
+
+In the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.
+
+WHAT'S NEXT:
+- If anything changes with your event, please don't hesitate to let me know.
+- Your remaining balance will be due two weeks before your event ({balanceDueDate}).
+
+I'm truly excited to create something beautiful for your celebration!
+
+Warmly,
+Kenna`
+            },
+            'one-month-reminder': {
+                name: 'One Month Reminder',
+                description: 'Friendly reminder about upcoming balance. Backend adds event details card automatically.',
+                subject: 'Kenna Giuzio Cake - Countdown for Your Upcoming Event',
+                body: `Hi {firstName},
+
+I can hardly believe your {eventType} is just one month away! I'm truly excited to create your cake for this special occasion.
+
+This is a friendly reminder that your remaining balance of {balanceAmount} will be due on {balanceDueDate}, which is two weeks before your event.
+
+If you have any questions, please don't hesitate to reach out.
+
+Looking forward to celebrating with you!
+
+Warmly,
+Kenna`
+            },
+            'two-week-reminder': {
+                name: 'Final Balance Due',
+                description: 'Balance due reminder two weeks before event. Backend adds event details card, balance amount, and payment link automatically.',
+                subject: 'Kenna Giuzio Cake - Reminder for Your Upcoming Event',
+                body: `Hi {firstName},
+
+Your {eventType} is just two weeks away!
+
+This is a friendly reminder that your final balance of {balanceAmount} is now due.
+
+Payment can be made by credit card, Zelle, or check.
+
+I'll reach out a few days before to confirm everything.
+
+So excited for your big day!
+
+Warmly,
+Kenna`
             }
         };
 
@@ -987,9 +1083,21 @@ kenna@kennagiuziocake.com`
         }
 
         function getVersionLabel(custom) {
-            if (!custom) return '<span style="color:var(--text-muted); font-size:0.7rem;">Original Default</span>';
-            const v = custom.version || 1;
-            return `<span style="color:#b5956a; font-size:0.7rem;">Version ${v}</span>`;
+            if (!custom || !custom.version) return '<span style="color:var(--text-muted); font-size:0.7rem;">Default</span>';
+            return `<span style="color:#b5956a; font-size:0.7rem;">Version ${custom.version}</span>`;
+        }
+
+        // Templates that are sent automatically by the system
+        const autoSendTemplates = {
+            'inquiry-response': 'Sent automatically when a new inquiry is received',
+            'tasting-confirmation': 'Sent automatically after tasting payment',
+            'deposit-reminder': 'Sent automatically 24 hours after proposal signing if deposit unpaid',
+            'booking-confirmation': 'Sent automatically after deposit payment'
+        };
+
+        function getAutoSendBadge(id) {
+            if (!autoSendTemplates[id]) return '';
+            return `<span style="display:inline-block; font-size:0.6rem; letter-spacing:0.5px; text-transform:uppercase; color:#8a9a7b; border:1px solid #c5d4be; padding:1px 6px; border-radius:3px; margin-left:6px; vertical-align:middle;" title="${autoSendTemplates[id]}">Auto</span>`;
         }
 
         // Render template list
@@ -1000,7 +1108,7 @@ kenna@kennagiuziocake.com`
                 return `
                     <div class="template-item">
                         <div class="template-info">
-                            <h3>${t.name} ${getVersionLabel(custom)}</h3>
+                            <h3>${t.name} ${getVersionLabel(custom)} ${getAutoSendBadge(id)}</h3>
                             <p>${t.description}</p>
                         </div>
                         <div class="template-actions">
@@ -1063,11 +1171,27 @@ kenna@kennagiuziocake.com`
             customTemplates[currentTemplateId] = { subject, body, version: currentVersion };
             localStorage.setItem('kgc_email_templates', JSON.stringify(customTemplates));
 
+            // Sync to DB so backend auto-sender can read custom templates
+            syncTemplatesToDB();
+
             document.getElementById('confirmModal').style.display = 'none';
             document.getElementById('editModal').style.display = 'none';
             document.body.classList.remove('modal-open');
             currentTemplateId = null;
             renderTemplates();
+        }
+
+        // Sync custom templates to DB for backend access
+        async function syncTemplatesToDB() {
+            try {
+                await fetch(`${API_BASE_URL}/api/settings/email_templates`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: customTemplates })
+                });
+            } catch (e) {
+                console.log('Template DB sync failed:', e.message);
+            }
         }
 
         // Reset template to default
@@ -1077,6 +1201,9 @@ kenna@kennagiuziocake.com`
             delete customTemplates[currentTemplateId];
             localStorage.setItem('kgc_email_templates', JSON.stringify(customTemplates));
 
+            // Sync deletion to DB so backend auto-sender uses defaults
+            syncTemplatesToDB();
+
             // Refresh modal with default
             const template = defaultTemplates[currentTemplateId];
             document.getElementById('editSubject').value = template.subject;
@@ -1085,9 +1212,36 @@ kenna@kennagiuziocake.com`
             renderTemplates();
         }
 
+        // One-time reset: clear old customizations now baked into defaults (Feb 2026)
+        if (!localStorage.getItem('kgc_template_defaults_v2')) {
+            localStorage.removeItem('kgc_email_templates');
+            localStorage.removeItem('kgc_contract_terms');
+            localStorage.removeItem('kgc_contract_meta');
+            localStorage.removeItem('kgc_tasting_defaults');
+            localStorage.setItem('kgc_template_defaults_v2', 'true');
+        }
+
+        // Load templates from DB (source of truth for backend auto-sender)
+        async function loadFromDB() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/settings/email_templates`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.value && typeof data.value === 'object') {
+                        customTemplates = data.value;
+                        localStorage.setItem('kgc_email_templates', JSON.stringify(customTemplates));
+                        renderTemplates();
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load templates from DB:', e.message);
+            }
+        }
+
         // Initialize
         loadCustomTemplates();
         renderTemplates();
+        loadFromDB(); // Async — updates UI when DB data arrives
 
         // ===== Draggable Modal Functionality =====
         function makeDraggable(modal) {
@@ -1241,7 +1395,7 @@ kenna@kennagiuziocake.com`
             document.getElementById('tastingPreviewFee').textContent = fee.toFixed(0);
 
             const subtotal = fee;
-            const processing = Math.round(fee * 0.034 * 100) / 100;
+            const processing = Math.round(fee * 0.03 * 100) / 100;
             const total = subtotal + processing;
             document.getElementById('tastingPreviewSubtotal').textContent = subtotal.toFixed(2);
             document.getElementById('tastingPreviewProcessing').textContent = processing.toFixed(2);
@@ -1286,16 +1440,92 @@ kenna@kennagiuziocake.com`
         function updateTastingCustomBadge() {
             const saved = JSON.parse(localStorage.getItem('kgc_tasting_defaults') || 'null');
             const badge = document.getElementById('tastingCustomBadge');
-            if (!saved) {
-                badge.innerHTML = '<span style="color:var(--text-muted);">Original Default</span>';
+            if (!saved || !saved.version) {
+                badge.innerHTML = '<span style="color:var(--text-muted);">Default</span>';
             } else {
-                const v = saved.version || 1;
-                badge.textContent = 'Version ' + v;
+                badge.textContent = 'Version ' + saved.version;
             }
         }
 
         updateTastingCustomBadge();
         makeDraggable(document.querySelector('#tastingModal .modal'));
+
+        // ===== Proposal Contract Template =====
+        const defaultContractTerms = `PAYMENT TERMS
+A 50% deposit is required to secure your date. The remaining balance is due 2 weeks before your event. Payment may be made by credit card (3.0% processing fee applies) or Zelle/Check (no fee).
+
+CANCELLATION POLICY
+Cancellations made more than 90 days before the event will receive a full refund of the deposit. Cancellations made 60-90 days before the event will receive a 50% refund of the deposit. Cancellations within 60 days are non-refundable.
+
+DESIGN CHANGES
+Design changes may be requested up to 60 days before the event, subject to availability and potential price adjustments. Changes requested within 60 days cannot be guaranteed.
+
+DELIVERY & SETUP
+Setup includes placement and assembly of cake at venue. Client is responsible for ensuring venue access and appropriate display surface. No other desserts should be placed on the same table or near the display cake unless mutually agreed upon. Proposal outlines the fees associated with delivery, setup, and if needed travel. Once the cake is delivered and set up, it is the responsibility of the wedding coordinator to ensure it is not damaged, as for an example many staff members may be moving around to set up other elements.
+
+DISPLAY CONDITIONS
+Client is responsible for ensuring the cake is displayed in a cool, climate-controlled environment away from direct sunlight, heat sources, and outdoor elements. Kenna Giuzio Cake is not responsible for damage due to improper display conditions.
+
+FORCE MAJEURE
+In the event of circumstances beyond our control (natural disasters, severe weather, illness, etc.), Kenna Giuzio Cake will work with you to reschedule or provide a full refund.
+
+FLOWER CLOCHES
+Your cake is designed to function as both a celebration centerpiece and a keepsake element - the hand crafted sugar components are created to be preserved as heirlooms. These are delicate art pieces and should be handled with care. Not edible.
+
+By accepting this proposal, you agree to these terms and conditions.`;
+
+        function getContractTemplate() {
+            return localStorage.getItem('kgc_contract_terms') || null;
+        }
+
+        function openContractModal() {
+            const saved = getContractTemplate();
+            document.getElementById('contractTplBody').value = saved || defaultContractTerms;
+
+            const overlay = document.getElementById('contractModal');
+            const modal = overlay.querySelector('.modal');
+            modal.style.left = '50%';
+            modal.style.top = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+            overlay.style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        function closeContractModal() {
+            document.getElementById('contractModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        function saveContractTemplate() {
+            const body = document.getElementById('contractTplBody').value;
+            const existing = JSON.parse(localStorage.getItem('kgc_contract_meta') || '{}');
+            const version = (existing.version || 0) + 1;
+            localStorage.setItem('kgc_contract_terms', body);
+            localStorage.setItem('kgc_contract_meta', JSON.stringify({ version }));
+            closeContractModal();
+            updateContractCustomBadge();
+        }
+
+        function resetContractTemplate() {
+            if (!confirm('Reset contract terms to factory defaults?')) return;
+            localStorage.removeItem('kgc_contract_terms');
+            localStorage.removeItem('kgc_contract_meta');
+            document.getElementById('contractTplBody').value = defaultContractTerms;
+            updateContractCustomBadge();
+        }
+
+        function updateContractCustomBadge() {
+            const meta = JSON.parse(localStorage.getItem('kgc_contract_meta') || 'null');
+            const badge = document.getElementById('contractCustomBadge');
+            if (!meta || !meta.version) {
+                badge.innerHTML = '<span style="color:var(--text-muted);">Default</span>';
+            } else {
+                badge.textContent = 'Version ' + meta.version;
+            }
+        }
+
+        updateContractCustomBadge();
+        makeDraggable(document.querySelector('#contractModal .modal'));
     </script>
 </body>
 </html>

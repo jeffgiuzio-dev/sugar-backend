@@ -3087,8 +3087,8 @@ Kenna`
             });
             const dedupedInvoices = Object.values(byType);
 
-            // Sort: tasting, deposit, final
-            const typeOrder = { tasting: 0, deposit: 1, final: 2 };
+            // Sort: tasting, lock_deposit, deposit, final
+            const typeOrder = { tasting: 0, lock_deposit: 1, deposit: 2, final: 3 };
             dedupedInvoices.sort((a, b) => (typeOrder[a.type] ?? 9) - (typeOrder[b.type] ?? 9));
 
             let totalDue = 0;
@@ -3105,6 +3105,7 @@ Kenna`
                 // Invoice name
                 let name = 'Invoice';
                 if (inv.type === 'tasting') name = 'Tasting Fee';
+                else if (inv.type === 'lock_deposit') name = 'Lock the Date Deposit';
                 else if (inv.type === 'deposit') name = 'Deposit (50%)';
                 else if (inv.type === 'final') name = 'Final Payment';
 
