@@ -1186,6 +1186,40 @@ Warmly,
 Kenna`
 };
 
+const defaultOneMonthReminderTemplate = {
+  subject: 'Kenna Giuzio Cake - Countdown for Your Upcoming Event',
+  body: `Hi {firstName},
+
+I can hardly believe your {eventType} is just one month away! I'm truly excited to create your cake for this special occasion.
+
+This is a friendly reminder that your remaining balance of {balanceAmount} will be due on {balanceDueDate}, which is two weeks before your event.
+
+If you have any questions, please don't hesitate to reach out.
+
+Looking forward to celebrating with you!
+
+Warmly,
+Kenna`
+};
+
+const defaultTwoWeekReminderTemplate = {
+  subject: 'Kenna Giuzio Cake - Reminder for Your Upcoming Event',
+  body: `Hi {firstName},
+
+Your {eventType} is just two weeks away!
+
+This is a friendly reminder that your final balance of {balanceAmount} is now due.
+
+Payment can be made by credit card, Zelle, or check.
+
+I'll reach out a few days before to confirm everything.
+
+So excited for your big day!
+
+Warmly,
+Kenna`
+};
+
 // --- Template loaders (same pattern as getDepositReminderTemplate) ---
 
 async function getTastingConfirmationTemplate() {
@@ -1220,14 +1254,47 @@ async function getBookingConfirmationTemplate() {
   return defaultBookingConfirmationTemplate;
 }
 
+async function getOneMonthReminderTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
+      if (custom && custom['one-month-reminder']) {
+        return { ...defaultOneMonthReminderTemplate, ...custom['one-month-reminder'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom one-month reminder template:', e.message);
+  }
+  return defaultOneMonthReminderTemplate;
+}
+
+async function getTwoWeekReminderTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
+      if (custom && custom['two-week-reminder']) {
+        return { ...defaultTwoWeekReminderTemplate, ...custom['two-week-reminder'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom two-week reminder template:', e.message);
+  }
+  return defaultTwoWeekReminderTemplate;
+}
+
 // --- Generic branded payment email HTML builder ---
 
 function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
+  // options: { title, amountFormatted, paymentDate, methodNote, detailsHTML, ctaUrl, ctaText }
   // Convert plain text body to styled HTML paragraphs
   const paragraphs = bodyText.split(/\n\n+/).map(p => {
     const lines = p.split('\n');
     const htmlLines = lines.map(line => {
-      // Style section headers like "YOUR TASTING:", "WHAT'S NEXT:"
+      // Style section headers like "YOUR TASTING:", "WHAT'S NEXT:", "DELIVERY DETAILS:"
       if (/^[A-Z][A-Z\s']+:?\s*$/.test(line.trim())) {
         return `<p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:8px 0 4px;">${line.trim()}</p>`;
       }
@@ -1242,14 +1309,30 @@ function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
     return `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${joined}</p>`;
   }).join('\n    ');
 
-  const receiptSection = options.amountFormatted ? `
+  // Payment receipt header (with amount) OR simple title header (no amount)
+  let headerSection = '';
+  if (options.amountFormatted) {
+    headerSection = `
   <tr><td style="padding:20px 40px 10px; text-align:center;">
     <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">${options.title || ''}</h1>
     <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${options.amountFormatted}</div>
     <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${options.paymentDate || ''}</p>
     ${options.methodNote || ''}
   </td></tr>
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>` : '';
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>`;
+  } else if (options.title) {
+    headerSection = `
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:normal; color:#1a1a1a; margin:0;">${options.title}</h1>
+  </td></tr>
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>`;
+  }
+
+  // Optional CTA button
+  const ctaSection = options.ctaUrl ? `
+  <tr><td align="center" style="padding:10px 40px 30px;">
+    <a href="${options.ctaUrl}" style="display:inline-block; padding:14px 40px; background:#b5956a; color:#ffffff; text-decoration:none; font-size:14px; font-weight:500; letter-spacing:1px; border-radius:4px;">${options.ctaText || 'View Details'}</a>
+  </td></tr>` : '';
 
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -1260,10 +1343,10 @@ function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
   <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
   <tr><td align="center" style="padding:30px 0 10px;">
     <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>${receiptSection}${options.detailsHTML || ''}
+  </td></tr>${headerSection}${options.detailsHTML || ''}
   <tr><td style="padding:20px 40px 30px;">
     ${paragraphs}
-  </td></tr>
+  </td></tr>${ctaSection}
   <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
     <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
     <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
@@ -1411,53 +1494,28 @@ async function getDepositReminderTemplate() {
   return defaultDepositReminderTemplate;
 }
 
-function buildDepositReminderHTML({ firstName, eventType, eventDate, depositUrl }) {
-  return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <!-- Banner -->
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <!-- Logo -->
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <!-- Title -->
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:normal; color:#1a1a1a; margin:0;">A Gentle Reminder</h1>
-  </td></tr>
-  <!-- Divider -->
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <!-- Message -->
-  <tr><td style="padding:20px 40px 10px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your ${eventType || 'celebration'}.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of ${eventDate || 'your upcoming event'} stays available for you. As a reminder, your date is officially reserved once the deposit is received.</p>
-  </td></tr>
-  <!-- CTA Button -->
-  <tr><td align="center" style="padding:10px 40px 30px;">
-    <a href="${depositUrl}" style="display:inline-block; padding:14px 40px; background:#b5956a; color:#ffffff; text-decoration:none; font-size:14px; font-weight:500; letter-spacing:1px; border-radius:4px;">Complete Your Deposit</a>
-  </td></tr>
-  <!-- Closing -->
-  <tr><td style="padding:0 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out. I'm always happy to help.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <!-- Footer -->
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+function buildDepositReminderHTML({ firstName, eventType, eventDate, depositUrl }, template) {
+  const bodyText = (template?.body || defaultDepositReminderTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{eventType\}/g, eventType || 'celebration')
+    .replace(/\{eventDate\}/g, eventDate || 'your upcoming event')
+    .replace(/\[DEPOSIT LINK\]/g, depositUrl);
+
+  return buildBrandedPaymentEmailHTML(bodyText, {
+    title: 'A Gentle Reminder',
+    ctaUrl: depositUrl,
+    ctaText: 'Complete Your Deposit'
+  });
 }
 
-function buildDepositReminderPlain({ firstName, eventType, eventDate, depositUrl }) {
-  return `Hi ${firstName},\n\nThank you so much for signing your proposal! It was such a pleasure discussing your vision, and I'm truly looking forward to bringing it to life for your ${eventType || 'celebration'}.\n\nI wanted to reach out because I noticed your deposit hasn't been submitted yet, and I want to make sure your date of ${eventDate || 'your upcoming event'} stays available for you. As a reminder, your date is officially reserved once the deposit is received.\n\nComplete your deposit here: ${depositUrl}\n\nIf you have any questions or would like to discuss anything before moving forward, please don't hesitate to reach out.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+function buildDepositReminderPlain({ firstName, eventType, eventDate, depositUrl }, template) {
+  const bodyText = (template?.body || defaultDepositReminderTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{eventType\}/g, eventType || 'celebration')
+    .replace(/\{eventDate\}/g, eventDate || 'your upcoming event')
+    .replace(/\[DEPOSIT LINK\]/g, depositUrl);
+
+  return bodyText + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
 }
 
 async function sendDepositReminder(proposal, client) {
@@ -1486,8 +1544,8 @@ async function sendDepositReminder(proposal, client) {
       .replace(/\{eventType\}/g, eventType)
       .replace(/\{eventDate\}/g, eventDate);
 
-    const htmlBody = buildDepositReminderHTML(emailData);
-    const plainText = buildDepositReminderPlain(emailData);
+    const htmlBody = buildDepositReminderHTML(emailData, template);
+    const plainText = buildDepositReminderPlain(emailData, template);
 
     // Send to client
     const clientEmailLines = [
@@ -1578,7 +1636,7 @@ setTimeout(checkDepositReminders, 30000);
 // ===== Inquiry Response (Auto-Send on New Inquiry) =====
 
 const defaultInquiryResponseTemplate = {
-  subject: 'Kenna Giuzio Cake - Thank You for Your Inquiry',
+  subject: 'Kenna Giuzio Cake - Thank You for Your Inquiry - {eventType}',
   body: `Hi {firstName},
 
 Thank you so much for reaching out about your {eventType}! I'm excited to hear about your vision for {eventDate}.
@@ -3554,26 +3612,25 @@ async function checkUpcomingEvents() {
         balanceDueDate.setDate(balanceDueDate.getDate() - 14);
         const balanceDueDateStr = balanceDueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-        const subject = `One Month Until Your ${client.event_type || 'Event'}!`;
-        const plainText = `Hi ${firstName},\n\nYour ${(client.event_type || 'event').toLowerCase()} is just one month away! We're getting so excited.\n\nJust a friendly reminder that your final balance of ${balanceAmount} will be due by ${balanceDueDateStr}.\n\nIf you have any questions or last-minute details to share, don't hesitate to reach out!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+        const eventType = (client.event_type || 'event').toLowerCase();
+        const oneMonthTemplate = await getOneMonthReminderTemplate();
 
-        const htmlBody = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <tr><td style="padding:20px 40px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">One Month to Go!</h1>
-  </td></tr>
-  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <tr><td style="padding:24px 40px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Your ${(client.event_type || 'event').toLowerCase()} is just one month away! We're getting so excited.</p>
+        const subject = oneMonthTemplate.subject
+          .replace(/\{firstName\}/g, firstName)
+          .replace(/\{eventType\}/g, eventType)
+          .replace(/\{balanceAmount\}/g, balanceAmount)
+          .replace(/\{balanceDueDate\}/g, balanceDueDateStr)
+          .replace(/\{eventDate\}/g, eventDateFormatted);
+
+        const bodyText = oneMonthTemplate.body
+          .replace(/\{firstName\}/g, firstName)
+          .replace(/\{eventType\}/g, eventType)
+          .replace(/\{balanceAmount\}/g, balanceAmount)
+          .replace(/\{balanceDueDate\}/g, balanceDueDateStr)
+          .replace(/\{eventDate\}/g, eventDateFormatted);
+
+        const eventDetailsHTML = `
+  <tr><td style="padding:0 40px;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
       <tr><td>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDateFormatted}</p>
@@ -3581,17 +3638,14 @@ async function checkUpcomingEvents() {
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Final Balance:</strong> ${balanceAmount} due by ${balanceDueDateStr}</p>
       </td></tr>
     </table>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions or last-minute details to share, don't hesitate to reach out!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+  </td></tr>`;
+
+        const plainText = bodyText + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+
+        const htmlBody = buildBrandedPaymentEmailHTML(bodyText, {
+          title: 'One Month to Go!',
+          detailsHTML: eventDetailsHTML
+        });
 
         try {
           const boundary = 'boundary_' + Date.now().toString(36);
@@ -3640,28 +3694,25 @@ async function checkUpcomingEvents() {
         const balanceFormatted = balanceAmount > 0 ? '$' + balanceAmount.toFixed(2) : 'your remaining balance';
         const finalBalanceLink = `https://portal.kennagiuziocake.com/welcome-proposal.html?dest=final-balance&clientId=${client.id}&mode=final-balance&total=${proposalTotal}&tastingCredit=${tastingCredit}&depositPaid=${depositPaid}`;
 
-        const subject = `Final Balance Due - ${client.event_type || 'Event'}`;
-        const plainText = `Hi ${firstName},\n\nYour ${(client.event_type || 'event').toLowerCase()} is just two weeks away!\n\nYour final balance of ${balanceFormatted} is now due. You can view and pay your final balance here:\n${finalBalanceLink}\n\nPayment can be made by credit card, Zelle, or check.\n\nI can't wait to see it all come together!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+        const eventType = (client.event_type || 'event').toLowerCase();
+        const twoWeekTemplate = await getTwoWeekReminderTemplate();
 
-        const htmlBody = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <tr><td style="padding:20px 40px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 8px;">Final Balance Due</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:8px;">${balanceFormatted}</div>
-    <p style="font-size:14px; color:#666; margin:0;">Due before ${eventDateFormatted}</p>
-  </td></tr>
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <tr><td style="padding:24px 40px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Your ${(client.event_type || 'event').toLowerCase()} is just two weeks away! Your final balance is now due.</p>
+        const subject = twoWeekTemplate.subject
+          .replace(/\{firstName\}/g, firstName)
+          .replace(/\{eventType\}/g, eventType)
+          .replace(/\{balanceAmount\}/g, balanceFormatted)
+          .replace(/\{eventDate\}/g, eventDateFormatted)
+          .replace(/\{venue\}/g, client.venue || '');
+
+        const bodyText = twoWeekTemplate.body
+          .replace(/\{firstName\}/g, firstName)
+          .replace(/\{eventType\}/g, eventType)
+          .replace(/\{balanceAmount\}/g, balanceFormatted)
+          .replace(/\{eventDate\}/g, eventDateFormatted)
+          .replace(/\{venue\}/g, client.venue || 'TBD');
+
+        const eventDetailsHTML = `
+  <tr><td style="padding:0 40px;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
       <tr><td>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDateFormatted}</p>
@@ -3669,21 +3720,18 @@ async function checkUpcomingEvents() {
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Balance Due:</strong> ${balanceFormatted}</p>
       </td></tr>
     </table>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 24px;">Payment can be made by credit card, Zelle, or check.</p>
-    <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="background:#b5956a; border-radius:4px;">
-      <a href="${finalBalanceLink}" style="display:inline-block; padding:16px 40px; color:#ffffff; font-family:Arial, sans-serif; font-size:14px; font-weight:bold; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">VIEW YOUR FINAL BALANCE</a>
-    </td></tr></table>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:24px 0 16px;">I can't wait to see it all come together!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+  </td></tr>`;
+
+        const plainText = bodyText + `\n\nView and pay your final balance here:\n${finalBalanceLink}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+
+        const htmlBody = buildBrandedPaymentEmailHTML(bodyText, {
+          title: 'Final Balance Due',
+          amountFormatted: balanceFormatted,
+          paymentDate: `Due before ${eventDateFormatted}`,
+          detailsHTML: eventDetailsHTML,
+          ctaUrl: finalBalanceLink,
+          ctaText: 'VIEW YOUR FINAL BALANCE'
+        });
 
         try {
           // Create final balance invoice record
