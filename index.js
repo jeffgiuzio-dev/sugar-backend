@@ -2722,17 +2722,29 @@ app.post('/api/payments/webhook', async (req, res) => {
   async function handlePaymentCompleted({ invoiceId, invoiceType, clientId, clientName, clientEmail, amountCents, stripeId }) {
     console.log('handlePaymentCompleted called:', { invoiceId, invoiceType, clientId, clientName, clientEmail: clientEmail ? '***' : '(empty)', amountCents, stripeId });
 
-    // Update invoice status to paid
+    // Update or create invoice record as paid
     try {
       if (invoiceId) {
-        await pool.query(`
-          UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW()
-          WHERE invoice_number = $1
-        `, [invoiceId]);
-        console.log('Invoice updated:', invoiceId);
+        const updateResult = await pool.query(`
+          UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW(),
+            amount = COALESCE(NULLIF(amount, 0), $2)
+          WHERE invoice_number = $1 RETURNING id
+        `, [invoiceId, amountCents / 100]);
+
+        if (updateResult.rowCount === 0) {
+          // Invoice doesn't exist in DB yet — create it (common for final balance + deposit via client browser)
+          await pool.query(`
+            INSERT INTO invoices (client_id, invoice_number, type, amount, status, paid_at, data, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, 'paid', NOW(), $5, NOW(), NOW())
+          `, [clientId || null, invoiceId, invoiceType || 'other', amountCents / 100,
+              JSON.stringify({ payment_method: 'card', client_name: clientName, client_email: clientEmail, stripe_id: stripeId })]);
+          console.log('Invoice created (upsert):', invoiceId, 'amount:', amountCents / 100);
+        } else {
+          console.log('Invoice updated:', invoiceId);
+        }
       }
     } catch (dbErr) {
-      console.error('Failed to update invoice:', dbErr.message);
+      console.error('Failed to update/create invoice:', dbErr.message);
     }
 
     // Update client status based on payment type
