@@ -1935,20 +1935,33 @@ function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
   // Convert plain text body to styled HTML paragraphs
   const paragraphs = bodyText.split(/\n\n+/).map(p => {
     const lines = p.split('\n');
-    const htmlLines = lines.map(line => {
-      // Style section headers like "YOUR TASTING:", "WHAT'S NEXT:", "DELIVERY DETAILS:"
+    // Separate styled lines (headers, bullets) from plain body lines
+    const styledLines = [];
+    const bodyLines = [];
+    lines.forEach(line => {
       if (/^[A-Z][A-Z\s']+:?\s*$/.test(line.trim())) {
-        return `<p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:8px 0 4px;">${line.trim()}</p>`;
+        // Flush any accumulated body lines before the header
+        if (bodyLines.length) {
+          styledLines.push(`<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${bodyLines.join('<br>')}</p>`);
+          bodyLines.length = 0;
+        }
+        styledLines.push(`<p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:8px 0 4px;">${line.trim()}</p>`);
+      } else if (/^[-•]/.test(line.trim())) {
+        if (bodyLines.length) {
+          styledLines.push(`<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${bodyLines.join('<br>')}</p>`);
+          bodyLines.length = 0;
+        }
+        styledLines.push(`<p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; ${line.trim().replace(/^[-•]\s*/, '')}</p>`);
+      } else {
+        bodyLines.push(line);
       }
-      // Style bullet points
-      if (/^[-•]/.test(line.trim())) {
-        return `<p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; ${line.trim().replace(/^[-•]\s*/, '')}</p>`;
-      }
-      return line;
     });
-    const joined = htmlLines.join('<br>');
-    if (joined.startsWith('<p style="font-size:13px')) return joined;
-    return `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${joined}</p>`;
+    // Flush remaining body lines
+    if (bodyLines.length) {
+      const text = bodyLines.filter(l => l.trim()).join('<br>');
+      if (text) styledLines.push(`<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${text}</p>`);
+    }
+    return styledLines.join('') || `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${lines.join('<br>')}</p>`;
   }).join('\n    ');
 
   // Payment receipt header (with amount) OR simple title header (no amount)
@@ -2324,18 +2337,24 @@ async function getInquiryResponseTemplate() {
 function buildInquiryResponseHTML(bodyText) {
   // Convert plain text paragraphs to HTML paragraphs
   const paragraphs = bodyText.split(/\n\n+/).map(p => {
-    // Check if line looks like a numbered header (e.g. "1. TASTING CONSULTATION")
     const lines = p.split('\n');
-    const htmlLines = lines.map(line => {
+    // Separate header lines from body lines
+    const headerLines = [];
+    const bodyLines = [];
+    lines.forEach(line => {
       if (/^\d+\.\s+[A-Z]/.test(line.trim())) {
-        return `<p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:8px 0 4px;">${line.trim()}</p>`;
+        headerLines.push(`<p style="font-size:13px; color:#b5956a; font-weight:bold; letter-spacing:0.5px; margin:8px 0 4px;">${line.trim()}</p>`);
+      } else {
+        bodyLines.push(line);
       }
-      return line;
     });
-    const joined = htmlLines.join('<br>');
-    // If it's just a styled header, return as-is
-    if (joined.startsWith('<p style="font-size:13px')) return joined;
-    return `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${joined}</p>`;
+    // Build output: header(s) first, then body text in a styled <p>
+    let result = headerLines.join('');
+    const bodyText = bodyLines.filter(l => l.trim()).join('<br>');
+    if (bodyText) {
+      result += `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${bodyText}</p>`;
+    }
+    return result || `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${lines.join('<br>')}</p>`;
   }).join('\n    ');
 
   return `<!DOCTYPE html>
