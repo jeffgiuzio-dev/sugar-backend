@@ -8,6 +8,8 @@ const twilio = require('twilio');
 const Stripe = require('stripe');
 const OpenAI = require('openai');
 const cron = require('node-cron');
+const PDFDocument = require('pdfkit');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -877,29 +879,32 @@ app.post('/api/payments/test-send-confirmation', async (req, res) => {
 </table>
 </td></tr></table></body></html>`;
 
-        const boundary = 'boundary_' + Date.now().toString(36);
-        const emailLines = [
-          `To: ${clientEmail}`,
-          `From: ${kennaEmail}`,
-          `Subject: Kenna Giuzio Cake - Tasting Paid & Confirmed`,
-          'MIME-Version: 1.0',
-          `Content-Type: multipart/alternative; boundary="${boundary}"`,
-          '',
-          `--${boundary}`,
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          plainText,
-          '',
-          `--${boundary}`,
-          'Content-Type: text/html; charset=utf-8',
-          '',
-          htmlBody,
-          '',
-          `--${boundary}--`
-        ];
+        const subject = 'Kenna Giuzio Cake - Tasting Paid & Confirmed';
+        let pdfBuffer = null;
+        try {
+          pdfBuffer = await generateReceiptPDF({
+            type: 'tasting', clientName: clientName,
+            amountFormatted, paymentDate, paymentMethod: 'Test Payment',
+            receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
+          });
+        } catch (pdfErr) { console.error('PDF generation failed (test):', pdfErr.message); }
 
-        const encoded = Buffer.from(emailLines.join('\r\n'))
-          .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        let encoded;
+        if (pdfBuffer) {
+          encoded = buildRawEmailWithAttachment({
+            to: clientEmail, from: kennaEmail, subject, plainText, htmlBody,
+            attachment: { filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: pdfBuffer }
+          });
+        } else {
+          const boundary = 'boundary_' + Date.now().toString(36);
+          const emailLines = [
+            `To: ${clientEmail}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+            'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
+            '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', '', plainText, '',
+            `--${boundary}`, 'Content-Type: text/html; charset=utf-8', '', htmlBody, '', `--${boundary}--`
+          ];
+          encoded = Buffer.from(emailLines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
 
         await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
         diagnostics.email_sent = true;
@@ -1146,6 +1151,194 @@ function formatTime(timeStr) {
   if (hours > 12) hours -= 12;
   if (hours === 0) hours = 12;
   return minutes === '00' ? `${hours} ${ampm}` : `${hours}:${minutes} ${ampm}`;
+}
+
+// ===== PDF Receipt Generator =====
+
+async function generateReceiptPDF(receiptData) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'letter', margin: 60 });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const gold = '#b5956a';
+    const darkText = '#1a1a1a';
+    const lightText = '#666666';
+    const pageWidth = 612 - 120; // letter width minus margins
+
+    // Logo (centered)
+    const logoPath = path.join(__dirname, '..', 'images', 'logo.png');
+    try {
+      doc.image(logoPath, (612 - 150) / 2, 50, { width: 150 });
+    } catch (e) { /* skip logo if not found */ }
+
+    // Title
+    doc.moveDown(1);
+    doc.y = 130;
+    doc.font('Times-Roman').fontSize(22).fillColor(gold)
+      .text('PAYMENT RECEIPT', 60, 130, { align: 'center', width: pageWidth });
+
+    // Gold divider
+    doc.moveTo(60, 165).lineTo(552, 165).strokeColor(gold).lineWidth(1.5).stroke();
+
+    // Receipt # and Date
+    doc.font('Helvetica').fontSize(10).fillColor(lightText);
+    doc.text(`Receipt #: ${receiptData.receiptNumber}`, 60, 180, { align: 'right', width: pageWidth });
+    doc.text(`Date: ${receiptData.paymentDate}`, 60, 195, { align: 'right', width: pageWidth });
+
+    // BILL TO
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
+      .text('BILL TO', 60, 225);
+    doc.font('Helvetica').fontSize(12).fillColor(darkText)
+      .text(receiptData.clientName || 'Client', 60, 240);
+
+    // PAYMENT DETAILS
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
+      .text('PAYMENT DETAILS', 60, 275);
+
+    const descriptionByType = {
+      tasting: 'Tasting Fee',
+      deposit: 'Event Deposit',
+      final: 'Final Balance Payment'
+    };
+
+    const detailRows = [
+      ['Description', descriptionByType[receiptData.type] || 'Payment'],
+      ['Amount', receiptData.amountFormatted],
+      ['Method', receiptData.paymentMethod],
+      ['Status', 'Paid']
+    ];
+
+    let tableY = 295;
+    const labelX = 60;
+    const valueX = 220;
+
+    detailRows.forEach((row, i) => {
+      const rowY = tableY + (i * 28);
+      // Alternating row background
+      if (i % 2 === 0) {
+        doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
+      }
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
+        .text(row[0], labelX, rowY + 4);
+      doc.font('Helvetica').fontSize(10).fillColor(darkText)
+        .text(row[1], valueX, rowY + 4);
+    });
+
+    // Type-specific details
+    let detailsY = tableY + (detailRows.length * 28) + 20;
+    let hasDetails = false;
+
+    if (receiptData.type === 'tasting' && receiptData.tastingDate) {
+      hasDetails = true;
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
+        .text('TASTING DETAILS', 60, detailsY);
+      detailsY += 18;
+
+      const tastingRows = [['Tasting Date', receiptData.tastingDate]];
+      if (receiptData.tastingTime) tastingRows.push(['Time', receiptData.tastingTime]);
+
+      tastingRows.forEach((row, i) => {
+        const rowY = detailsY + (i * 28);
+        if (i % 2 === 0) {
+          doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
+        }
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
+          .text(row[0], labelX, rowY + 4);
+        doc.font('Helvetica').fontSize(10).fillColor(darkText)
+          .text(row[1], valueX, rowY + 4);
+      });
+      detailsY += tastingRows.length * 28;
+    }
+
+    if ((receiptData.type === 'deposit' || receiptData.type === 'final') && receiptData.eventDate) {
+      hasDetails = true;
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
+        .text('EVENT DETAILS', 60, detailsY);
+      detailsY += 18;
+
+      const eventRows = [];
+      if (receiptData.eventType) eventRows.push(['Event', receiptData.eventType]);
+      if (receiptData.eventDate) eventRows.push(['Event Date', receiptData.eventDate]);
+      if (receiptData.venue) eventRows.push(['Venue', receiptData.venue]);
+      if (receiptData.balanceDueDate) eventRows.push(['Balance Due', receiptData.balanceDueDate]);
+
+      eventRows.forEach((row, i) => {
+        const rowY = detailsY + (i * 28);
+        if (i % 2 === 0) {
+          doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
+        }
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
+          .text(row[0], labelX, rowY + 4);
+        doc.font('Helvetica').fontSize(10).fillColor(darkText)
+          .text(row[1], valueX, rowY + 4);
+      });
+      detailsY += eventRows.length * 28;
+    }
+
+    // Footer divider
+    const footerY = hasDetails ? detailsY + 30 : tableY + (detailRows.length * 28) + 40;
+    doc.moveTo(60, footerY).lineTo(552, footerY).strokeColor(gold).lineWidth(1).stroke();
+
+    // Footer text
+    doc.font('Times-Roman').fontSize(12).fillColor(darkText)
+      .text('Thank you for choosing', 60, footerY + 20, { align: 'center', width: pageWidth });
+    doc.font('Times-Bold').fontSize(14).fillColor(darkText)
+      .text('Kenna Giuzio Cake', 60, footerY + 40, { align: 'center', width: pageWidth });
+    doc.font('Helvetica').fontSize(10).fillColor(lightText)
+      .text('(206) 472-5401  |  kenna@kennagiuziocake.com', 60, footerY + 62, { align: 'center', width: pageWidth });
+
+    doc.end();
+  });
+}
+
+// ===== Raw Email Builder with Attachment =====
+
+function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, attachment }) {
+  const mixedBoundary = 'mixed_' + Date.now().toString(36);
+  const altBoundary = 'alt_' + Date.now().toString(36) + '_a';
+
+  const lines = [
+    `To: ${to}`,
+    `From: ${from}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
+    '',
+    `--${mixedBoundary}`,
+    `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+    '',
+    `--${altBoundary}`,
+    'Content-Type: text/plain; charset=utf-8',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    plainText,
+    '',
+    `--${altBoundary}`,
+    'Content-Type: text/html; charset=utf-8',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    htmlBody,
+    '',
+    `--${altBoundary}--`,
+    '',
+    `--${mixedBoundary}`,
+    `Content-Type: ${attachment.contentType}; name="${attachment.filename}"`,
+    `Content-Disposition: attachment; filename="${attachment.filename}"`,
+    'Content-Transfer-Encoding: base64',
+    '',
+    attachment.data.toString('base64').replace(/(.{76})/g, '$1\r\n'),
+    '',
+    `--${mixedBoundary}--`
+  ];
+
+  return Buffer.from(lines.join('\r\n'))
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 // ===== Template-Aware Email Builders =====
@@ -1943,10 +2136,11 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
 
           let subject, plainText, htmlBody;
+          let tastingDate = null, tastingTime = null;
+          let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
 
           if (invoice_type === 'tasting') {
             // Fetch tasting date/time for combined email
-            let tastingDate = null, tastingTime = null;
             try {
               if (client_id) {
                 const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [client_id]);
@@ -1969,7 +2163,6 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
           } else if (invoice_type === 'deposit') {
             // Booking confirmation for deposit payments
-            let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
             try {
               if (client_id) {
                 const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [client_id]);
@@ -2031,31 +2224,37 @@ app.post('/api/payments/offline-verify', async (req, res) => {
 </body></html>`;
           }
 
-          const boundary = 'boundary_' + Date.now().toString(36);
-          const emailLines = [
-            `To: ${client_email}`,
-            `From: ${kennaEmail}`,
-            `Subject: ${subject}`,
-            'MIME-Version: 1.0',
-            `Content-Type: multipart/alternative; boundary="${boundary}"`,
-            '',
-            `--${boundary}`,
-            'Content-Type: text/plain; charset=utf-8',
-            'Content-Transfer-Encoding: 7bit',
-            '',
-            plainText,
-            '',
-            `--${boundary}`,
-            'Content-Type: text/html; charset=utf-8',
-            'Content-Transfer-Encoding: 7bit',
-            '',
-            htmlBody,
-            '',
-            `--${boundary}--`
-          ];
+          // Generate PDF receipt
+          let pdfBuffer = null;
+          try {
+            const receiptData = {
+              type: invoice_type || 'other',
+              clientName: client_name || firstName,
+              amountFormatted, paymentDate, paymentMethod: methodLabel,
+              receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
+            };
+            if (invoice_type === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
+            if (invoice_type === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
+            pdfBuffer = await generateReceiptPDF(receiptData);
+          } catch (pdfErr) { console.error('PDF receipt generation failed (offline):', pdfErr.message); }
 
-          const encodedClientEmail = Buffer.from(emailLines.join('\r\n'))
-            .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          let encodedClientEmail;
+          if (pdfBuffer) {
+            encodedClientEmail = buildRawEmailWithAttachment({
+              to: client_email, from: kennaEmail, subject, plainText, htmlBody,
+              attachment: { filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: pdfBuffer }
+            });
+          } else {
+            const boundary = 'boundary_' + Date.now().toString(36);
+            const emailLines = [
+              `To: ${client_email}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+              'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
+              '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit',
+              '', plainText, '', `--${boundary}`, 'Content-Type: text/html; charset=utf-8',
+              'Content-Transfer-Encoding: 7bit', '', htmlBody, '', `--${boundary}--`
+            ];
+            encodedClientEmail = Buffer.from(emailLines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          }
 
           await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedClientEmail } });
 
@@ -2209,10 +2408,11 @@ app.post('/api/payments/webhook', async (req, res) => {
           const paymentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
 
           let subject, plainText, htmlBody;
+          let tastingDate = null, tastingTime = null;
+          let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
 
           if (invoiceType === 'tasting') {
             // Fetch tasting date/time for combined email
-            let tastingDate = null, tastingTime = null;
             try {
               if (clientId) {
                 const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [clientId]);
@@ -2235,7 +2435,6 @@ app.post('/api/payments/webhook', async (req, res) => {
             htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
           } else if (invoiceType === 'deposit') {
             // Booking confirmation for deposit payments
-            let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
             try {
               if (clientId) {
                 const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [clientId]);
@@ -2295,34 +2494,37 @@ app.post('/api/payments/webhook', async (req, res) => {
 </body></html>`;
           }
 
-          const boundary = 'boundary_' + Date.now().toString(36);
-          const emailLines = [
-            `To: ${clientEmail}`,
-            `From: ${kennaEmail}`,
-            `Subject: ${subject}`,
-            'MIME-Version: 1.0',
-            `Content-Type: multipart/alternative; boundary="${boundary}"`,
-            '',
-            `--${boundary}`,
-            'Content-Type: text/plain; charset=utf-8',
-            'Content-Transfer-Encoding: 7bit',
-            '',
-            plainText,
-            '',
-            `--${boundary}`,
-            'Content-Type: text/html; charset=utf-8',
-            'Content-Transfer-Encoding: 7bit',
-            '',
-            htmlBody,
-            '',
-            `--${boundary}--`
-          ];
+          // Generate PDF receipt
+          let pdfBuffer = null;
+          try {
+            const receiptData = {
+              type: invoiceType || 'other',
+              clientName: clientName || firstName,
+              amountFormatted, paymentDate, paymentMethod: 'Card',
+              receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(stripeId || '').slice(-4) || Date.now().toString().slice(-4)}`
+            };
+            if (invoiceType === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
+            if (invoiceType === 'deposit') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate; }
+            pdfBuffer = await generateReceiptPDF(receiptData);
+          } catch (pdfErr) { console.error('PDF receipt generation failed (webhook):', pdfErr.message); }
 
-          const encodedClientEmail = Buffer.from(emailLines.join('\r\n'))
-            .toString('base64')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/, '');
+          let encodedClientEmail;
+          if (pdfBuffer) {
+            encodedClientEmail = buildRawEmailWithAttachment({
+              to: clientEmail, from: kennaEmail, subject, plainText, htmlBody,
+              attachment: { filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: pdfBuffer }
+            });
+          } else {
+            const boundary = 'boundary_' + Date.now().toString(36);
+            const emailLines = [
+              `To: ${clientEmail}`, `From: ${kennaEmail}`, `Subject: ${subject}`,
+              'MIME-Version: 1.0', `Content-Type: multipart/alternative; boundary="${boundary}"`,
+              '', `--${boundary}`, 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: 7bit',
+              '', plainText, '', `--${boundary}`, 'Content-Type: text/html; charset=utf-8',
+              'Content-Transfer-Encoding: 7bit', '', htmlBody, '', `--${boundary}--`
+            ];
+            encodedClientEmail = Buffer.from(emailLines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          }
 
           await gmail.users.messages.send({
             userId: 'me',
