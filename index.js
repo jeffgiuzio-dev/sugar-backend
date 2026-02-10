@@ -1763,6 +1763,25 @@ See you soon,
 Kenna`
 };
 
+const defaultLockTheDateTemplate = {
+  subject: 'Kenna Giuzio Cake - Lock Your Date - {eventDate}',
+  body: `Hi {firstName},
+
+Thank you for your interest in a custom creation for your {eventType}! I'm truly excited about the possibility of working together.
+
+To reserve your date of {eventDate}, a Lock the Date deposit of {lockAmount} is required. This deposit will be credited toward your final balance once your custom proposal is ready.
+
+You can submit your deposit securely here:
+[LOCK DEPOSIT LINK]
+
+Once received, your date will be held exclusively for you while we finalize the design details.
+
+I look forward to creating something beautiful for your celebration!
+
+Warmly,
+Kenna`
+};
+
 const defaultBookingConfirmationTemplate = {
   subject: "Kenna Giuzio Cake - You're Booked! - {eventDate}",
   body: `Hi {firstName},
@@ -1831,6 +1850,22 @@ async function getTastingConfirmationTemplate() {
     console.log('Could not load custom tasting confirmation template:', e.message);
   }
   return defaultTastingConfirmationTemplate;
+}
+
+async function getLockTheDateTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
+      if (custom && custom['lock-the-date']) {
+        return { ...defaultLockTheDateTemplate, ...custom['lock-the-date'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom lock the date template:', e.message);
+  }
+  return defaultLockTheDateTemplate;
 }
 
 async function getBookingConfirmationTemplate() {
@@ -3494,7 +3529,7 @@ app.get('/api/invoices/:id', async (req, res) => {
 
     // Try to find by invoice_number first (TI-2026-1234), then by id
     let result;
-    if (id.startsWith('TI-') || id.startsWith('DI-') || id.startsWith('FI-') || id.startsWith('INV-')) {
+    if (id.startsWith('TI-') || id.startsWith('DI-') || id.startsWith('FI-') || id.startsWith('LI-') || id.startsWith('INV-')) {
       result = await pool.query(
         'SELECT * FROM invoices WHERE invoice_number = $1',
         [id]
@@ -4511,17 +4546,28 @@ async function checkUpcomingEvents() {
         });
 
         try {
-          // Create final balance invoice record
-          const fbInvoiceId = 'FB-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
-          await pool.query(`
-            INSERT INTO invoices (invoice_number, client_id, type, status, amount, data, created_at)
-            VALUES ($1, $2, 'final', 'sent', $3, $4, NOW())
-            ON CONFLICT DO NOTHING
-          `, [fbInvoiceId, client.id, balanceAmount, JSON.stringify({
-            proposalTotal, tastingCredit, depositPaid,
-            clientName: client.name, clientEmail: client.email,
-            eventType: client.event_type, eventDate: client.event_date, venue: client.venue
-          })]);
+          // Create final balance invoice record (only if none exists for this client)
+          const existingFinal = await pool.query(
+            `SELECT id FROM invoices WHERE client_id = $1 AND type = 'final' LIMIT 1`, [client.id]
+          );
+          let fbInvoiceId;
+          if (existingFinal.rows.length > 0) {
+            // Update existing invoice amount if it was $0
+            fbInvoiceId = existingFinal.rows[0].invoice_number || existingFinal.rows[0].id;
+            await pool.query(`UPDATE invoices SET amount = $1, updated_at = NOW() WHERE id = $2 AND amount = 0`,
+              [balanceAmount, existingFinal.rows[0].id]);
+          } else if (balanceAmount > 0) {
+            fbInvoiceId = 'FB-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+            await pool.query(`
+              INSERT INTO invoices (invoice_number, client_id, type, status, amount, data, created_at)
+              VALUES ($1, $2, 'final', 'sent', $3, $4, NOW())
+              ON CONFLICT DO NOTHING
+            `, [fbInvoiceId, client.id, balanceAmount, JSON.stringify({
+              proposalTotal, tastingCredit, depositPaid,
+              clientName: client.name, clientEmail: client.email,
+              eventType: client.event_type, eventDate: client.event_date, venue: client.venue
+            })]);
+          }
 
           const boundary = 'boundary_' + Date.now().toString(36);
           const emailLines = [
