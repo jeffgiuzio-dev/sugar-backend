@@ -2505,6 +2505,8 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             VALUES ($1, TRUE, NOW())
             ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
           `, [client_id]);
+          // Mark any remaining 'sent' final invoices for this client as paid (e.g. auto-created by reminder)
+          await pool.query(`UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW() WHERE client_id = $1 AND type = 'final' AND status = 'sent'`, [client_id]);
         }
       }
     } catch (dbErr) {
@@ -2806,6 +2808,8 @@ app.post('/api/payments/webhook', async (req, res) => {
             VALUES ($1, TRUE, NOW())
             ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
           `, [clientId]);
+          // Mark any remaining 'sent' final invoices for this client as paid (e.g. auto-created by reminder)
+          await pool.query(`UPDATE invoices SET status = 'paid', paid_at = NOW(), updated_at = NOW() WHERE client_id = $1 AND type = 'final' AND status = 'sent'`, [clientId]);
         }
         console.log('Client status updated:', clientId, invoiceType);
       }
@@ -4323,16 +4327,28 @@ async function checkUpcomingEvents() {
         let balanceAmount = 'your remaining balance';
         let proposalTotal = 0, tastingCredit = 0, depositPaid = 0;
         try {
+          // Get proposal total from proposals table (most reliable source)
+          const propResult = await pool.query(
+            "SELECT data FROM proposals WHERE client_id = $1 AND status IN ('signed','sent') ORDER BY updated_at DESC LIMIT 1",
+            [client.id]
+          );
+          if (propResult.rows.length > 0) {
+            const propData = typeof propResult.rows[0].data === 'string' ? JSON.parse(propResult.rows[0].data) : (propResult.rows[0].data || {});
+            proposalTotal = parseFloat(propData.totalPrice || propData.adjustedTotal || propData.proposalTotal) || 0;
+            tastingCredit = parseFloat(propData.tastingCredit) || 0;
+          }
+
           const invResult = await pool.query(
             "SELECT amount, data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
             [client.id]
           );
           if (invResult.rows.length > 0) {
             const invData = invResult.rows[0].data || {};
-            proposalTotal = parseFloat(invData.proposalTotal) || 0;
-            tastingCredit = parseFloat(invData.tastingCredit) || 0;
-            depositPaid = parseFloat(invResult.rows[0].amount) || parseFloat(invData.amount) || 0;
-            const remaining = Math.floor((proposalTotal - tastingCredit) - depositPaid);
+            if (!proposalTotal) proposalTotal = parseFloat(invData.proposalTotal) || 0;
+            if (!tastingCredit) tastingCredit = parseFloat(invData.tastingCredit) || 0;
+            const adjustedTotal = proposalTotal - tastingCredit;
+            depositPaid = adjustedTotal > 0 ? Math.floor(adjustedTotal / 2) : (parseFloat(invResult.rows[0].amount) || 0);
+            const remaining = Math.floor(adjustedTotal - depositPaid);
             if (remaining > 0) balanceAmount = '$' + remaining.toLocaleString();
           }
         } catch (e) { console.log('Could not calculate balance for reminder'); }
@@ -4411,17 +4427,34 @@ async function checkUpcomingEvents() {
         let balanceAmount = 0;
         let proposalTotal = 0, tastingCredit = 0, depositPaid = 0;
         try {
+          // Get proposal total from proposals table (most reliable source)
+          const propResult = await pool.query(
+            "SELECT data FROM proposals WHERE client_id = $1 AND status IN ('signed','sent') ORDER BY updated_at DESC LIMIT 1",
+            [client.id]
+          );
+          if (propResult.rows.length > 0) {
+            const propData = typeof propResult.rows[0].data === 'string' ? JSON.parse(propResult.rows[0].data) : (propResult.rows[0].data || {});
+            proposalTotal = parseFloat(propData.totalPrice || propData.adjustedTotal || propData.proposalTotal) || 0;
+            tastingCredit = parseFloat(propData.tastingCredit) || 0;
+          }
+
+          // Get deposit paid from deposit invoice
           const invResult = await pool.query(
             "SELECT amount, data FROM invoices WHERE client_id = $1 AND type = 'deposit' AND status = 'paid' ORDER BY created_at DESC LIMIT 1",
             [client.id]
           );
           if (invResult.rows.length > 0) {
             const invData = invResult.rows[0].data || {};
-            proposalTotal = parseFloat(invData.proposalTotal) || 0;
-            tastingCredit = parseFloat(invData.tastingCredit) || 0;
-            depositPaid = parseFloat(invResult.rows[0].amount) || parseFloat(invData.amount) || 0;
-            balanceAmount = (proposalTotal - tastingCredit) - depositPaid;
+            // Fall back to deposit invoice data if proposal not found
+            if (!proposalTotal) proposalTotal = parseFloat(invData.proposalTotal) || 0;
+            if (!tastingCredit) tastingCredit = parseFloat(invData.tastingCredit) || 0;
+            // Use proposal-based deposit (half of adjusted total), not DB amount which includes CC fee
+            const adjustedTotal = proposalTotal - tastingCredit;
+            depositPaid = adjustedTotal > 0 ? Math.floor(adjustedTotal / 2) : (parseFloat(invResult.rows[0].amount) || 0);
           }
+
+          balanceAmount = (proposalTotal - tastingCredit) - depositPaid;
+          if (balanceAmount <= 0) balanceAmount = 0; // Guard against negative
         } catch (e) { console.log('Could not calculate balance for 2-week reminder'); }
 
         const balanceFormatted = balanceAmount > 0 ? '$' + Math.floor(balanceAmount).toLocaleString() : 'your remaining balance';
