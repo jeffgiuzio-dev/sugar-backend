@@ -2438,6 +2438,12 @@ app.post('/api/payments/offline-verify', async (req, res) => {
           `, [client_id]);
           // Create multi-day "Event Prep" calendar event
           await createEventPrepCalendarEvent(client_id);
+        } else if (invoice_type === 'final') {
+          await pool.query(`
+            INSERT INTO portal_data (client_id, final_paid, final_paid_date)
+            VALUES ($1, TRUE, NOW())
+            ON CONFLICT (client_id) DO UPDATE SET final_paid = TRUE, final_paid_date = NOW(), updated_at = NOW()
+          `, [client_id]);
         }
       }
     } catch (dbErr) {
@@ -2517,40 +2523,55 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             subject = bookingTemplate.subject.replace(/\{eventDate\}/g, eventDate || 'Your Event').replace(/\{firstName\}/g, firstName).replace(/\{eventType\}/g, eventType || 'celebration');
             plainText = buildBookingConfirmationPlain(bookingData, bookingTemplate);
             htmlBody = buildBookingConfirmationHTML(bookingData, bookingTemplate);
+          } else if (invoice_type === 'final') {
+            // Paid in Full confirmation for final balance payments
+            try {
+              if (client_id) {
+                const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [client_id]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  eventType = row.event_type;
+                  if (row.event_date) {
+                    eventDate = new Date(row.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  venueStr = row.venue;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Offline verify: Failed to fetch event details for final payment email:', dbErr.message);
+            }
+
+            const eventDetailsHTML = `
+  <tr><td style="padding:0 40px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
+      <tr><td>
+        ${eventType ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event:</strong> ${eventType}</p>` : ''}
+        ${eventDate ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDate}</p>` : ''}
+        ${venueStr ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Venue:</strong> ${venueStr}</p>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`;
+
+            const bodyTextFinal = `Hi ${firstName},\n\nYour final balance has been received — you are officially paid in full!\n\nWe are so excited for your ${eventType || 'event'}${eventDate ? ' on ' + eventDate : ''}. Everything is set, and we can't wait to bring your cake vision to life.\n\nIf you have any last-minute details or questions, don't hesitate to reach out.\n\nWarmly,\nKenna`;
+
+            subject = `Paid in Full - Kenna Giuzio Cake`;
+            plainText = bodyTextFinal + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+            htmlBody = buildBrandedPaymentEmailHTML(bodyTextFinal, {
+              title: 'Paid in Full',
+              amountFormatted,
+              paymentDate,
+              detailsHTML: eventDetailsHTML
+            });
           } else {
-            // Generic payment confirmation for final/other payments
+            // Generic payment confirmation for other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
-            plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
-            htmlBody = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 8px;">${paymentDate}</p>
-    <p style="font-size:13px; color:#999; margin:0;">Paid via ${methodLabel}</p>
-  </td></tr>
-  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <tr><td style="padding:24px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+            const bodyTextGeneric = `Hi ${firstName},\n\nThank you for your ${methodLabel} payment of ${amountFormatted}.\n\nWarmly,\nKenna`;
+            plainText = bodyTextGeneric + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+            htmlBody = buildBrandedPaymentEmailHTML(bodyTextGeneric, {
+              title: 'Payment Confirmed',
+              amountFormatted,
+              paymentDate
+            });
           }
 
           // Generate PDF attachments
@@ -2576,6 +2597,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Date.now().toString().slice(-4)}`
             };
             if (invoice_type === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
+            if (invoice_type === 'final') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; }
             if (invoice_type === 'deposit') {
               receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate;
               // Extract proposal totals for receipt breakdown
@@ -2827,39 +2849,55 @@ app.post('/api/payments/webhook', async (req, res) => {
             subject = bookingTemplate.subject.replace(/\{eventDate\}/g, eventDate || 'Your Event').replace(/\{firstName\}/g, firstName).replace(/\{eventType\}/g, eventType || 'celebration');
             plainText = buildBookingConfirmationPlain(bookingData, bookingTemplate);
             htmlBody = buildBookingConfirmationHTML(bookingData, bookingTemplate);
+          } else if (invoiceType === 'final') {
+            // Paid in Full confirmation for final balance payments
+            try {
+              if (clientId) {
+                const clientResult = await pool.query('SELECT event_type, event_date, venue FROM clients WHERE id = $1', [clientId]);
+                if (clientResult.rows.length > 0) {
+                  const row = clientResult.rows[0];
+                  eventType = row.event_type;
+                  if (row.event_date) {
+                    eventDate = new Date(row.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+                  venueStr = row.venue;
+                }
+              }
+            } catch (dbErr) {
+              console.error('Failed to fetch event details for final payment email:', dbErr.message);
+            }
+
+            const eventDetailsHTML = `
+  <tr><td style="padding:0 40px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px; margin:16px 0;">
+      <tr><td>
+        ${eventType ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event:</strong> ${eventType}</p>` : ''}
+        ${eventDate ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Event Date:</strong> ${eventDate}</p>` : ''}
+        ${venueStr ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Venue:</strong> ${venueStr}</p>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`;
+
+            const bodyTextFinal = `Hi ${firstName},\n\nYour final balance has been received — you are officially paid in full!\n\nWe are so excited for your ${eventType || 'event'}${eventDate ? ' on ' + eventDate : ''}. Everything is set, and we can't wait to bring your cake vision to life.\n\nIf you have any last-minute details or questions, don't hesitate to reach out.\n\nWarmly,\nKenna`;
+
+            subject = `Paid in Full - Kenna Giuzio Cake`;
+            plainText = bodyTextFinal + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+            htmlBody = buildBrandedPaymentEmailHTML(bodyTextFinal, {
+              title: 'Paid in Full',
+              amountFormatted,
+              paymentDate,
+              detailsHTML: eventDetailsHTML
+            });
           } else {
-            // Generic payment confirmation for final/other payments
+            // Generic payment confirmation for other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
-            plainText = `Payment Confirmed\n\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}.\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
-            htmlBody = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Payment Confirmed</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:20px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0;">${paymentDate}</p>
-  </td></tr>
-  <tr><td style="padding:0 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>
-  <tr><td style="padding:24px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+            const bodyTextGeneric = `Hi ${firstName},\n\nThank you for your payment of ${amountFormatted}.\n\nWarmly,\nKenna`;
+            plainText = bodyTextGeneric + '\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com';
+            htmlBody = buildBrandedPaymentEmailHTML(bodyTextGeneric, {
+              title: 'Payment Confirmed',
+              amountFormatted,
+              paymentDate
+            });
           }
 
           // Generate PDF attachments
@@ -2884,6 +2922,7 @@ app.post('/api/payments/webhook', async (req, res) => {
               receiptNumber: `KGC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(stripeId || '').slice(-4) || Date.now().toString().slice(-4)}`
             };
             if (invoiceType === 'tasting') { receiptData.tastingDate = tastingDate; receiptData.tastingTime = tastingTime; }
+            if (invoiceType === 'final') { receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; }
             if (invoiceType === 'deposit') {
               receiptData.eventType = eventType; receiptData.eventDate = eventDate; receiptData.venue = venueStr; receiptData.balanceDueDate = balanceDueDate;
               // Extract proposal totals for receipt breakdown
