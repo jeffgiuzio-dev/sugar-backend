@@ -1511,8 +1511,8 @@
 
     <!-- Lock the Date Modal -->
     <div class="modal-overlay" id="lockTheDateModal" style="display:none;">
-        <div class="modal" id="ltdModalInner" style="max-width:95vw; width:820px; min-width:500px;">
-            <div class="modal-header">
+        <div class="modal" id="ltdModalInner" style="max-width:95vw; width:820px; min-width:500px; min-height:350px; resize:both; overflow:auto;">
+            <div class="modal-header" id="ltdDragHandle" style="cursor:move; user-select:none;">
                 <h2 class="modal-title" id="ltdTitle">Lock the Date</h2>
                 <button class="modal-close" onclick="closeLockTheDateModal()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2311,11 +2311,21 @@ Kenna`
             document.getElementById('ltdEmailTo').textContent = 'Select a client';
             document.getElementById('ltdClientInfo').style.display = 'none';
             ltdCurrentClient = null;
+            ltdTemplateCache = null;
 
             // Load template
             const tpl = await getLockTheDateTemplate();
+            ltdTemplateCache = tpl;
             document.getElementById('ltdEmailSubjectInput').value = tpl.subject;
             document.getElementById('ltdEmailBody').value = tpl.body;
+
+            // Reset modal position (in case it was dragged previously)
+            const inner = document.getElementById('ltdModalInner');
+            inner.style.position = '';
+            inner.style.left = '';
+            inner.style.top = '';
+            inner.style.margin = '';
+            inner.style.transform = '';
 
             const modal = document.getElementById('lockTheDateModal');
             modal.style.display = 'flex';
@@ -2338,6 +2348,18 @@ Kenna`
             if (e.target === this) closeLockTheDateModal();
         });
 
+        function ltdParseDate(dateStr) {
+            if (!dateStr) return null;
+            const clean = String(dateStr).split('T')[0];
+            const d = new Date(clean + 'T00:00:00');
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function ltdFormatDate(dateStr) {
+            const d = ltdParseDate(dateStr);
+            return d ? d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null;
+        }
+
         function ltdClientChanged() {
             const select = document.getElementById('ltdClientSelect');
             const clientId = select.value;
@@ -2356,52 +2378,49 @@ Kenna`
             document.getElementById('ltdClientInfo').style.display = 'block';
             document.getElementById('ltdClientEmail').textContent = client.email || 'No email';
             document.getElementById('ltdClientEvent').textContent = client.eventType || 'No event type';
-            document.getElementById('ltdClientDate').textContent = client.eventDate ? new Date(client.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No date';
+            document.getElementById('ltdClientDate').textContent = ltdFormatDate(client.eventDate) || 'No date';
 
-            ltdUpdatePreview();
+            // Reload template and apply all vars fresh
+            ltdReloadAndApply();
+        }
+
+        let ltdTemplateCache = null;
+
+        async function ltdReloadAndApply() {
+            if (!ltdCurrentClient) return;
+            const client = ltdCurrentClient;
+            const tpl = ltdTemplateCache || await getLockTheDateTemplate();
+            ltdTemplateCache = tpl;
+
+            const firstName = (client.name || '').split(' ')[0];
+            const eventType = client.eventType || 'celebration';
+            const eventDate = ltdFormatDate(client.eventDate) || '[date]';
+            const amount = document.getElementById('ltdAmount').value;
+            const lockAmount = amount ? '$' + parseFloat(amount).toLocaleString() : '{lockAmount}';
+
+            const subjectInput = document.getElementById('ltdEmailSubjectInput');
+            subjectInput.value = tpl.subject
+                .replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType)
+                .replace(/{eventDate}/g, eventDate)
+                .replace(/{lockAmount}/g, lockAmount);
+
+            const bodyEl = document.getElementById('ltdEmailBody');
+            bodyEl.value = tpl.body
+                .replace(/{firstName}/g, firstName)
+                .replace(/{eventType}/g, eventType)
+                .replace(/{eventDate}/g, eventDate)
+                .replace(/{lockAmount}/g, lockAmount);
         }
 
         function ltdUpdatePreview() {
-            if (!ltdCurrentClient) return;
-            const client = ltdCurrentClient;
-            const firstName = (client.name || '').split(' ')[0];
-            const eventType = client.eventType || 'celebration';
-            const eventDate = client.eventDate ? new Date(client.eventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '[date]';
-            const amount = document.getElementById('ltdAmount').value;
-            const lockAmount = amount ? '$' + parseFloat(amount).toLocaleString() : '[amount]';
-
-            // Update subject
-            const subjectInput = document.getElementById('ltdEmailSubjectInput');
-            let subject = subjectInput.value;
-            subject = subject.replace(/{firstName}/g, firstName)
-                .replace(/{eventType}/g, eventType)
-                .replace(/{eventDate}/g, eventDate)
-                .replace(/{lockAmount}/g, lockAmount);
-            // Only replace if template vars are present (don't re-replace after manual edits)
-            if (subjectInput.value.includes('{')) {
-                subjectInput.value = subject;
-            }
-
-            // Update body
-            const bodyEl = document.getElementById('ltdEmailBody');
-            let body = bodyEl.value;
-            body = body.replace(/{firstName}/g, firstName)
-                .replace(/{eventType}/g, eventType)
-                .replace(/{eventDate}/g, eventDate)
-                .replace(/{lockAmount}/g, lockAmount);
-            bodyEl.value = body;
+            ltdReloadAndApply();
         }
 
-        // Update preview when amount changes
+        // Update preview when amount changes — reload from template to avoid stale replacements
         document.getElementById('ltdAmount').addEventListener('input', function() {
             if (ltdCurrentClient) {
-                // Only replace {lockAmount} placeholder, not already-filled amounts
-                const bodyEl = document.getElementById('ltdEmailBody');
-                const body = bodyEl.value;
-                const amount = this.value;
-                const lockAmount = amount ? '$' + parseFloat(amount).toLocaleString() : '[amount]';
-                // Replace the lock amount pattern
-                bodyEl.value = body.replace(/\$[\d,]+(?= is required)|\[amount\](?= is required)/g, lockAmount);
+                ltdReloadAndApply();
             }
         });
 
@@ -2417,6 +2436,9 @@ Kenna`
             btn.textContent = 'Sending...';
 
             try {
+                const clientEventDate = ltdCurrentClient.eventDate || '';
+                const clientEventType = ltdCurrentClient.eventType || '';
+
                 // 1. Create the lock_deposit invoice in the database
                 const invoiceNumber = 'LI-' + new Date().getFullYear() + '-' + String(ltdCurrentClient.id).padStart(4, '0');
                 const invoiceResp = await fetch(`${API_BASE_URL}/api/invoices`, {
@@ -2430,8 +2452,8 @@ Kenna`
                         status: 'sent',
                         data: {
                             clientName: ltdCurrentClient.name,
-                            eventType: ltdCurrentClient.eventType,
-                            eventDate: ltdCurrentClient.eventDate,
+                            eventType: clientEventType,
+                            eventDate: clientEventDate,
                             sentAt: new Date().toISOString()
                         }
                     })
@@ -2440,17 +2462,19 @@ Kenna`
                 const invoice = await invoiceResp.json();
 
                 // 2. Build the payment link
-                const paymentUrl = `https://portal.kennagiuziocake.com/invoices/deposit-invoice.html?clientId=${ltdCurrentClient.id}&invoiceId=${invoice.id}&mode=lock-deposit&amount=${amount}&name=${encodeURIComponent(ltdCurrentClient.name)}&email=${encodeURIComponent(ltdCurrentClient.email)}&eventType=${encodeURIComponent(ltdCurrentClient.eventType || '')}&eventDate=${encodeURIComponent(ltdCurrentClient.eventDate || '')}`;
+                const paymentUrl = `https://portal.kennagiuziocake.com/invoices/deposit-invoice.html?clientId=${ltdCurrentClient.id}&invoiceId=${invoice.id}&mode=lock-deposit&amount=${amount}&name=${encodeURIComponent(ltdCurrentClient.name)}&email=${encodeURIComponent(ltdCurrentClient.email)}&eventType=${encodeURIComponent(clientEventType)}&eventDate=${encodeURIComponent(clientEventDate)}`;
 
                 // 3. Build email with payment link
                 const subject = document.getElementById('ltdEmailSubjectInput').value;
                 let bodyText = document.getElementById('ltdEmailBody').value;
-                bodyText = bodyText.replace('[LOCK DEPOSIT LINK]', paymentUrl);
 
-                // Build branded HTML with button
+                // For plain text: replace placeholder with URL
+                const plainBody = bodyText.replace('[LOCK DEPOSIT LINK]', paymentUrl);
+
+                // For HTML: replace placeholder with styled button
                 const buttonHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center"><a href="${paymentUrl}" style="display:inline-block; padding:16px 48px; background-color:#b5956a; color:#ffffff; font-family:'Montserrat',Arial,sans-serif; font-size:14px; font-weight:400; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:2px;">View Invoice & Pay</a></td></tr></table>`;
-                const htmlBody = bodyText.replace(paymentUrl, buttonHtml);
-                const html = buildBrandedEmailHtml(htmlBody);
+                const htmlBodyText = bodyText.replace('[LOCK DEPOSIT LINK]', buttonHtml);
+                const html = buildBrandedEmailHtml(htmlBodyText);
 
                 // 4. Send the email
                 const sendResp = await fetch(`${API_BASE_URL}/api/gmail/send`, {
@@ -2459,7 +2483,7 @@ Kenna`
                     body: JSON.stringify({
                         to: ltdCurrentClient.email,
                         subject: subject,
-                        message: bodyText,
+                        message: plainBody,
                         html: html,
                         client_id: ltdCurrentClient.id
                     })
@@ -2472,11 +2496,41 @@ Kenna`
                 renderProjects();
             } catch (err) {
                 showToast('Error: ' + err.message, 'error');
+                console.error('Lock the Date send error:', err);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Send Lock the Date';
             }
         }
+
+        // Draggable Lock the Date modal
+        (function() {
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            const handle = document.getElementById('ltdDragHandle');
+            const modal = document.getElementById('ltdModalInner');
+
+            handle.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.modal-close')) return;
+                isDragging = true;
+                const rect = modal.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                modal.style.position = 'fixed';
+                modal.style.margin = '0';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                modal.style.left = (e.clientX - dragOffsetX) + 'px';
+                modal.style.top = (e.clientY - dragOffsetY) + 'px';
+                modal.style.transform = 'none';
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        })();
 
         // ============ END LOCK THE DATE MODAL ============
 
