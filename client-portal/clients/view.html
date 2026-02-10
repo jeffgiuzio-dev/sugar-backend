@@ -965,22 +965,14 @@
             margin-bottom: 0;
         }
 
-        /* Internal Notes Card */
+        /* Project Notes Card */
         .card.internal {
-            border-color: #c2185b;
+            border-color: #b5956a;
             border-width: 2px;
         }
 
         .card.internal .card-header {
-            background: #fce4ec;
-        }
-
-        .internal-badge {
-            font-size: 0.65rem;
-            background: #c2185b;
-            color: #fff;
-            padding: 4px 10px;
-            letter-spacing: 0.5px;
+            background: #faf6f0;
         }
 
         /* Files Section */
@@ -1921,14 +1913,13 @@
             </div>
         </div>
 
-        <!-- Internal Notes (Admin Only) -->
+        <!-- Project Notes, Files, Sketches & Photos -->
         <div class="card collapsible internal admin-only" id="internalCard">
             <div class="card-header" onclick="toggleCard('internalCard')">
                 <div style="display: flex; align-items: center;">
                     <span class="collapse-icon"><span class="icon-minus">−</span><span class="icon-plus">+</span></span>
-                    <h2 class="card-title">Internal Notes</h2>
+                    <h2 class="card-title">Project Notes, Files, Sketches & Photos</h2>
                 </div>
-                <span class="internal-badge">Private - Not Visible to Client</span>
             </div>
             <div class="card-body">
                 <textarea class="form-textarea" id="internalNotes" placeholder="Private notes about this client (preferences, concerns, reminders...)"></textarea>
