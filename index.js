@@ -1129,15 +1129,30 @@ app.post('/api/payments/offline-claimed', async (req, res) => {
     // Set invoice status to pending_verification (NOT paid) and store payment method
     try {
       if (invoice_id) {
-        await pool.query(`
+        const updateResult = await pool.query(`
           UPDATE invoices SET status = 'pending_verification',
           data = COALESCE(data, '{}'::jsonb) || $2::jsonb,
           updated_at = NOW()
           WHERE invoice_number = $1
+          RETURNING id
         `, [invoice_id, JSON.stringify({ payment_method: method })]);
+
+        // If invoice didn't exist in DB yet (created on client browser only), insert it
+        if (updateResult.rowCount === 0) {
+          await pool.query(`
+            INSERT INTO invoices (client_id, invoice_number, type, amount, status, data, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, 'pending_verification', $5, NOW(), NOW())
+          `, [
+            client_id || null,
+            invoice_id,
+            invoice_type || 'deposit',
+            parseFloat(amount) || 0,
+            JSON.stringify({ payment_method: method, client_name: client_name, client_email: client_email })
+          ]);
+        }
       }
     } catch (dbErr) {
-      console.error('Offline claim: Failed to update invoice:', dbErr.message);
+      console.error('Offline claim: Failed to update/create invoice:', dbErr.message);
     }
 
     // Send notification email to Kenna — she needs to verify
