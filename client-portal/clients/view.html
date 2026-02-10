@@ -1393,6 +1393,7 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-secondary);
+            overflow: hidden;
         }
 
         .calendar-day:hover:not(.other-month):not(.past) {
@@ -1441,7 +1442,7 @@
 
         .day-events {
             flex: 1;
-            overflow: hidden;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             gap: 2px;
@@ -1454,6 +1455,26 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        /* Multi-day bar spanning styles */
+        .day-event.span-start {
+            border-radius: 3px 0 0 3px;
+            margin-right: -7px;
+        }
+
+        .day-event.span-mid {
+            border-radius: 0;
+            margin-left: -7px;
+            margin-right: -7px;
+            padding-left: 7px;
+            min-height: 15px;
+        }
+
+        .day-event.span-end {
+            border-radius: 0 3px 3px 0;
+            margin-left: -7px;
+            padding-left: 7px;
         }
 
         .day-event.tasting {
@@ -1716,6 +1737,13 @@
                 </svg>
                 Archive
             </a>
+            <a href="/admin/dev-tools.html" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Dev Tools
+            </a>
 
             <!-- Dark Mode Toggle -->
             <div style="padding: 14px 30px; margin-top: auto;">
@@ -1842,7 +1870,6 @@
                         <h2 class="card-title">Communication Log</h2>
                     </div>
                     <div class="admin-only comm-quick-actions" onclick="event.stopPropagation();" style="display: flex; gap: 6px;">
-                        <button onclick="openTemplateModal()" class="comm-action-btn" title="Use Email Template" style="background:#b5956a; color:#fff;">Template</button>
                         <button onclick="openQuickComm('email')" class="comm-action-btn" title="Send Email">Email</button>
                         <button onclick="openQuickComm('text')" class="comm-action-btn" title="Log Text">Text</button>
                         <button onclick="openQuickComm('call')" class="comm-action-btn" title="Log Call">Call</button>
@@ -1968,6 +1995,10 @@
                 <button id="archivedBtn" onclick="setClientArchived()" style="padding: 10px 24px; border: none; background: #fff; color: #666; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; cursor: pointer; border-left: 1px solid #ddd; transition: all 0.2s;">Archive</button>
             </div>
             <p style="font-size: 0.7rem; color: #bbb; margin-top: 12px;">Archived clients are moved to the Archived section on the dashboard</p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <button onclick="deleteClient()" style="padding: 8px 20px; border: 1px solid #e74c3c; background: #fff; color: #e74c3c; font-family: 'Montserrat', sans-serif; font-size: 0.7rem; cursor: pointer; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.2s;" onmouseover="this.style.background='#e74c3c';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#e74c3c'">Delete Client</button>
+                <p style="font-size: 0.65rem; color: #ccc; margin-top: 8px;">Permanently removes this client and all their proposals, invoices, and payments</p>
+            </div>
         </div>
     </main>
 
@@ -2208,12 +2239,12 @@
 
     <!-- Edit Event Details Modal -->
     <div class="modal-overlay" id="editEventModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
-        <div id="editEventModalContent" style="background:#fff; width:100%; max-width:550px; max-height:90vh; overflow-y:auto; position:relative;">
-            <div id="editEventModalHeader" style="padding:24px 28px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; cursor:move; user-select:none;">
+        <div id="editEventModalContent" style="background:#fff; width:100%; max-width:550px; max-height:90vh; position:relative; display:flex; flex-direction:column;">
+            <div id="editEventModalHeader" style="padding:24px 28px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; cursor:move; user-select:none; flex-shrink:0;">
                 <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400;">Edit Event Details</h2>
                 <button onclick="closeEditEventModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:#999;">&times;</button>
             </div>
-            <div style="padding:24px 28px;">
+            <div style="padding:24px 28px; overflow-y:auto; flex:1;">
                 <!-- Client Information Section -->
                 <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #eee;">
                     <div style="font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:#b5956a; margin-bottom:12px; font-weight:500;">Client Information</div>
@@ -2252,9 +2283,6 @@
                             <option value="Wedding">Wedding</option>
                             <option value="Birthday">Birthday</option>
                             <option value="Anniversary">Anniversary</option>
-                            <option value="Corporate">Corporate Event</option>
-                            <option value="Baby Shower">Baby Shower</option>
-                            <option value="Engagement">Engagement</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -2339,7 +2367,7 @@
                 </div>
                 <p style="font-size:0.75rem; color:#999; margin-top:16px;">Note: Changes to the event date and time will also update the calendar.</p>
             </div>
-            <div style="padding:20px 28px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px;">
+            <div style="padding:20px 28px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; flex-shrink:0;">
                 <button onclick="closeEditEventModal()" style="padding:10px 20px; background:#fff; border:1px solid #ddd; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer;">Cancel</button>
                 <button onclick="saveEventDetails()" style="padding:10px 20px; background:#b5956a; color:#fff; border:none; font-family:'Montserrat',sans-serif; font-size:0.8rem; cursor:pointer;">Save Changes</button>
             </div>
@@ -2965,15 +2993,9 @@ Kenna`
 
         function formatDate(dateStr) {
             if (!dateStr) return '-';
-            // Handle both simple date strings and full ISO strings
-            let date;
-            if (dateStr.includes('T')) {
-                // Already has time component (ISO string)
-                date = new Date(dateStr);
-            } else {
-                // Simple date string - add T00:00:00 to force local timezone
-                date = new Date(dateStr + 'T00:00:00');
-            }
+            // Always strip time/timezone to avoid UTC→local shift (-1 day in PT)
+            const clean = String(dateStr).split('T')[0];
+            const date = new Date(clean + 'T00:00:00');
             if (isNaN(date.getTime())) return '-';
             return date.toLocaleDateString('en-US', {
                 month: 'long', day: 'numeric', year: 'numeric'
@@ -3087,104 +3109,88 @@ Kenna`
             document.getElementById('progressBarContainer').innerHTML = html;
         }
 
-        function loadAccounting() {
-            const client = window.currentClient;
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-            const tastingDrafts = JSON.parse(localStorage.getItem('kgc_tasting_drafts') || '{}');
-            const signatures = JSON.parse(localStorage.getItem('kgc_signatures') || '{}');
-
-            const items = [];
-            let totalDue = 0;
-            let totalPaid = 0;
-
-            // Tasting payment
-            if (tastingDrafts[clientId] || client.status === 'tasting') {
-                const fee = parseFloat(tastingDrafts[clientId]?.tastingFee) || 250;
-                const isPaid = portalData.tastingPaid;
-                items.push({
-                    name: 'Tasting Fee',
-                    amount: fee,
-                    paid: isPaid,
-                    paidDate: portalData.tastingPaidDate,
-                    type: 'tasting'
-                });
-                if (isPaid) totalPaid += fee;
-                else if (client.status === 'tasting') totalDue += fee;
-            }
-
-            // Proposal deposit (50%)
-            const sig = signatures[clientId];
-            if (sig && sig.totalDue) {
-                const deposit = sig.totalDue / 2;
-                const isPaid = portalData.depositPaid;
-                items.push({
-                    name: 'Deposit (50%)',
-                    amount: deposit,
-                    paid: isPaid,
-                    paidDate: portalData.depositPaidDate,
-                    type: 'deposit'
-                });
-                if (isPaid) totalPaid += deposit;
-                else totalDue += deposit;
-
-                // Final payment
-                const finalPaid = portalData.finalPaid;
-                items.push({
-                    name: 'Final Payment',
-                    amount: deposit,
-                    paid: finalPaid,
-                    paidDate: portalData.finalPaidDate,
-                    type: 'final'
-                });
-                if (finalPaid) totalPaid += deposit;
-                else if (isPaid) totalDue += deposit; // Only due if deposit is paid
-            }
-
-            // Render accounting items
+        async function loadAccounting() {
             const container = document.getElementById('accountingList');
-            if (items.length === 0) {
+            const summaryEl = document.getElementById('accountingSummary');
+
+            // Fetch invoices from API (same source as Finance page)
+            let invoices = [];
+            try {
+                const resp = await fetch(`https://sugar-backend-production.up.railway.app/api/invoices?client_id=${clientId}`);
+                if (resp.ok) invoices = await resp.json();
+            } catch (e) { console.log('Could not load invoices:', e.message); }
+
+            if (invoices.length === 0) {
                 container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No invoices yet</p>';
-                document.getElementById('accountingSummary').style.display = 'none';
+                summaryEl.style.display = 'none';
                 return;
             }
 
-            // Get event date for calculating final payment due date
-            const eventDate = client?.eventDate;
-            let finalDueDate = null;
-            if (eventDate) {
-                const ed = new Date(eventDate + 'T00:00:00');
-                if (!isNaN(ed.getTime())) {
-                    ed.setDate(ed.getDate() - 14); // 2 weeks before event
-                    finalDueDate = ed.toISOString();
+            // Deduplicate: keep highest-status invoice per type
+            const statusPriority = { paid: 3, pending_verification: 2, sent: 1, draft: 0 };
+            const byType = {};
+            invoices.forEach(inv => {
+                const type = inv.type || 'other';
+                if (!byType[type] || (statusPriority[inv.status] || 0) > (statusPriority[byType[type].status] || 0)) {
+                    byType[type] = inv;
                 }
-            }
+            });
+            const dedupedInvoices = Object.values(byType);
 
-            container.innerHTML = items.map(item => {
-                let statusText = 'Unpaid';
-                if (item.paid) {
-                    statusText = 'Paid ' + formatDate(item.paidDate);
-                } else if (item.type === 'final' && finalDueDate) {
-                    statusText = 'Due by ' + formatDate(finalDueDate);
+            // Sort: tasting, deposit, final
+            const typeOrder = { tasting: 0, deposit: 1, final: 2 };
+            dedupedInvoices.sort((a, b) => (typeOrder[a.type] ?? 9) - (typeOrder[b.type] ?? 9));
+
+            let totalDue = 0;
+            let totalPaid = 0;
+
+            container.innerHTML = dedupedInvoices.map(inv => {
+                const amount = parseFloat(inv.amount) || 0;
+                const isPaid = inv.status === 'paid';
+                const isPending = inv.status === 'pending_verification';
+
+                if (isPaid) totalPaid += amount;
+                else if (inv.status === 'sent') totalDue += amount;
+
+                // Invoice name
+                let name = 'Invoice';
+                if (inv.type === 'tasting') name = 'Tasting Fee';
+                else if (inv.type === 'deposit') name = 'Deposit (50%)';
+                else if (inv.type === 'final') name = 'Final Payment';
+
+                // Status text
+                let statusText = '';
+                let statusClass = '';
+                if (isPaid) {
+                    statusText = 'Paid ' + (inv.paid_at ? formatDate(inv.paid_at) : '');
+                    statusClass = 'paid';
+                } else if (isPending) {
+                    statusText = 'Pending verification';
+                } else if (inv.status === 'sent') {
+                    statusText = inv.due_date ? 'Due by ' + formatDate(inv.due_date) : 'Sent';
+                } else {
+                    statusText = inv.status || 'Draft';
                 }
+
+                const invNum = inv.invoice_number || '';
+
                 return `
-                <div class="accounting-item ${item.paid ? 'paid' : ''}">
+                <div class="accounting-item ${statusClass}">
                     <div class="accounting-info">
-                        <div class="accounting-name">${item.name}</div>
+                        <div class="accounting-name">${name}</div>
                         <div class="accounting-meta">${statusText}</div>
+                        ${invNum ? `<div style="font-size: 0.7rem; color: #999; margin-top: 2px;">${invNum}</div>` : ''}
                     </div>
                     <div class="accounting-actions">
-                        <div class="accounting-amount ${item.paid ? 'paid' : ''}">$${item.amount.toFixed(2)}</div>
-                        ${!item.paid
-                            ? `<button class="btn btn-small btn-primary" onclick="markPaid('${item.type}')" style="padding: 6px 12px; font-size: 0.7rem;">Mark Paid</button>`
-                            : `<button class="btn btn-small btn-secondary" onclick="undoPaid('${item.type}')" style="padding: 6px 12px; font-size: 0.7rem;">Undo</button>`
-                        }
+                        <div class="accounting-amount ${statusClass}">$${amount.toFixed(2)}</div>
+                        ${isPending ? '<span style="font-size: 0.65rem; color: #856404; background: #fff3cd; padding: 2px 8px; border-radius: 3px;">Verifying</span>' : ''}
                     </div>
                 </div>
                 `;
             }).join('');
 
             // Render summary
-            document.getElementById('accountingSummary').innerHTML = `
+            summaryEl.innerHTML = `
                 <div class="summary-item">
                     <div class="summary-label">Total Due</div>
                     <div class="summary-value due">$${totalDue.toFixed(2)}</div>
@@ -3194,72 +3200,7 @@ Kenna`
                     <div class="summary-value paid">$${totalPaid.toFixed(2)}</div>
                 </div>
             `;
-            document.getElementById('accountingSummary').style.display = 'flex';
-        }
-
-        function markPaid(type) {
-            const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-
-            if (type === 'tasting') {
-                portalData.tastingPaid = true;
-                portalData.tastingPaidDate = new Date().toISOString();
-            } else if (type === 'deposit') {
-                portalData.depositPaid = true;
-                portalData.depositPaidDate = new Date().toISOString();
-            } else if (type === 'final') {
-                portalData.finalPaid = true;
-                portalData.finalPaidDate = new Date().toISOString();
-            }
-
-            localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-            loadAccounting();
-        }
-
-        function undoPaid(type) {
-            showConfirmModal('Are you sure you want to mark this as unpaid?', () => {
-                const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-
-                if (type === 'tasting') {
-                    portalData.tastingPaid = false;
-                    delete portalData.tastingPaidDate;
-                } else if (type === 'deposit') {
-                    portalData.depositPaid = false;
-                    delete portalData.depositPaidDate;
-                } else if (type === 'final') {
-                    portalData.finalPaid = false;
-                    delete portalData.finalPaidDate;
-                }
-
-                localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-                loadAccounting();
-            });
-        }
-
-        function showConfirmModal(message, onConfirm) {
-            // Create modal
-            const modal = document.createElement('div');
-            modal.className = 'confirm-modal';
-            modal.innerHTML = `
-                <div class="confirm-modal-content">
-                    <p>${message}</p>
-                    <div class="confirm-modal-actions">
-                        <button class="btn btn-secondary btn-small" onclick="this.closest('.confirm-modal').remove()">Cancel</button>
-                        <button class="btn btn-primary btn-small" id="confirmBtn">Yes, Undo</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            // Add confirm handler
-            modal.querySelector('#confirmBtn').onclick = () => {
-                modal.remove();
-                onConfirm();
-            };
-
-            // Close on overlay click
-            modal.onclick = (e) => {
-                if (e.target === modal) modal.remove();
-            };
+            summaryEl.style.display = 'flex';
         }
 
         function loadNotes() {
@@ -3560,6 +3501,45 @@ Kenna`
                 localStorage.setItem('kgc_clients', JSON.stringify(clients));
                 window.currentClient = client;
                 updateArchiveToggle(false);
+            }
+        }
+
+        async function deleteClient() {
+            if (!isAdmin) return;
+
+            const client = window.currentClient;
+            const name = client ? (client.name || client.firstName || 'this client') : 'this client';
+
+            if (!confirm(`Permanently delete ${name}?\n\nThis will remove ALL their data:\n- Proposals\n- Invoices\n- Payments & revenue\n- Communications\n\nThis cannot be undone.`)) return;
+
+            if (!confirm(`Are you sure? Type OK to confirm deletion of ${name}.`)) return;
+
+            try {
+                const resp = await fetch(`https://sugar-backend-production.up.railway.app/api/clients/${clientId}`, { method: 'DELETE' });
+                const data = await resp.json();
+
+                if (data.success) {
+                    // Clean up localStorage
+                    const invoices = JSON.parse(localStorage.getItem('kgc_invoices') || '[]');
+                    const cleaned = invoices.filter(i => String(i.clientId) !== String(clientId));
+                    localStorage.setItem('kgc_invoices', JSON.stringify(cleaned));
+
+                    const revenue = JSON.parse(localStorage.getItem('kgc_revenue') || '[]');
+                    const cleanedRev = revenue.filter(r => String(r.clientId) !== String(clientId));
+                    localStorage.setItem('kgc_revenue', JSON.stringify(cleanedRev));
+
+                    const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+                    const cleanedClients = clients.filter(c => String(c.id) !== String(clientId));
+                    localStorage.setItem('kgc_clients', JSON.stringify(cleanedClients));
+
+                    alert(`${name} has been deleted.`);
+                    window.location.href = '/admin/in-studio.html';
+                } else {
+                    alert('Error: ' + (data.error || 'Delete failed'));
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Connection error. Please try again.');
             }
         }
 
@@ -4728,9 +4708,24 @@ Kenna`
             document.getElementById('templateModal').style.display = 'none';
         }
 
-        function selectTemplate(templateId) {
-            const template = emailTemplates.find(t => t.id === templateId);
+        async function selectTemplate(templateId) {
+            // Check for custom template saved from Templates page (DB first, then localStorage)
+            let template = emailTemplates.find(t => t.id === templateId);
             if (!template) return;
+
+            let custom = {};
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/settings/email_templates`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.value && typeof data.value === 'object') custom = data.value;
+                }
+            } catch (e) {
+                try { custom = JSON.parse(localStorage.getItem('kgc_email_templates') || '{}'); } catch (e2) {}
+            }
+            if (custom[templateId]) {
+                template = { ...template, ...custom[templateId] };
+            }
 
             const client = window.currentClient;
             if (!client) {
@@ -4738,8 +4733,18 @@ Kenna`
                 return;
             }
 
-            // Replace placeholders with client data
-            const firstName = (client.name || 'there').split(' ')[0];
+            // Replace placeholders with client data — handle couples: "Sophia & Emma Williams" → "Sophia & Emma"
+            let firstName = 'there';
+            if (client.name) {
+                const name = client.name.trim();
+                if (name.includes(' & ')) {
+                    const parts = name.split(' ');
+                    parts.pop();
+                    firstName = parts.join(' ');
+                } else {
+                    firstName = name.split(' ')[0];
+                }
+            }
             const eventType = client.eventType || 'event';
             const eventDate = client.eventDate ? formatDate(client.eventDate) : '[EVENT DATE]';
             const venue = client.venue || '[VENUE]';
@@ -4747,7 +4752,8 @@ Kenna`
             // Calculate balance due date (2 weeks before event)
             let balanceDueDate = '[DUE DATE]';
             if (client.eventDate) {
-                const ed = new Date(client.eventDate);
+                const cleanDate = String(client.eventDate).split('T')[0];
+                const ed = new Date(cleanDate + 'T00:00:00');
                 ed.setDate(ed.getDate() - 14);
                 balanceDueDate = ed.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             }
@@ -4795,7 +4801,10 @@ Kenna`
         let tastingCalendarYear = new Date().getFullYear();
         let tastingCalendarSelectedDate = null;
 
-        function initTastingDateSlots() {
+        async function initTastingDateSlots() {
+            // Fetch all clients from API so calendar shows all events/tastings
+            await loadAllClientsForCalendar();
+
             // Show the date slots sidebar
             document.getElementById('tastingDateSlots').style.display = 'block';
 
@@ -4879,62 +4888,138 @@ Kenna`
             renderTastingCalendar();
         }
 
-        function getEventsForMonth(year, month) {
-            const clients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
-            const events = [];
+        // Cache for API-fetched data (loaded once when tasting calendar opens)
+        let cachedAllClients = null;
+        let cachedCalendarEvents = null;
 
-            clients.forEach(client => {
-                // Event dates
-                if (client.eventDate) {
-                    let eventDateStr = client.eventDate;
-                    if (eventDateStr.includes('T')) eventDateStr = eventDateStr.split('T')[0];
-                    const d = new Date(eventDateStr + 'T00:00:00');
-                    if (d.getFullYear() === year && d.getMonth() === month) {
-                        events.push({
-                            date: eventDateStr,
-                            type: 'event',
-                            name: client.name,
-                            eventType: client.eventType || 'Event'
-                        });
+        async function loadAllClientsForCalendar() {
+            if (cachedAllClients) return;
+            try {
+                const [clientsResp, eventsResp] = await Promise.all([
+                    fetch(API_BASE_URL + '/api/clients'),
+                    fetch(API_BASE_URL + '/api/events').catch(() => null)
+                ]);
+                if (clientsResp.ok) cachedAllClients = await clientsResp.json();
+                if (eventsResp && eventsResp.ok) cachedCalendarEvents = await eventsResp.json();
+            } catch (e) {
+                console.log('Could not fetch data for calendar:', e.message);
+            }
+        }
+
+        function getEventsForMonth(year, month) {
+            const events = [];
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+
+            // Helper: check if a date string falls in this month
+            function inMonth(dateStr) {
+                if (!dateStr) return false;
+                const d = new Date(String(dateStr).split('T')[0] + 'T00:00:00');
+                return d.getFullYear() === year && d.getMonth() === month;
+            }
+
+            // Helper: expand multi-day events into individual day entries for this month
+            function expandEvent(startDate, endDate, name, type) {
+                const start = new Date(String(startDate).split('T')[0] + 'T00:00:00');
+                const end = endDate ? new Date(String(endDate).split('T')[0] + 'T00:00:00') : start;
+                const cursor = new Date(Math.max(start.getTime(), monthStart.getTime()));
+                const limit = new Date(Math.min(end.getTime(), monthEnd.getTime()));
+                const isMultiDay = end.getTime() > start.getTime();
+                while (cursor <= limit) {
+                    const dateStr = cursor.toISOString().split('T')[0];
+                    let spanPos = 'single';
+                    if (isMultiDay) {
+                        const isFirst = cursor.getTime() === start.getTime();
+                        const isLast = cursor.getTime() === end.getTime();
+                        if (isFirst) spanPos = 'span-start';
+                        else if (isLast) spanPos = 'span-end';
+                        else spanPos = 'span-mid';
                     }
+                    events.push({ date: dateStr, type, name, eventType: type, spanPos });
+                    cursor.setDate(cursor.getDate() + 1);
                 }
-                // Tasting dates
-                if (client.tastingDate) {
-                    let tastingDateStr = client.tastingDate;
-                    if (tastingDateStr.includes('T')) tastingDateStr = tastingDateStr.split('T')[0];
-                    const d = new Date(tastingDateStr + 'T00:00:00');
-                    if (d.getFullYear() === year && d.getMonth() === month) {
-                        events.push({
-                            date: tastingDateStr,
-                            type: 'tasting',
-                            name: client.name,
-                            eventType: 'Tasting'
-                        });
+            }
+
+            // 1. Clients from API — event dates, tasting dates, inquiry dates
+            const apiClients = cachedAllClients || [];
+            const localClients = JSON.parse(localStorage.getItem('kgc_clients') || '[]');
+            const clientMap = {};
+            localClients.forEach(c => { clientMap[c.id || c.name] = c; });
+            apiClients.forEach(c => {
+                clientMap[c.id || c.name] = {
+                    id: c.id, name: c.name,
+                    eventDate: c.event_date || c.eventDate,
+                    eventType: c.event_type || c.eventType,
+                    tastingDate: c.tasting_date || c.tastingDate,
+                    createdAt: c.created_at || c.createdAt
+                };
+            });
+
+            Object.values(clientMap).forEach(client => {
+                if (client.eventDate && inMonth(client.eventDate)) {
+                    events.push({ date: String(client.eventDate).split('T')[0], type: 'event', name: client.name });
+                }
+                if (client.tastingDate && inMonth(client.tastingDate)) {
+                    events.push({ date: String(client.tastingDate).split('T')[0], type: 'tasting', name: client.name });
+                }
+                if (client.createdAt) {
+                    const d = new Date(client.createdAt);
+                    const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                    if (inMonth(dateStr)) {
+                        const lastName = client.name.split(' ').pop();
+                        events.push({ date: dateStr, type: 'event', name: lastName + ' Inquiry' });
                     }
                 }
             });
 
-            // Get events from imported calendars
+            // 2. Custom calendar events from localStorage (includes multi-day)
+            const customEvents = JSON.parse(localStorage.getItem('kgc_calendar_events') || '[]');
+            customEvents.forEach(evt => {
+                const startDate = evt.date || evt.eventDate;
+                if (!startDate) return;
+                const endDate = evt.endDate || evt.eventEndDate;
+                const evtType = (evt.type || evt.eventType || 'custom').toLowerCase();
+                const mappedType = evtType === 'tasting' ? 'tasting' : evtType === 'personal' ? 'personal' : 'event';
+                const name = evt.title || evt.name || 'Event';
+
+                if (endDate) {
+                    expandEvent(startDate, endDate, name, mappedType);
+                } else if (inMonth(startDate)) {
+                    events.push({ date: String(startDate).split('T')[0], type: mappedType, name });
+                }
+            });
+
+            // 3. Imported calendars (includes multi-day)
             const importedCalendars = JSON.parse(localStorage.getItem('kgc_imported_calendars') || '[]');
             importedCalendars.forEach(cal => {
-                if (cal.enabled) {
-                    cal.events.forEach(evt => {
-                        if (evt.date) {
-                            let evtDateStr = evt.date;
-                            if (evtDateStr.includes('T')) evtDateStr = evtDateStr.split('T')[0];
-                            const d = new Date(evtDateStr + 'T00:00:00');
-                            if (d.getFullYear() === year && d.getMonth() === month) {
-                                events.push({
-                                    date: evtDateStr,
-                                    type: 'personal',
-                                    name: evt.name || 'Personal Event',
-                                    eventType: cal.name || 'Personal'
-                                });
-                            }
-                        }
-                    });
-                }
+                if (!cal.enabled) return;
+                cal.events.forEach(evt => {
+                    if (!evt.date) return;
+                    if (evt.endDate) {
+                        expandEvent(evt.date, evt.endDate, evt.name || 'Personal', 'personal');
+                    } else if (inMonth(evt.date)) {
+                        events.push({ date: String(evt.date).split('T')[0], type: 'personal', name: evt.name || 'Personal' });
+                    }
+                });
             });
+
+            // 4. API calendar events (prep events, server-created)
+            if (cachedCalendarEvents) {
+                cachedCalendarEvents.forEach(evt => {
+                    const startDate = evt.event_date || evt.date;
+                    if (!startDate) return;
+                    const endDate = evt.event_end_date || evt.endDate;
+                    const evtType = (evt.event_type || evt.type || 'custom').toLowerCase();
+                    const mappedType = evtType === 'tasting' ? 'tasting' : evtType === 'personal' ? 'personal' : 'event';
+                    const name = evt.title || evt.name || 'Event';
+
+                    if (endDate) {
+                        expandEvent(startDate, endDate, name, mappedType);
+                    } else if (inMonth(startDate)) {
+                        events.push({ date: String(startDate).split('T')[0], type: mappedType, name });
+                    }
+                });
+            }
 
             return events;
         }
@@ -4988,8 +5073,10 @@ Kenna`
                 let eventsHtml = '<div class="day-events">';
                 const maxDisplay = 2;
                 dayEvents.slice(0, maxDisplay).forEach(e => {
-                    const shortName = e.name.length > 12 ? e.name.substring(0, 10) + '...' : e.name;
-                    eventsHtml += `<div class="day-event ${e.type}" title="${e.name}">${shortName}</div>`;
+                    const pos = e.spanPos || 'single';
+                    const showName = pos === 'single' || pos === 'span-start';
+                    const shortName = showName ? (e.name.length > 12 ? e.name.substring(0, 10) + '...' : e.name) : '';
+                    eventsHtml += `<div class="day-event ${e.type} ${pos}" title="${e.name}">${shortName}</div>`;
                 });
                 if (dayEvents.length > maxDisplay) {
                     eventsHtml += `<div class="day-event-more">+${dayEvents.length - maxDisplay} more</div>`;
@@ -5595,43 +5682,7 @@ Kenna`
         // Load from API in background
         loadClientsFromAPI();
 
-        // Sync portal data from DB (picks up Stripe payment updates)
-        async function syncPortalDataFromDB() {
-            try {
-                const resp = await fetch('https://sugar-backend-production.up.railway.app/api/portal/' + clientId);
-                const dbData = resp.ok ? await resp.json() : {};
-                if (dbData && (dbData.tasting_paid || dbData.deposit_paid || dbData.final_paid)) {
-                    const portalData = JSON.parse(localStorage.getItem('kgc_portal_' + clientId) || '{}');
-                    let changed = false;
-
-                    if (dbData.tasting_paid && !portalData.tastingPaid) {
-                        portalData.tastingPaid = true;
-                        portalData.tastingPaidDate = dbData.tasting_paid_date || new Date().toISOString();
-                        changed = true;
-                    }
-                    if (dbData.deposit_paid && !portalData.depositPaid) {
-                        portalData.depositPaid = true;
-                        portalData.depositPaidDate = dbData.deposit_paid_date || new Date().toISOString();
-                        changed = true;
-                    }
-                    if (dbData.final_paid && !portalData.finalPaid) {
-                        portalData.finalPaid = true;
-                        portalData.finalPaidDate = dbData.final_paid_date || new Date().toISOString();
-                        changed = true;
-                    }
-
-                    if (changed) {
-                        localStorage.setItem('kgc_portal_' + clientId, JSON.stringify(portalData));
-                        loadAccounting();
-                        updateProgressTracker();
-                        console.log('Portal data synced from DB — payment status updated');
-                    }
-                }
-            } catch (err) {
-                console.log('Portal data sync skipped:', err.message);
-            }
-        }
-        syncPortalDataFromDB();
+        // Accounting now reads directly from API — no localStorage sync needed
 
         // Auto-sync Gmail emails quietly on page load
         autoSyncEmails();
