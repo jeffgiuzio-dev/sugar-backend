@@ -3572,6 +3572,16 @@ app.post('/api/communications', async (req, res) => {
   }
 });
 
+app.delete('/api/communications/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM communications WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting communication:', err);
+    res.status(500).json({ error: 'Failed to delete communication' });
+  }
+});
+
 // ============================================
 // INVOICES
 // ============================================
