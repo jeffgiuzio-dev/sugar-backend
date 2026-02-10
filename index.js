@@ -2054,13 +2054,19 @@ function buildTastingConfirmationHTML(emailData, template) {
   const locationLine = tastingLocation || 'Queen Anne, Seattle';
   const arrivalHTML = tastingArrival ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:8px 0 0;"><strong>Arrival:</strong> ${tastingArrival.replace(/\n/g, '<br>')}</p>` : '';
 
+  // Build tasting section title: "Smith Wedding Tasting" or "Your Tasting"
+  const lastName = emailData.clientName ? emailData.clientName.split(' ').pop() : '';
+  const evtType = emailData.eventType || '';
+  const tastingSectionTitle = (lastName && evtType) ? `${lastName} ${evtType} Tasting` : 'Your Tasting';
+
   const tastingDetailsHTML = `
   <tr><td style="padding:24px 40px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
       <tr><td>
-        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">Your Tasting</p>
+        <p style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; font-weight:normal; color:#1a1a1a; margin:0 0 12px;">${tastingSectionTitle}</p>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">${dateLine}</p>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Location:</strong> ${locationLine}</p>
+        <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;"><strong>Address:</strong> 302 W Howe St., Seattle, WA 98119</p>
         <p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Duration:</strong> Approximately 1-2 hours</p>
         ${arrivalHTML}
       </td></tr>
@@ -2089,7 +2095,10 @@ function buildTastingConfirmationPlain(emailData, template) {
   const dateStr = tastingDate ? `${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}` : 'To be confirmed';
   const locationStr = tastingLocation || 'Queen Anne, Seattle';
   const arrivalStr = tastingArrival ? `\nArrival: ${tastingArrival}` : '';
-  const tastingInfo = `\nYOUR TASTING:\nDate: ${dateStr}\nLocation: ${locationStr}\nDuration: Approximately 1-2 hours${arrivalStr}\n`;
+  const lastNamePlain = emailData.clientName ? emailData.clientName.split(' ').pop() : '';
+  const evtTypePlain = emailData.eventType || '';
+  const tastingTitlePlain = (lastNamePlain && evtTypePlain) ? `${lastNamePlain} ${evtTypePlain} TASTING` : 'YOUR TASTING';
+  const tastingInfo = `\n${tastingTitlePlain}:\nDate: ${dateStr}\nLocation: ${locationStr}\nAddress: 302 W Howe St., Seattle, WA 98119\nDuration: Approximately 1-2 hours${arrivalStr}\n`;
 
   const bodyText = (template?.body || defaultTastingConfirmationTemplate.body)
     .replace(/\{firstName\}/g, firstName)
@@ -2657,13 +2666,15 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             let tastingLocation = null, tastingArrival = null, tastingDescription = null;
             try {
               if (client_id) {
-                const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [client_id]);
+                const clientResult = await pool.query('SELECT tasting_date, tasting_time, event_type, name FROM clients WHERE id = $1', [client_id]);
                 if (clientResult.rows.length > 0) {
                   const row = clientResult.rows[0];
                   if (row.tasting_date) {
                     tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
                   }
                   tastingTime = formatTime(row.tasting_time);
+                  if (row.event_type) eventType = row.event_type;
+                  if (row.name) clientName = row.name;
                 }
               }
             } catch (dbErr) {
@@ -2686,7 +2697,7 @@ app.post('/api/payments/offline-verify', async (req, res) => {
             }
 
             const tastingTemplate = await getTastingConfirmationTemplate();
-            const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: method, tastingDate, tastingTime, tastingLocation, tastingArrival, tastingDescription };
+            const emailData = { firstName, clientName, eventType, amountFormatted, paymentDate, paymentMethod: method, tastingDate, tastingTime, tastingLocation, tastingArrival, tastingDescription };
             subject = tastingTemplate.subject.replace(/\{tastingDate\}/g, tastingDate || 'Your Tasting').replace(/\{firstName\}/g, firstName);
             plainText = buildTastingConfirmationPlain(emailData, tastingTemplate);
             htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
@@ -3014,13 +3025,14 @@ app.post('/api/payments/webhook', async (req, res) => {
             let tastingLocation = null, tastingArrival = null, tastingDescription = null;
             try {
               if (clientId) {
-                const clientResult = await pool.query('SELECT tasting_date, tasting_time FROM clients WHERE id = $1', [clientId]);
+                const clientResult = await pool.query('SELECT tasting_date, tasting_time, event_type FROM clients WHERE id = $1', [clientId]);
                 if (clientResult.rows.length > 0) {
                   const row = clientResult.rows[0];
                   if (row.tasting_date) {
                     tastingDate = new Date(row.tasting_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
                   }
                   tastingTime = formatTime(row.tasting_time);
+                  if (row.event_type) eventType = row.event_type;
                 }
               }
             } catch (dbErr) {
@@ -3043,7 +3055,7 @@ app.post('/api/payments/webhook', async (req, res) => {
             }
 
             const tastingTemplate = await getTastingConfirmationTemplate();
-            const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', tastingDate, tastingTime, tastingLocation, tastingArrival, tastingDescription };
+            const emailData = { firstName, clientName, eventType, amountFormatted, paymentDate, paymentMethod: 'card', tastingDate, tastingTime, tastingLocation, tastingArrival, tastingDescription };
             subject = tastingTemplate.subject.replace(/\{tastingDate\}/g, tastingDate || 'Your Tasting').replace(/\{firstName\}/g, firstName);
             plainText = buildTastingConfirmationPlain(emailData, tastingTemplate);
             htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
@@ -3167,7 +3179,7 @@ app.post('/api/payments/webhook', async (req, res) => {
             }
             const receiptBuf = await generateReceiptPDF(receiptData);
             pdfAttachments.push({ filename: 'KGC-Payment-Receipt.pdf', contentType: 'application/pdf', data: receiptBuf });
-          } catch (pdfErr) { console.error('PDF receipt generation failed (webhook):', pdfErr.message); }
+          } catch (pdfErr) { console.error('PDF receipt generation failed (webhook):', pdfErr.message, pdfErr.stack); }
 
           // Signed proposal PDF for deposit payments
           if (proposalRow) {
