@@ -1215,9 +1215,50 @@ function formatTime(timeStr) {
   return minutes === '00' ? `${hours} ${ampm}` : `${hours}:${minutes} ${ampm}`;
 }
 
+// ===== Image fetcher for PDFs (works on Railway where local files don't exist) =====
+
+const https = require('https');
+
+function fetchImageBuffer(url) {
+  return new Promise((resolve) => {
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) { resolve(null); return; }
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', () => resolve(null));
+    }).on('error', () => resolve(null));
+  });
+}
+
+async function loadImage(localPaths, remoteUrl) {
+  const fs = require('fs');
+  // Try local paths first (for dev)
+  const localPath = localPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
+  if (localPath) return localPath;
+  // Fall back to fetching from public URL
+  if (remoteUrl) {
+    try { return await fetchImageBuffer(remoteUrl); } catch { return null; }
+  }
+  return null;
+}
+
 // ===== PDF Receipt Generator =====
 
 async function generateReceiptPDF(receiptData) {
+  // Pre-fetch images before entering the sync PDF generation
+  const bannerImg = await loadImage([
+    path.join(__dirname, 'client-portal', 'images', 'header-flowers.jpg'),
+    path.join(__dirname, '..', 'images', 'header-flowers.jpg'),
+    path.join(__dirname, 'images', 'header-flowers.jpg')
+  ], 'https://portal.kennagiuziocake.com/images/header-flowers.jpg');
+
+  const logoImg = await loadImage([
+    path.join(__dirname, 'client-portal', 'images', 'logo.png'),
+    path.join(__dirname, '..', 'images', 'logo.png'),
+    path.join(__dirname, 'images', 'logo.png')
+  ], 'https://portal.kennagiuziocake.com/images/logo.png');
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'letter', margin: 50 });
     const chunks = [];
@@ -1233,20 +1274,11 @@ async function generateReceiptPDF(receiptData) {
     // Round down to nearest dollar, no cents
     const fmt = (n) => '$' + Math.floor(parseFloat(n)).toLocaleString();
 
-    const fs = require('fs');
-
     // Banner image (full width, top of page)
-    const bannerPaths = [
-      path.join(__dirname, 'client-portal', 'images', 'header-flowers.jpg'),
-      path.join(__dirname, '..', 'images', 'header-flowers.jpg'),
-      path.join(__dirname, 'images', 'header-flowers.jpg')
-    ];
-    const bannerPath = bannerPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
     const bannerHeight = 120;
-    if (bannerPath) {
+    if (bannerImg) {
       try {
-        doc.image(bannerPath, 0, 0, { width: 612, height: bannerHeight });
-        // Light overlay for readability
+        doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
         doc.save();
         doc.rect(0, 0, 612, bannerHeight).fill('rgba(255,255,255,0.15)');
         doc.restore();
@@ -1254,14 +1286,8 @@ async function generateReceiptPDF(receiptData) {
     }
 
     // Logo (centered on banner)
-    const logoPaths = [
-      path.join(__dirname, 'client-portal', 'images', 'logo.png'),
-      path.join(__dirname, '..', 'images', 'logo.png'),
-      path.join(__dirname, 'images', 'logo.png')
-    ];
-    const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
-    if (logoPath) {
-      try { doc.image(logoPath, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
+    if (logoImg) {
+      try { doc.image(logoImg, (612 - 120) / 2, (bannerHeight - 50) / 2, { width: 120 }); } catch (e) { /* skip */ }
     }
 
     // Title (below banner)
@@ -1398,6 +1424,13 @@ async function generateReceiptPDF(receiptData) {
 // ===== Signed Proposal PDF Generator =====
 
 async function generateProposalPDF(proposal) {
+  // Pre-fetch logo before entering sync PDF generation
+  const logoImg = await loadImage([
+    path.join(__dirname, 'client-portal', 'images', 'logo.png'),
+    path.join(__dirname, '..', 'images', 'logo.png'),
+    path.join(__dirname, 'images', 'logo.png')
+  ], 'https://portal.kennagiuziocake.com/images/logo.png');
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'letter', margin: 50 });
     const chunks = [];
@@ -1412,15 +1445,8 @@ async function generateProposalPDF(proposal) {
     const data = typeof proposal.data === 'string' ? JSON.parse(proposal.data) : proposal.data;
 
     // Logo
-    const fs = require('fs');
-    const logoPaths = [
-      path.join(__dirname, 'client-portal', 'images', 'logo.png'),
-      path.join(__dirname, '..', 'images', 'logo.png'),
-      path.join(__dirname, 'images', 'logo.png')
-    ];
-    const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
-    if (logoPath) {
-      try { doc.image(logoPath, (612 - 140) / 2, 40, { width: 140 }); } catch (e) { /* skip */ }
+    if (logoImg) {
+      try { doc.image(logoImg, (612 - 140) / 2, 40, { width: 140 }); } catch (e) { /* skip */ }
     }
 
     doc.y = 110;
