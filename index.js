@@ -1765,6 +1765,8 @@ function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, a
   ];
 
   allAttachments.forEach(att => {
+    const b64 = att.data.toString('base64');
+    const b64Lines = b64.match(/.{1,76}/g) || [];
     lines.push(
       '',
       `--${mixedBoundary}`,
@@ -1772,7 +1774,7 @@ function buildRawEmailWithAttachment({ to, from, subject, plainText, htmlBody, a
       `Content-Disposition: attachment; filename="${att.filename}"`,
       'Content-Transfer-Encoding: base64',
       '',
-      att.data.toString('base64').replace(/(.{76})/g, '$1\r\n')
+      ...b64Lines
     );
   });
 
