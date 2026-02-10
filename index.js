@@ -1204,7 +1204,7 @@ function formatTime(timeStr) {
 
 async function generateReceiptPDF(receiptData) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'letter', margin: 60 });
+    const doc = new PDFDocument({ size: 'letter', margin: 50 });
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -1213,10 +1213,12 @@ async function generateReceiptPDF(receiptData) {
     const gold = '#b5956a';
     const darkText = '#1a1a1a';
     const lightText = '#666666';
-    const pageWidth = 612 - 120; // letter width minus margins
+    const pageWidth = 612 - 100; // letter width minus margins
 
-    // Logo (centered)
-    // Try multiple logo paths (different on local dev vs Railway)
+    // Round down to nearest dollar, no cents
+    const fmt = (n) => '$' + Math.floor(parseFloat(n)).toLocaleString();
+
+    // Logo (centered, compact)
     const logoPaths = [
       path.join(__dirname, 'client-portal', 'images', 'logo.png'),
       path.join(__dirname, '..', 'images', 'logo.png'),
@@ -1225,34 +1227,30 @@ async function generateReceiptPDF(receiptData) {
     const fs = require('fs');
     const logoPath = logoPaths.find(p => { try { fs.accessSync(p); return true; } catch { return false; } });
     if (logoPath) {
-      try {
-        doc.image(logoPath, (612 - 150) / 2, 50, { width: 150 });
-      } catch (e) { /* skip logo if not found */ }
+      try { doc.image(logoPath, (612 - 120) / 2, 40, { width: 120 }); } catch (e) { /* skip */ }
     }
 
     // Title
-    doc.moveDown(1);
-    doc.y = 130;
-    doc.font('Times-Roman').fontSize(22).fillColor(gold)
-      .text('PAYMENT RECEIPT', 60, 130, { align: 'center', width: pageWidth });
+    doc.font('Times-Roman').fontSize(18).fillColor(gold)
+      .text('PAYMENT RECEIPT', 50, 105, { align: 'center', width: pageWidth });
 
     // Gold divider
-    doc.moveTo(60, 165).lineTo(552, 165).strokeColor(gold).lineWidth(1.5).stroke();
+    doc.moveTo(50, 130).lineTo(562, 130).strokeColor(gold).lineWidth(1).stroke();
 
-    // Receipt # and Date
-    doc.font('Helvetica').fontSize(10).fillColor(lightText);
-    doc.text(`Receipt #: ${receiptData.receiptNumber}`, 60, 180, { align: 'right', width: pageWidth });
-    doc.text(`Date: ${receiptData.paymentDate}`, 60, 195, { align: 'right', width: pageWidth });
+    // Receipt # and Date (same line, compact)
+    doc.font('Helvetica').fontSize(8).fillColor(lightText);
+    doc.text(`Receipt #: ${receiptData.receiptNumber}`, 50, 138, { align: 'right', width: pageWidth });
+    doc.text(`Date: ${receiptData.paymentDate}`, 50, 150, { align: 'right', width: pageWidth });
 
     // BILL TO
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
-      .text('BILL TO', 60, 225);
-    doc.font('Helvetica').fontSize(12).fillColor(darkText)
-      .text(receiptData.clientName || 'Client', 60, 240);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('BILL TO', 50, 140);
+    doc.font('Helvetica').fontSize(10).fillColor(darkText)
+      .text(receiptData.clientName || 'Client', 50, 152);
 
     // PAYMENT DETAILS
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
-      .text('PAYMENT DETAILS', 60, 275);
+    let y = 175;
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('PAYMENT DETAILS', 50, y);
+    y += 14;
 
     const descriptionByType = {
       tasting: 'Tasting Fee',
@@ -1260,17 +1258,16 @@ async function generateReceiptPDF(receiptData) {
       final: 'Final Balance Payment'
     };
 
-    const fmt = (n) => '$' + parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const detailRows = [
       ['Description', descriptionByType[receiptData.type] || 'Payment']
     ];
 
-    // Deposit receipts: show full proposal accounting trail
+    // Deposit receipts: full proposal accounting (all floor'd)
     if (receiptData.type === 'deposit' && receiptData.proposalTotal) {
-      const proposalTotal = parseFloat(receiptData.proposalTotal);
-      const tastingCredit = parseFloat(receiptData.tastingCredit) || 0;
+      const proposalTotal = Math.floor(parseFloat(receiptData.proposalTotal));
+      const tastingCredit = Math.floor(parseFloat(receiptData.tastingCredit) || 0);
       const revisedTotal = proposalTotal - tastingCredit;
-      const deposit = revisedTotal / 2;
+      const deposit = Math.floor(revisedTotal / 2);
       detailRows.push(['Proposal Total', fmt(proposalTotal)]);
       if (tastingCredit > 0) {
         detailRows.push(['Tasting Credit', '-' + fmt(tastingCredit)]);
@@ -1278,21 +1275,20 @@ async function generateReceiptPDF(receiptData) {
       detailRows.push(['Revised Total', fmt(revisedTotal)]);
       detailRows.push(['Deposit (50%)', fmt(deposit)]);
       if (receiptData.isCardPayment) {
-        const ccFee = deposit * 0.03;
-        const totalCharged = deposit + ccFee;
+        const ccFee = Math.floor(deposit * 0.03);
         detailRows.push(['CC Processing Fee (3%)', fmt(ccFee)]);
-        detailRows.push(['Total Charged', fmt(totalCharged)]);
+        detailRows.push(['Total Charged', fmt(deposit + ccFee)]);
       } else {
         detailRows.push(['Amount Due', fmt(deposit)]);
       }
     } else if (receiptData.isCardPayment && receiptData.amountRaw) {
-      // Tasting / final: simple CC fee breakdown
-      const totalCharged = parseFloat(receiptData.amountRaw);
-      const subtotal = totalCharged / 1.03;
+      // Tasting / final: simple CC fee breakdown (floor'd)
+      const totalCharged = Math.floor(parseFloat(receiptData.amountRaw));
+      const subtotal = Math.floor(totalCharged / 1.03);
       const ccFee = totalCharged - subtotal;
       detailRows.push(['Subtotal', fmt(subtotal)]);
       detailRows.push(['CC Processing Fee (3%)', fmt(ccFee)]);
-      detailRows.push(['Total Charged', receiptData.amountFormatted]);
+      detailRows.push(['Total Charged', fmt(totalCharged)]);
     } else {
       detailRows.push(['Amount', receiptData.amountFormatted]);
     }
@@ -1300,84 +1296,64 @@ async function generateReceiptPDF(receiptData) {
     detailRows.push(['Method', receiptData.paymentMethod]);
     detailRows.push(['Status', 'Paid']);
 
-    let tableY = 295;
-    const labelX = 60;
-    const valueX = 220;
+    const labelX = 50;
+    const valueX = 210;
+    const rowH = 20;
 
     detailRows.forEach((row, i) => {
-      const rowY = tableY + (i * 28);
-      // Alternating row background
+      const rowY = y + (i * rowH);
       if (i % 2 === 0) {
-        doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
+        doc.rect(45, rowY - 2, pageWidth + 10, rowH - 1).fill('#faf8f5');
       }
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
-        .text(row[0], labelX, rowY + 4);
-      doc.font('Helvetica').fontSize(10).fillColor(darkText)
-        .text(row[1], valueX, rowY + 4);
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText)
+        .text(row[0], labelX, rowY + 3);
+      doc.font('Helvetica').fontSize(9).fillColor(darkText)
+        .text(row[1], valueX, rowY + 3);
     });
 
-    // Type-specific details
-    let detailsY = tableY + (detailRows.length * 28) + 20;
-    let hasDetails = false;
+    y += detailRows.length * rowH + 12;
 
+    // Type-specific details (compact)
     if (receiptData.type === 'tasting' && receiptData.tastingDate) {
-      hasDetails = true;
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
-        .text('TASTING DETAILS', 60, detailsY);
-      detailsY += 18;
-
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('TASTING DETAILS', 50, y);
+      y += 14;
       const tastingRows = [['Tasting Date', receiptData.tastingDate]];
       if (receiptData.tastingTime) tastingRows.push(['Time', receiptData.tastingTime]);
-
       tastingRows.forEach((row, i) => {
-        const rowY = detailsY + (i * 28);
-        if (i % 2 === 0) {
-          doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
-        }
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
-          .text(row[0], labelX, rowY + 4);
-        doc.font('Helvetica').fontSize(10).fillColor(darkText)
-          .text(row[1], valueX, rowY + 4);
+        const rowY = y + (i * rowH);
+        if (i % 2 === 0) doc.rect(45, rowY - 2, pageWidth + 10, rowH - 1).fill('#faf8f5');
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText).text(row[0], labelX, rowY + 3);
+        doc.font('Helvetica').fontSize(9).fillColor(darkText).text(row[1], valueX, rowY + 3);
       });
-      detailsY += tastingRows.length * 28;
+      y += tastingRows.length * rowH;
     }
 
     if ((receiptData.type === 'deposit' || receiptData.type === 'final') && receiptData.eventDate) {
-      hasDetails = true;
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(gold)
-        .text('EVENT DETAILS', 60, detailsY);
-      detailsY += 18;
-
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(gold).text('EVENT DETAILS', 50, y);
+      y += 14;
       const eventRows = [];
       if (receiptData.eventType) eventRows.push(['Event', receiptData.eventType]);
       if (receiptData.eventDate) eventRows.push(['Event Date', receiptData.eventDate]);
       if (receiptData.venue) eventRows.push(['Venue', receiptData.venue]);
       if (receiptData.balanceDueDate) eventRows.push(['Balance Due', receiptData.balanceDueDate]);
-
       eventRows.forEach((row, i) => {
-        const rowY = detailsY + (i * 28);
-        if (i % 2 === 0) {
-          doc.rect(55, rowY - 4, pageWidth + 10, 26).fill('#faf8f5');
-        }
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(darkText)
-          .text(row[0], labelX, rowY + 4);
-        doc.font('Helvetica').fontSize(10).fillColor(darkText)
-          .text(row[1], valueX, rowY + 4);
+        const rowY = y + (i * rowH);
+        if (i % 2 === 0) doc.rect(45, rowY - 2, pageWidth + 10, rowH - 1).fill('#faf8f5');
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText).text(row[0], labelX, rowY + 3);
+        doc.font('Helvetica').fontSize(9).fillColor(darkText).text(row[1], valueX, rowY + 3);
       });
-      detailsY += eventRows.length * 28;
+      y += eventRows.length * rowH;
     }
 
-    // Footer divider
-    const footerY = hasDetails ? detailsY + 30 : tableY + (detailRows.length * 28) + 40;
-    doc.moveTo(60, footerY).lineTo(552, footerY).strokeColor(gold).lineWidth(1).stroke();
-
-    // Footer text
-    doc.font('Times-Roman').fontSize(12).fillColor(darkText)
-      .text('Thank you for choosing', 60, footerY + 20, { align: 'center', width: pageWidth });
-    doc.font('Times-Bold').fontSize(14).fillColor(darkText)
-      .text('Kenna Giuzio Cake', 60, footerY + 40, { align: 'center', width: pageWidth });
-    doc.font('Helvetica').fontSize(10).fillColor(lightText)
-      .text('(206) 472-5401  |  kenna@kennagiuziocake.com', 60, footerY + 62, { align: 'center', width: pageWidth });
+    // Footer
+    y += 20;
+    doc.moveTo(50, y).lineTo(562, y).strokeColor(gold).lineWidth(1).stroke();
+    doc.font('Times-Roman').fontSize(11).fillColor(darkText)
+      .text('Thank you for choosing', 50, y + 12, { align: 'center', width: pageWidth });
+    doc.font('Times-Bold').fontSize(12).fillColor(darkText)
+      .text('Kenna Giuzio Cake', 50, y + 28, { align: 'center', width: pageWidth });
+    doc.font('Helvetica').fontSize(8).fillColor(lightText)
+      .text('(206) 472-5401  |  kenna@kennagiuziocake.com', 50, y + 46, { align: 'center', width: pageWidth });
 
     doc.end();
   });
