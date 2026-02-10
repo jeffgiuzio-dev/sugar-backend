@@ -1830,7 +1830,7 @@ const defaultOneMonthReminderTemplate = {
 
 I can hardly believe your {eventType} is just one month away! I'm truly excited to create your cake for this special occasion.
 
-This is a friendly reminder that your remaining balance of {balanceAmount} will be due on {balanceDueDate}, which is two weeks before your event.
+This is a friendly reminder that {balanceAmount} will be due on {balanceDueDate}, which is two weeks before your event.
 
 If you have any questions, please don't hesitate to reach out.
 
@@ -1846,7 +1846,7 @@ const defaultTwoWeekReminderTemplate = {
 
 Your {eventType} is just two weeks away!
 
-This is a friendly reminder that your final balance of {balanceAmount} is now due.
+This is a friendly reminder that {balanceAmount} is now due.
 
 Payment can be made by credit card, Zelle, or check.
 
