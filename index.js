@@ -251,16 +251,34 @@ app.post('/api/gmail/sync', async (req, res) => {
         }
 
         if (client) {
-          // Get message body
-          let body = '';
-          if (fullMsg.data.payload.body && fullMsg.data.payload.body.data) {
-            body = Buffer.from(fullMsg.data.payload.body.data, 'base64').toString('utf-8');
-          } else if (fullMsg.data.payload.parts) {
-            const textPart = fullMsg.data.payload.parts.find(p => p.mimeType === 'text/plain');
-            if (textPart && textPart.body && textPart.body.data) {
-              body = Buffer.from(textPart.body.data, 'base64').toString('utf-8');
+          // Get message body (recursively search nested parts)
+          function extractBody(payload) {
+            if (payload.body && payload.body.data) {
+              return Buffer.from(payload.body.data, 'base64').toString('utf-8');
             }
+            if (payload.parts) {
+              // Prefer text/plain, fall back to text/html
+              for (const part of payload.parts) {
+                if (part.mimeType === 'text/plain' && part.body && part.body.data) {
+                  return Buffer.from(part.body.data, 'base64').toString('utf-8');
+                }
+              }
+              // Recurse into nested multipart parts
+              for (const part of payload.parts) {
+                if (part.mimeType && part.mimeType.startsWith('multipart/')) {
+                  const found = extractBody(part);
+                  if (found) return found;
+                }
+              }
+              // Last resort: try any part with body data
+              for (const part of payload.parts) {
+                const found = extractBody(part);
+                if (found) return found;
+              }
+            }
+            return '';
           }
+          let body = extractBody(fullMsg.data.payload);
 
           // Determine direction
           const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
