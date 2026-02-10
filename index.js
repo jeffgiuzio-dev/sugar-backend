@@ -2350,9 +2350,9 @@ function buildInquiryResponseHTML(bodyText) {
     });
     // Build output: header(s) first, then body text in a styled <p>
     let result = headerLines.join('');
-    const bodyText = bodyLines.filter(l => l.trim()).join('<br>');
-    if (bodyText) {
-      result += `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${bodyText}</p>`;
+    const bodyContent = bodyLines.filter(l => l.trim()).join('<br>');
+    if (bodyContent) {
+      result += `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${bodyContent}</p>`;
     }
     return result || `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${lines.join('<br>')}</p>`;
   }).join('\n    ');
