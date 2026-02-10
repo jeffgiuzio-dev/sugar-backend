@@ -1279,8 +1279,9 @@ async function generateReceiptPDF(receiptData) {
       detailRows.push(['Deposit (50%)', fmt(deposit)]);
       if (receiptData.isCardPayment) {
         const ccFee = deposit * 0.03;
+        const totalCharged = deposit + ccFee;
         detailRows.push(['CC Processing Fee (3%)', fmt(ccFee)]);
-        detailRows.push(['Total Charged', receiptData.amountFormatted]);
+        detailRows.push(['Total Charged', fmt(totalCharged)]);
       } else {
         detailRows.push(['Amount Due', fmt(deposit)]);
       }
