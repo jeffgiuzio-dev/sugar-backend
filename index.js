@@ -1148,14 +1148,141 @@ function formatTime(timeStr) {
   return minutes === '00' ? `${hours} ${ampm}` : `${hours}:${minutes} ${ampm}`;
 }
 
-// Build combined Tasting Confirmation + Payment Receipt email (module-level so both webhook and offline-verify can use it)
-function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+// ===== Template-Aware Email Builders =====
+// These read custom templates from the DB (settings table, key 'email_templates')
+// and fall back to hardcoded defaults if no custom version exists.
+
+// --- Default templates (fallback if nothing in DB) ---
+
+const defaultTastingConfirmationTemplate = {
+  subject: 'Kenna Giuzio Cake - Tasting Confirmed - {tastingDate}',
+  body: `Dear {firstName},
+
+Thank you for your payment of {amount}. Your tasting is confirmed!
+
+Feel free to bring any inspiration photos, color swatches, or your event team members.
+
+If you have any questions before your tasting, don't hesitate to reach out.
+
+See you soon,
+Kenna`
+};
+
+const defaultBookingConfirmationTemplate = {
+  subject: "Kenna Giuzio Cake - You're Booked! - {eventDate}",
+  body: `Hi {firstName},
+
+I'm delighted to share that your date is officially booked! Thank you for trusting me with your {eventType}.
+
+In the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.
+
+WHAT'S NEXT:
+- If anything changes with your event, please don't hesitate to let me know.
+- Your remaining balance will be due two weeks before your event ({balanceDueDate}).
+
+I'm truly excited to create something beautiful for your celebration!
+
+Warmly,
+Kenna`
+};
+
+// --- Template loaders (same pattern as getDepositReminderTemplate) ---
+
+async function getTastingConfirmationTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
+      if (custom && custom['tasting-confirmation']) {
+        return { ...defaultTastingConfirmationTemplate, ...custom['tasting-confirmation'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom tasting confirmation template:', e.message);
+  }
+  return defaultTastingConfirmationTemplate;
+}
+
+async function getBookingConfirmationTemplate() {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'email_templates'");
+    if (result.rows.length > 0) {
+      let custom = result.rows[0].value;
+      if (typeof custom === 'string') custom = JSON.parse(custom);
+      if (custom && custom['booking-confirmation']) {
+        return { ...defaultBookingConfirmationTemplate, ...custom['booking-confirmation'] };
+      }
+    }
+  } catch (e) {
+    console.log('Could not load custom booking confirmation template:', e.message);
+  }
+  return defaultBookingConfirmationTemplate;
+}
+
+// --- Generic branded payment email HTML builder ---
+
+function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
+  // Convert plain text body to styled HTML paragraphs
+  const paragraphs = bodyText.split(/\n\n+/).map(p => {
+    const lines = p.split('\n');
+    const htmlLines = lines.map(line => {
+      // Style section headers like "YOUR TASTING:", "WHAT'S NEXT:"
+      if (/^[A-Z][A-Z\s']+:?\s*$/.test(line.trim())) {
+        return `<p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:8px 0 4px;">${line.trim()}</p>`;
+      }
+      // Style bullet points
+      if (/^[-•]/.test(line.trim())) {
+        return `<p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; ${line.trim().replace(/^[-•]\s*/, '')}</p>`;
+      }
+      return line;
+    });
+    const joined = htmlLines.join('<br>');
+    if (joined.startsWith('<p style="font-size:13px')) return joined;
+    return `<p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">${joined}</p>`;
+  }).join('\n    ');
+
+  const receiptSection = options.amountFormatted ? `
+  <tr><td style="padding:20px 40px 10px; text-align:center;">
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">${options.title || ''}</h1>
+    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${options.amountFormatted}</div>
+    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${options.paymentDate || ''}</p>
+    ${options.methodNote || ''}
+  </td></tr>
+  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>` : '';
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
+  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
+  <tr><td align="center" style="padding:30px 0 10px;">
+    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
+  </td></tr>${receiptSection}${options.detailsHTML || ''}
+  <tr><td style="padding:20px 40px 30px;">
+    ${paragraphs}
+  </td></tr>
+  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
+    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
+    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+// --- Tasting Confirmation builders (template-aware) ---
+
+function buildTastingConfirmationHTML(emailData, template) {
+  const { firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime } = emailData;
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
   const dateLine = tastingDate
     ? `<strong>Date:</strong> ${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}`
     : `<strong>Date:</strong> To be confirmed`;
-  const tastingSection = `
-  <!-- Tasting Details -->
+
+  const tastingDetailsHTML = `
   <tr><td style="padding:24px 40px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
       <tr><td>
@@ -1167,59 +1294,43 @@ function buildTastingConfirmationHTML({ firstName, amountFormatted, paymentDate,
     </table>
   </td></tr>`;
 
-  return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <!-- Banner -->
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <!-- Logo -->
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <!-- Payment Receipt -->
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">Tasting Confirmed</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
-    ${methodNote}
-  </td></tr>
-  <!-- Divider -->
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${tastingSection}
-  <!-- Message -->
-  <tr><td style="padding:20px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Dear ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Thank you for your payment of ${amountFormatted}. Your tasting is confirmed!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Feel free to bring any inspiration photos, color swatches, or your event team members.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">If you have any questions before your tasting, don't hesitate to reach out.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">See you soon,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <!-- Footer -->
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+  const bodyText = (template?.body || defaultTastingConfirmationTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{amount\}/g, amountFormatted)
+    .replace(/\{tastingDate\}/g, tastingDate || 'To be confirmed')
+    .replace(/\{tastingTime\}/g, tastingTime || '');
+
+  return buildBrandedPaymentEmailHTML(bodyText, {
+    title: 'Tasting Confirmed',
+    amountFormatted,
+    paymentDate,
+    methodNote,
+    detailsHTML: tastingDetailsHTML
+  });
 }
 
-function buildTastingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime }) {
+function buildTastingConfirmationPlain(emailData, template) {
+  const { firstName, amountFormatted, paymentDate, paymentMethod, tastingDate, tastingTime } = emailData;
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
   const dateStr = tastingDate ? `${tastingDate}${tastingTime ? ` at ${tastingTime}` : ''}` : 'To be confirmed';
   const tastingInfo = `\nYOUR TASTING:\nDate: ${dateStr}\nLocation: Queen Anne, Seattle\nDuration: Approximately 1-2 hours\n`;
 
-  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\nDear ${firstName},\n\nThank you for your payment of ${amountFormatted}. Your tasting is confirmed!\n\nFeel free to bring any inspiration photos, color swatches, or your event team members.\n\nIf you have any questions before your tasting, don't hesitate to reach out.\n\nSee you soon,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  const bodyText = (template?.body || defaultTastingConfirmationTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{amount\}/g, amountFormatted)
+    .replace(/\{tastingDate\}/g, tastingDate || 'To be confirmed')
+    .replace(/\{tastingTime\}/g, tastingTime || '');
+
+  return `Tasting Confirmed\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${tastingInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
-// Build Booking Confirmation email (sent when deposit is paid)
-function buildBookingConfirmationHTML({ firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate }) {
+// --- Booking Confirmation builders (template-aware) ---
+
+function buildBookingConfirmationHTML(emailData, template) {
+  const { firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate } = emailData;
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `<p style="font-size:13px; color:#999; margin:0;">Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</p>` : '';
-  const eventSection = `
-  <!-- Event Details -->
+
+  const eventDetailsHTML = `
   <tr><td style="padding:24px 40px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5; border-radius:8px; padding:20px 24px;">
       <tr><td>
@@ -1230,67 +1341,39 @@ function buildBookingConfirmationHTML({ firstName, amountFormatted, paymentDate,
         ${balanceDueDate ? `<p style="font-size:14px; color:#444; line-height:1.8; margin:0;"><strong>Final Balance Due:</strong> ${balanceDueDate}</p>` : ''}
       </td></tr>
     </table>
-  </td></tr>
-  <!-- What's Next -->
-  <tr><td style="padding:16px 40px 0;">
-    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What's Next</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; Your date is officially reserved</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; I'll begin working on your custom design</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; You'll receive a final balance reminder closer to your event</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 12px;">&#8226; Feel free to reach out anytime with questions or updates!</p>
   </td></tr>`;
 
-  const balanceNote = balanceDueDate ? `Your remaining balance will be due two weeks before your event (${balanceDueDate}).` : 'Your remaining balance will be due two weeks before your event.';
+  const bodyText = (template?.body || defaultBookingConfirmationTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{amount\}/g, amountFormatted)
+    .replace(/\{eventType\}/g, (eventType || 'celebration').toLowerCase())
+    .replace(/\{eventDate\}/g, eventDate || 'your event')
+    .replace(/\{venue\}/g, venue || '')
+    .replace(/\{balanceDueDate\}/g, balanceDueDate || 'two weeks before your event');
 
-  return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f5f2ed; font-family:Arial, Helvetica, sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed; padding:30px 0;">
-<tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%; background:#ffffff;">
-  <!-- Banner -->
-  <tr><td style="height:160px; background:url('https://portal.kennagiuziocake.com/images/header-flowers.jpg') 30% center / cover no-repeat;"></td></tr>
-  <!-- Logo -->
-  <tr><td align="center" style="padding:30px 0 10px;">
-    <img src="https://portal.kennagiuziocake.com/images/logo.png" alt="Kenna Giuzio Cake" style="height:60px; width:auto;">
-  </td></tr>
-  <!-- Payment Receipt -->
-  <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:24px; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">You're Booked!</h1>
-    <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${amountFormatted}</div>
-    <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${paymentDate}</p>
-    ${methodNote}
-  </td></tr>
-  <!-- Divider -->
-  <tr><td style="padding:8px 40px;"><div style="border-top:1px solid #e8e0d5;"></div></td></tr>${eventSection}
-  <!-- Message (Lock the Date template) -->
-  <tr><td style="padding:20px 40px 30px;">
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">Hi ${firstName},</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm delighted to share that your date is officially booked! Thank you for trusting me with your ${(eventType || 'celebration').toLowerCase()}.</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">In the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.</p>
-    <p style="font-size:13px; font-weight:500; color:#1a1a1a; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">What's Next</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 4px;">&#8226; If anything changes with your event, please don't hesitate to let me know.</p>
-    <p style="font-size:14px; color:#666; line-height:1.8; margin:0 0 16px;">&#8226; ${balanceNote}</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 16px;">I'm truly excited to create something beautiful for your celebration!</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0 0 4px;">Warmly,</p>
-    <p style="font-size:14px; color:#444; line-height:1.8; margin:0;">Kenna</p>
-  </td></tr>
-  <!-- Footer -->
-  <tr><td style="background:#faf8f5; padding:20px 40px; text-align:center; border-top:1px solid #e8e0d5;">
-    <p style="font-size:12px; color:#999; margin:0 0 4px;">Kenna Giuzio Cake &middot; An Artisan Studio</p>
-    <p style="font-size:12px; color:#999; margin:0;">(206) 472-5401 &middot; <a href="mailto:kenna@kennagiuziocake.com" style="color:#b5956a; text-decoration:none;">kenna@kennagiuziocake.com</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+  return buildBrandedPaymentEmailHTML(bodyText, {
+    title: "You're Booked!",
+    amountFormatted,
+    paymentDate,
+    methodNote,
+    detailsHTML: eventDetailsHTML
+  });
 }
 
-function buildBookingConfirmationPlain({ firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate }) {
+function buildBookingConfirmationPlain(emailData, template) {
+  const { firstName, amountFormatted, paymentDate, paymentMethod, eventType, eventDate, venue, balanceDueDate } = emailData;
   const methodNote = paymentMethod && paymentMethod !== 'card' ? `Paid via ${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}\n` : '';
-  const eventInfo = `\nYOUR EVENT\nEvent: ${eventType || 'Wedding'}\nDate: ${eventDate || 'To be confirmed'}${venue ? `\nVenue: ${venue}` : ''}${balanceDueDate ? `\nFinal Balance Due: ${balanceDueDate}` : ''}\n\nWHAT'S NEXT\n- Your date is officially reserved\n- I'll begin working on your custom design\n- You'll receive a final balance reminder closer to your event\n- Feel free to reach out anytime with questions or updates!\n`;
+  const eventInfo = `\nYOUR EVENT\nEvent: ${eventType || 'Wedding'}\nDate: ${eventDate || 'To be confirmed'}${venue ? `\nVenue: ${venue}` : ''}${balanceDueDate ? `\nFinal Balance Due: ${balanceDueDate}` : ''}\n`;
 
-  const balanceNote = balanceDueDate ? `Your remaining balance will be due two weeks before your event (${balanceDueDate}).` : 'Your remaining balance will be due two weeks before your event.';
-  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\nHi ${firstName},\n\nI'm delighted to share that your date is officially booked! Thank you for trusting me with your ${(eventType || 'celebration').toLowerCase()}.\n\nIn the near future, you will receive an invitation to your event portal, which will allow you to provide wedding cake information such as delivery logistics and setup times, key team members, and a day-of contact phone number. Additionally, we will need to coordinate the return of the floral arrangements to have these preserved. I typically pick up the display cake, when possible and arranged in advance.\n\nWHAT'S NEXT:\n- If anything changes with your event, please don't hesitate to let me know.\n- ${balanceNote}\n\nI'm truly excited to create something beautiful for your celebration!\n\nWarmly,\nKenna\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  const bodyText = (template?.body || defaultBookingConfirmationTemplate.body)
+    .replace(/\{firstName\}/g, firstName)
+    .replace(/\{amount\}/g, amountFormatted)
+    .replace(/\{eventType\}/g, (eventType || 'celebration').toLowerCase())
+    .replace(/\{eventDate\}/g, eventDate || 'your event')
+    .replace(/\{venue\}/g, venue || '')
+    .replace(/\{balanceDueDate\}/g, balanceDueDate || 'two weeks before your event');
+
+  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
 // ===== Deposit Reminder (Auto-Send 24h After Signing) =====
@@ -1819,10 +1902,11 @@ app.post('/api/payments/offline-verify', async (req, res) => {
               console.error('Offline verify: Failed to fetch tasting details for email:', dbErr.message);
             }
 
+            const tastingTemplate = await getTastingConfirmationTemplate();
             const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: method, tastingDate, tastingTime };
-            subject = tastingDate ? `Kenna Giuzio Cake - Tasting Confirmed - ${tastingDate}` : 'Kenna Giuzio Cake - Tasting Confirmed';
-            plainText = buildTastingConfirmationPlain(emailData);
-            htmlBody = buildTastingConfirmationHTML(emailData);
+            subject = tastingTemplate.subject.replace(/\{tastingDate\}/g, tastingDate || 'Your Tasting').replace(/\{firstName\}/g, firstName);
+            plainText = buildTastingConfirmationPlain(emailData, tastingTemplate);
+            htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
           } else if (invoice_type === 'deposit') {
             // Booking confirmation for deposit payments
             let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
@@ -1846,10 +1930,11 @@ app.post('/api/payments/offline-verify', async (req, res) => {
               console.error('Offline verify: Failed to fetch event details for booking email:', dbErr.message);
             }
 
+            const bookingTemplate = await getBookingConfirmationTemplate();
             const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: method, eventType, eventDate, venue: venueStr, balanceDueDate };
-            subject = eventDate ? `Kenna Giuzio Cake - You're Booked! - ${eventDate}` : "Kenna Giuzio Cake - You're Booked!";
-            plainText = buildBookingConfirmationPlain(bookingData);
-            htmlBody = buildBookingConfirmationHTML(bookingData);
+            subject = bookingTemplate.subject.replace(/\{eventDate\}/g, eventDate || 'Your Event').replace(/\{firstName\}/g, firstName).replace(/\{eventType\}/g, eventType || 'celebration');
+            plainText = buildBookingConfirmationPlain(bookingData, bookingTemplate);
+            htmlBody = buildBookingConfirmationHTML(bookingData, bookingTemplate);
           } else {
             // Generic payment confirmation for final/other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
@@ -2083,10 +2168,11 @@ app.post('/api/payments/webhook', async (req, res) => {
               console.error('Failed to fetch tasting details for email:', dbErr.message);
             }
 
+            const tastingTemplate = await getTastingConfirmationTemplate();
             const emailData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', tastingDate, tastingTime };
-            subject = tastingDate ? `Kenna Giuzio Cake - Tasting Confirmed - ${tastingDate}` : 'Kenna Giuzio Cake - Tasting Confirmed';
-            plainText = buildTastingConfirmationPlain(emailData);
-            htmlBody = buildTastingConfirmationHTML(emailData);
+            subject = tastingTemplate.subject.replace(/\{tastingDate\}/g, tastingDate || 'Your Tasting').replace(/\{firstName\}/g, firstName);
+            plainText = buildTastingConfirmationPlain(emailData, tastingTemplate);
+            htmlBody = buildTastingConfirmationHTML(emailData, tastingTemplate);
           } else if (invoiceType === 'deposit') {
             // Booking confirmation for deposit payments
             let eventType = null, eventDate = null, venueStr = null, balanceDueDate = null;
@@ -2109,10 +2195,11 @@ app.post('/api/payments/webhook', async (req, res) => {
               console.error('Failed to fetch event details for booking email:', dbErr.message);
             }
 
+            const bookingTemplate = await getBookingConfirmationTemplate();
             const bookingData = { firstName, amountFormatted, paymentDate, paymentMethod: 'card', eventType, eventDate, venue: venueStr, balanceDueDate };
-            subject = eventDate ? `Kenna Giuzio Cake - You're Booked! - ${eventDate}` : "Kenna Giuzio Cake - You're Booked!";
-            plainText = buildBookingConfirmationPlain(bookingData);
-            htmlBody = buildBookingConfirmationHTML(bookingData);
+            subject = bookingTemplate.subject.replace(/\{eventDate\}/g, eventDate || 'Your Event').replace(/\{firstName\}/g, firstName).replace(/\{eventType\}/g, eventType || 'celebration');
+            plainText = buildBookingConfirmationPlain(bookingData, bookingTemplate);
+            htmlBody = buildBookingConfirmationHTML(bookingData, bookingTemplate);
           } else {
             // Generic payment confirmation for final/other payments
             subject = 'Payment Confirmed - Kenna Giuzio Cake';
