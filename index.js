@@ -1543,7 +1543,8 @@ function buildBrandedPaymentEmailHTML(bodyText, options = {}) {
   if (options.amountFormatted) {
     headerSection = `
   <tr><td style="padding:20px 40px 10px; text-align:center;">
-    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:${titleFontSize}; font-weight:normal; color:#1a1a1a; margin:0 0 16px;">${options.title || ''}</h1>
+    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:${titleFontSize}; font-weight:normal; color:#1a1a1a; margin:0 0 ${options.subtitle ? '6px' : '16px'};">${options.title || ''}</h1>
+    ${options.subtitle ? `<p style="font-family:Georgia, 'Times New Roman', serif; font-size:14px; font-weight:normal; color:#666; margin:0 0 16px;">${options.subtitle}</p>` : ''}
     <div style="font-size:32px; font-weight:600; color:#b5956a; margin-bottom:12px;">${options.amountFormatted}</div>
     <p style="font-size:14px; color:#666; line-height:1.7; margin:0 0 4px;">${options.paymentDate || ''}</p>
     ${options.methodNote || ''}
@@ -1666,6 +1667,7 @@ function buildBookingConfirmationHTML(emailData, template) {
 
   return buildBrandedPaymentEmailHTML(bodyText, {
     title: "You're Booked!",
+    subtitle: "Deposit Payment Received",
     amountFormatted,
     paymentDate,
     methodNote,
@@ -1686,7 +1688,7 @@ function buildBookingConfirmationPlain(emailData, template) {
     .replace(/\{venue\}/g, venue || '')
     .replace(/\{balanceDueDate\}/g, balanceDueDate || 'two weeks before your event');
 
-  return `You're Booked!\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
+  return `You're Booked!\nDeposit Payment Received\n\n${amountFormatted}\n${paymentDate}\n${methodNote}${eventInfo}\n${bodyText}\n\nKenna Giuzio Cake\n(206) 472-5401\nkenna@kennagiuziocake.com`;
 }
 
 // ===== Deposit Reminder (Auto-Send 24h After Signing) =====
