@@ -1282,10 +1282,13 @@ async function generateReceiptPDF(receiptData) {
     if (bannerImg) {
       try {
         doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
+        // Light white overlay for softer look (PDFKit uses fillOpacity, not rgba)
         doc.save();
-        doc.rect(0, 0, 612, bannerHeight).fill('rgba(255,255,255,0.15)');
+        doc.fillOpacity(0.15);
+        doc.rect(0, 0, 612, bannerHeight).fill('#ffffff');
+        doc.fillOpacity(1);
         doc.restore();
-      } catch (e) { /* skip banner */ }
+      } catch (e) { console.error('Receipt banner image error:', e.message); }
     }
 
     // Logo (centered on banner)
@@ -1458,10 +1461,13 @@ async function generateProposalPDF(proposal) {
     if (bannerImg) {
       try {
         doc.image(bannerImg, 0, 0, { width: 612, height: bannerHeight });
+        // Light white overlay for softer look (PDFKit uses fillOpacity, not rgba)
         doc.save();
-        doc.rect(0, 0, 612, bannerHeight).fill('rgba(255,255,255,0.15)');
+        doc.fillOpacity(0.15);
+        doc.rect(0, 0, 612, bannerHeight).fill('#ffffff');
+        doc.fillOpacity(1);
         doc.restore();
-      } catch (e) { /* skip banner */ }
+      } catch (e) { console.error('Proposal banner image error:', e.message); }
     }
 
     // Logo (centered on banner)
