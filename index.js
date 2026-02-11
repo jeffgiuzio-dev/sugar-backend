@@ -3393,23 +3393,40 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
       console.error('Failed to send inquiry notification email:', emailErr.message);
     }
 
-    // Send SMS alert to Kenna
+    // Send text alert to Kenna via email-to-SMS (Verizon gateway)
     try {
-      if (twilioClient && process.env.KENNA_PHONE) {
-        const smsBody = `New inquiry from ${name}!` +
-          (event_type ? ` ${event_type}.` : '') +
-          (event_date ? ` Date: ${event_date}.` : '') +
-          ` Check Sugar for details.`;
+      const smsGateway = process.env.KENNA_SMS_GATEWAY || '2064725401@vtext.com';
+      const smsBody = `New inquiry from ${name}!` +
+        (event_type ? ` ${event_type}.` : '') +
+        (event_date ? ` Date: ${event_date}.` : '') +
+        ` Check Sugar for details.`;
 
-        await twilioClient.messages.create({
-          body: smsBody,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: process.env.KENNA_PHONE
+      const tokenResult2 = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+      if (tokenResult2.rows.length > 0) {
+        oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
+        const smsEmail = [
+          `To: ${smsGateway}`,
+          `From: Kenna Giuzio Cake <${process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com'}>`,
+          `Subject: New Inquiry`,
+          'Content-Type: text/plain; charset=utf-8',
+          '',
+          smsBody
+        ].join('\r\n');
+
+        const encodedSms = Buffer.from(smsEmail)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: { raw: encodedSms }
         });
-        console.log('Inquiry SMS sent to Kenna');
+        console.log('Inquiry text sent to Kenna via email-to-SMS');
       }
     } catch (smsErr) {
-      console.error('Failed to send inquiry SMS:', smsErr.message);
+      console.error('Failed to send inquiry text:', smsErr.message);
     }
 
     // Auto-send inquiry response to client
