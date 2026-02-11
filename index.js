@@ -3744,6 +3744,34 @@ app.get('/api/proposals', async (req, res) => {
   }
 });
 
+// Track proposal view (client opened the proposal)
+app.post('/api/proposals/:id/view', async (req, res) => {
+  try {
+    // Add columns if they don't exist yet
+    await pool.query(`
+      ALTER TABLE proposals ADD COLUMN IF NOT EXISTS first_viewed_at TIMESTAMP;
+      ALTER TABLE proposals ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
+      ALTER TABLE proposals ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
+    `);
+
+    const result = await pool.query(
+      `UPDATE proposals SET
+        first_viewed_at = COALESCE(first_viewed_at, NOW()),
+        last_viewed_at = NOW(),
+        view_count = COALESCE(view_count, 0) + 1
+       WHERE id = $1 RETURNING id, first_viewed_at, last_viewed_at, view_count`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Proposal not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error tracking proposal view:', err);
+    res.status(500).json({ error: 'Failed to track view' });
+  }
+});
+
 app.post('/api/proposals', async (req, res) => {
   try {
     const { client_id, proposal_number, status, data, signed_at, signature } = req.body;
