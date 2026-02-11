@@ -694,7 +694,7 @@ app.get('/api/twilio/status', (req, res) => {
 // Test SMS via email-to-SMS gateway
 app.post('/api/test-sms', async (req, res) => {
   try {
-    const smsGateway = '2064725401@vtext.com';
+    const smsGateway = req.body?.gateway || '2064725401@vzwpix.com';
     const smsBody = 'Test text from Sugar Portal!';
 
     const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
@@ -3436,7 +3436,7 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
 
     // Send text alert to Kenna via email-to-SMS (Verizon gateway)
     try {
-      const smsGateway = process.env.KENNA_SMS_GATEWAY || '2064725401@vtext.com';
+      const smsGateway = process.env.KENNA_SMS_GATEWAY || '2064725401@vzwpix.com';
       const smsBody = `New inquiry from ${name}!` +
         (event_type ? ` ${event_type}.` : '') +
         (event_date ? ` Date: ${event_date}.` : '') +
