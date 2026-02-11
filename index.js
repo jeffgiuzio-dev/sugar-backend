@@ -334,7 +334,7 @@ app.post('/api/gmail/disconnect', async (req, res) => {
 // Send email via Gmail
 app.post('/api/gmail/send', async (req, res) => {
   try {
-    const { to, subject, message, html, client_id } = req.body;
+    const { to, subject, message, html, client_id, bcc } = req.body;
 
     if (!to || !message) {
       return res.status(400).json({ error: 'Missing required fields: to, message' });
@@ -358,6 +358,7 @@ app.post('/api/gmail/send', async (req, res) => {
       const emailLines = [
         `To: ${to}`,
         `From: Kenna Giuzio Cake <${kennaEmail}>`,
+        ...(bcc ? [`Bcc: ${bcc}`] : []),
         `Subject: ${subject || ''}`,
         'MIME-Version: 1.0',
         `Content-Type: multipart/alternative; boundary="${boundary}"`,
@@ -381,6 +382,7 @@ app.post('/api/gmail/send', async (req, res) => {
       const emailLines = [
         `To: ${to}`,
         `From: Kenna Giuzio Cake <${kennaEmail}>`,
+        ...(bcc ? [`Bcc: ${bcc}`] : []),
         `Subject: ${subject || ''}`,
         'Content-Type: text/plain; charset=utf-8',
         '',
