@@ -691,47 +691,6 @@ app.get('/api/twilio/status', (req, res) => {
   });
 });
 
-// Test SMS via email-to-SMS gateway
-app.post('/api/test-sms', async (req, res) => {
-  try {
-    const smsGateway = req.body?.gateway || '2064725401@vzwpix.com';
-    const smsBody = 'Test text from Sugar Portal!';
-
-    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
-    if (tokenResult.rows.length === 0) {
-      return res.status(500).json({ error: 'No Gmail token found' });
-    }
-
-    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
-    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
-
-    const smsEmail = [
-      `To: ${smsGateway}`,
-      `From: ${kennaEmail}`,
-      `Subject: Test`,
-      'Content-Type: text/plain; charset=utf-8',
-      '',
-      smsBody
-    ].join('\r\n');
-
-    const encodedSms = Buffer.from(smsEmail)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-
-    const result = await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: encodedSms }
-    });
-
-    res.json({ success: true, messageId: result.data.id, gateway: smsGateway });
-  } catch (err) {
-    console.error('Test SMS error:', err);
-    res.status(500).json({ error: err.message, code: err.code });
-  }
-});
-
 // ============================================
 // STRIPE PAYMENTS
 // ============================================
@@ -3432,42 +3391,6 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
       }
     } catch (emailErr) {
       console.error('Failed to send inquiry notification email:', emailErr.message);
-    }
-
-    // Send text alert to Kenna via email-to-SMS (Verizon gateway)
-    try {
-      const smsGateway = process.env.KENNA_SMS_GATEWAY || '2064725401@vzwpix.com';
-      const smsBody = `New inquiry from ${name}!` +
-        (event_type ? ` ${event_type}.` : '') +
-        (event_date ? ` Date: ${event_date}.` : '') +
-        ` Check Sugar for details.`;
-
-      const tokenResult2 = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
-      if (tokenResult2.rows.length > 0) {
-        oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
-        const smsEmail = [
-          `To: ${smsGateway}`,
-          `From: ${process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com'}`,
-          `Subject: New Inquiry`,
-          'Content-Type: text/plain; charset=utf-8',
-          '',
-          smsBody
-        ].join('\r\n');
-
-        const encodedSms = Buffer.from(smsEmail)
-          .toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
-
-        await gmail.users.messages.send({
-          userId: 'me',
-          requestBody: { raw: encodedSms }
-        });
-        console.log('Inquiry text sent to Kenna via email-to-SMS');
-      }
-    } catch (smsErr) {
-      console.error('Failed to send inquiry text:', smsErr.message);
     }
 
     // Auto-send inquiry response to client
