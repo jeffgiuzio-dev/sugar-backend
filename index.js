@@ -3458,7 +3458,7 @@ app.get('/api/clients/:id', async (req, res) => {
 app.post('/api/clients', async (req, res) => {
   try {
     const { name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
-            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company } = req.body;
+            tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company, send_email } = req.body;
     const result = await pool.query(
       `INSERT INTO clients (name, email, phone, status, event_date, event_type, guest_count, venue, source, notes, address,
        tasting_date, tasting_time, tasting_end_time, tasting_guests, event_time, event_end_time, archived, instagram, linkedin, website, company)
@@ -3470,8 +3470,8 @@ app.post('/api/clients', async (req, res) => {
 
     const newClient = result.rows[0];
 
-    // Auto-send inquiry response if status is inquiry and email exists
-    if ((newClient.status === 'inquiry') && newClient.email) {
+    // Auto-send inquiry response if status is inquiry, email exists, and send_email is not false
+    if ((newClient.status === 'inquiry') && newClient.email && send_email !== false) {
       try {
         await sendInquiryResponse(newClient);
       } catch (autoErr) {
