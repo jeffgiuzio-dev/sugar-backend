@@ -691,6 +691,47 @@ app.get('/api/twilio/status', (req, res) => {
   });
 });
 
+// Test SMS via email-to-SMS gateway
+app.post('/api/test-sms', async (req, res) => {
+  try {
+    const smsGateway = '2064725401@vtext.com';
+    const smsBody = 'Test text from Sugar Portal!';
+
+    const tokenResult = await pool.query("SELECT value FROM settings WHERE key = 'gmail_refresh_token'");
+    if (tokenResult.rows.length === 0) {
+      return res.status(500).json({ error: 'No Gmail token found' });
+    }
+
+    oauth2Client.setCredentials({ refresh_token: tokenResult.rows[0].value });
+    const kennaEmail = process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com';
+
+    const smsEmail = [
+      `To: ${smsGateway}`,
+      `From: ${kennaEmail}`,
+      `Subject: Test`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      smsBody
+    ].join('\r\n');
+
+    const encodedSms = Buffer.from(smsEmail)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw: encodedSms }
+    });
+
+    res.json({ success: true, messageId: result.data.id, gateway: smsGateway });
+  } catch (err) {
+    console.error('Test SMS error:', err);
+    res.status(500).json({ error: err.message, code: err.code });
+  }
+});
+
 // ============================================
 // STRIPE PAYMENTS
 // ============================================
