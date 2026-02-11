@@ -3447,7 +3447,7 @@ View in Sugar: https://portal.kennagiuziocake.com/clients/view.html?id=${newClie
         oauth2Client.setCredentials({ refresh_token: tokenResult2.rows[0].value });
         const smsEmail = [
           `To: ${smsGateway}`,
-          `From: Kenna Giuzio Cake <${process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com'}>`,
+          `From: ${process.env.KENNA_EMAIL || 'kenna@kennagiuziocake.com'}`,
           `Subject: New Inquiry`,
           'Content-Type: text/plain; charset=utf-8',
           '',
